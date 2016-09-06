@@ -329,7 +329,7 @@ namespace PdfSharper.Drawing.Pdf
 
             int count = points.Length;
             if (points.Length < 2)
-                throw new ArgumentException("points", PSSR.PointArrayAtLeast(2));
+                throw new ArgumentException(PSSR.PointArrayAtLeast(2), "points");
 
             const string format = Config.SignificantFigures4;
             AppendFormatPoint("{0:" + format + "} {1:" + format + "} m\n", points[0].X, points[0].Y);
@@ -445,20 +445,20 @@ namespace PdfSharper.Drawing.Pdf
 
             if (!format.Comb)
             {
-            switch (format.Alignment)
-            {
-                case XStringAlignment.Near:
-                    // nothing to do
-                    break;
+                switch (format.Alignment)
+                {
+                    case XStringAlignment.Near:
+                        // nothing to do
+                        break;
 
-                case XStringAlignment.Center:
-                    x += (rect.Width - width) / 2;
-                    break;
+                    case XStringAlignment.Center:
+                        x += (rect.Width - width) / 2;
+                        break;
 
-                case XStringAlignment.Far:
-                    x += rect.Width - width;
-                    break;
-            }
+                    case XStringAlignment.Far:
+                        x += rect.Width - width;
+                        break;
+                }
             }
             if (Gfx.PageDirection == XPageDirection.Downwards)
             {
@@ -571,9 +571,9 @@ namespace PdfSharper.Drawing.Pdf
                     }
                     else
                     {
-                    AdjustTdOffset(ref pos, verticalOffset, true);
-                    AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} Td\n{2} Tj\n", pos.X, pos.Y, text);
-                }
+                        AdjustTdOffset(ref pos, verticalOffset, true);
+                        AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} Td\n{2} Tj\n", pos.X, pos.Y, text);
+                    }
                 }
                 else
                 {
@@ -613,10 +613,10 @@ namespace PdfSharper.Drawing.Pdf
                     }
                     else
                     {
-                    AdjustTdOffset(ref pos, verticalOffset, false);
-                    AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} Td {2} Tj\n", pos.X, pos.Y, text);
+                        AdjustTdOffset(ref pos, verticalOffset, false);
+                        AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} Td {2} Tj\n", pos.X, pos.Y, text);
+                    }
                 }
-            }
             }
 #else
                 AdjustTextMatrix(ref pos);
