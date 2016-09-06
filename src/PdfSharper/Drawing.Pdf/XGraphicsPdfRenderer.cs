@@ -443,6 +443,8 @@ namespace PdfSharper.Drawing.Pdf
 
             Realize(font, brush, boldSimulation ? 2 : 0);
 
+            if (!format.Comb)
+            {
             switch (format.Alignment)
             {
                 case XStringAlignment.Near:
@@ -456,6 +458,7 @@ namespace PdfSharper.Drawing.Pdf
                 case XStringAlignment.Far:
                     x += rect.Width - width;
                     break;
+            }
             }
             if (Gfx.PageDirection == XPageDirection.Downwards)
             {
@@ -554,11 +557,27 @@ namespace PdfSharper.Drawing.Pdf
             {
                 if (_gfxState.ItalicSimulationOn)
                 {
+                    if (format.Comb)
+                    {
+                        text = text.TrimStart('(').TrimEnd(')');
+                        for (var i = 0; i < text.Length; i++)
+                        {
+                            var c = text[i].ToString();
+                            var cSize = _gfx.MeasureString(c, font);
+                            var xOffset = (format.CombWidth - cSize.Width) / 2.3;
+                            AppendFormat("q {0:0.####} {1:0.####} Td ({2}) Tj Q\n", pos.X + xOffset, pos.Y, c);
+                            pos.X += format.CombWidth;
+                        }
+                    }
+                    else
+                    {
                     AdjustTdOffset(ref pos, verticalOffset, true);
                     AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} Td\n{2} Tj\n", pos.X, pos.Y, text);
                 }
+                }
                 else
                 {
+                    // TODO: Combs
                     // Italic simulation is done by skewing characters 20° to the right.
                     XMatrix m = new XMatrix(1, 0, Const.ItalicSkewAngleSinus, 1, pos.X, pos.Y);
                     AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} {2:" + format2 + "} {3:" + format2 + "} {4:" + format2 + "} {5:" + format2 + "} Tm\n{6} Tj\n",
@@ -571,6 +590,7 @@ namespace PdfSharper.Drawing.Pdf
             {
                 if (_gfxState.ItalicSimulationOn)
                 {
+                    // TODO: Combs
                     XMatrix m = new XMatrix(1, 0, 0, 1, pos.X, pos.Y);
                     AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} {2:" + format2 + "} {3:" + format2 + "} {4:" + format2 + "} {5:" + format2 + "} Tm\n{6} Tj\n",
                         m.M11, m.M12, m.M21, m.M22, m.OffsetX, m.OffsetY, text);
@@ -579,9 +599,24 @@ namespace PdfSharper.Drawing.Pdf
                 }
                 else
                 {
+                    if (format.Comb)
+                    {
+                        text = text.TrimStart('(').TrimEnd(')');
+                        for (var i = 0; i < text.Length; i++)
+                        {
+                            var c = text[i].ToString();
+                            var cSize = _gfx.MeasureString(c, font);
+                            var xOffset = (format.CombWidth - cSize.Width) / 2.3;
+                            AppendFormat("q {0:0.####} {1:0.####} Td ({2}) Tj Q\n", pos.X + xOffset, pos.Y, c);
+                            pos.X += format.CombWidth;
+                        }
+                    }
+                    else
+                    {
                     AdjustTdOffset(ref pos, verticalOffset, false);
                     AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} Td {2} Tj\n", pos.X, pos.Y, text);
                 }
+            }
             }
 #else
                 AdjustTextMatrix(ref pos);
