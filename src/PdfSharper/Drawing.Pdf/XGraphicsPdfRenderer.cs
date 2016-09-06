@@ -1004,7 +1004,7 @@ namespace PdfSharper.Drawing.Pdf
             {
                 int currentQuadrant = startQuadrant;
                 bool firstLoop = true;
-                do
+                while (true)
                 {
                     if (currentQuadrant == startQuadrant && firstLoop)
                     {
@@ -1035,7 +1035,7 @@ namespace PdfSharper.Drawing.Pdf
                         currentQuadrant = currentQuadrant == 0 ? 3 : currentQuadrant - 1;
 
                     firstLoop = false;
-                } while (true);
+                }
             }
         }
 
