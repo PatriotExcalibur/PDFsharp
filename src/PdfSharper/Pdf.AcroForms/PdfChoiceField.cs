@@ -226,13 +226,10 @@ namespace PdfSharper.Pdf.AcroForms
                     else if (item is PdfArray)
                     {
                         PdfArray array = (PdfArray)item;
-                        if (array.Elements.Count > 0)
-                        {
-                            // Pdf Reference 1.7, Section 12.7.4.4: Should be a 2-element Array. Second value is the text shown in the UI.
-                            if ((!useExportValue && array.Elements.Count > 1 && array.Elements[1].ToString() == value) ||
-                                (array.Elements.Count > 0 && array.Elements[0].ToString() == value))
-                                return idx;
-                        }
+                        // Pdf Reference 1.7, Section 12.7.4.4: Should be a 2-element Array. Second value is the text shown in the UI.
+                        if ((!useExportValue && array.Elements.Count > 1 && array.Elements[1].ToString() == value) ||
+                            (array.Elements.Count > 0 && array.Elements[0].ToString() == value))
+                            return idx;
                     }
                 }
             }
