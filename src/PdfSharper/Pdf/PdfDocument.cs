@@ -846,17 +846,6 @@ namespace PdfSharper.Pdf
         }
 
         /// <summary>
-        /// Flattens a document (make the fields non-editable).
-        /// </summary>
-        public void Flatten()
-        {
-            for (int i = 0; i < AcroForm.Fields.Count; i++)
-            {
-                AcroForm.Fields[i].ReadOnly = true;
-            }
-        }
-
-        /// <summary>
         /// Gets the security handler.
         /// </summary>
         public PdfStandardSecurityHandler SecurityHandler
