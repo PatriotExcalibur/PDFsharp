@@ -248,8 +248,8 @@ namespace PdfSharper.Pdf.AcroForms
                 }
                 else
                 {
-                gfx.DrawString(Text, Font, new XSolidBrush(ForeColor),
-                  rect.ToXRect() - rect.Location + new XPoint(2, 0), XStringFormats.TopLeft);
+                    gfx.DrawString(Text, Font, new XSolidBrush(ForeColor),
+                      rect.ToXRect() - rect.Location + new XPoint(2, 0), XStringFormats.TopLeft);
                 }
             }
 
@@ -268,6 +268,9 @@ namespace PdfSharper.Pdf.AcroForms
             ap.Elements["/N"] = form.PdfForm.Reference;
 
             PdfFormXObject xobj = form.PdfForm;
+            if (xobj.Stream == null)
+                xobj.CreateStream(new byte[] { });
+
             string s = xobj.Stream.ToString();
             // Thank you Adobe: Without putting the content in 'EMC brackets'
             // the text is not rendered by PDF Reader 9 or higher.
