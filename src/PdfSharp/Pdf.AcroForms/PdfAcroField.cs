@@ -686,6 +686,10 @@ namespace PdfSharp.Pdf.AcroForms
         /// </summary>
         public sealed class PdfAcroFieldCollection : PdfArray
         {
+            PdfAcroFieldCollection(PdfDocument document)
+                : base(document)
+            { }
+
             PdfAcroFieldCollection(PdfArray array)
                 : base(array)
             { }
