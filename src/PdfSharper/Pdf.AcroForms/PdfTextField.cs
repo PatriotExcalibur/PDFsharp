@@ -31,6 +31,7 @@ using PdfSharper.Drawing;
 using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Annotations;
 using PdfSharper.Pdf.Internal;
+using System;
 
 namespace PdfSharper.Pdf.AcroForms
 {
@@ -289,36 +290,113 @@ namespace PdfSharper.Pdf.AcroForms
         {
             base.Flatten();
 
+            if (HasKids)
+            {
+                for (int i = 0; i < Fields.Elements.Count; i++)
+                {
+                    var rect = Fields[i].Rectangle;
+                    var page = Fields[i].Page;
+                    var font = GetFontFromElement(Fields[i]);
+                    XStringFormat format = GetAlignment(Fields[i].Elements);
+                    DrawToPDF(rect, page, font, format);
+                }
+            }
+            else
+            {
             var rect = Rectangle;
+                var page = Page;
+                XStringFormat format = GetAlignment(Elements);
+                DrawToPDF(rect, page, Font, format);
+            }
+        }
+
+        internal void DrawToPDF(PdfRectangle rect, PdfPage elementPage, XFont font, XStringFormat format)
+        {
             if (!rect.IsEmpty)
             {
-                using (var gfx = XGraphics.FromPdfPage(Page))
+                using (var gfx = XGraphics.FromPdfPage(elementPage))
                 {
                     // Note: Page origin [0,0] is bottom left !
                     var text = Text;
                     if (text.Length > 0)
                     {
-                        var xRect = new XRect(rect.X1, Page.Height.Point - rect.Y2, rect.Width, rect.Height);
+                        var xRect = new XRect(rect.X1, elementPage.Height.Point - rect.Y2, rect.Width, rect.Height);
                         if ((Flags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
                         {
                             var combWidth = xRect.Width / MaxLength;
-                            var format = XStringFormats.TopLeft;
                             format.Comb = true;
                             format.CombWidth = combWidth;
                             gfx.Save();
                             gfx.IntersectClip(xRect);
-                            gfx.DrawString(text, Font, new XSolidBrush(ForeColor), xRect + new XPoint(0, 1.5), format);
+                            gfx.DrawString(text, font, new XSolidBrush(ForeColor), xRect + new XPoint(0, 1.5), format);
                             gfx.Restore();
                         }
                         else
                         {
                             gfx.Save();
                             gfx.IntersectClip(xRect);
-                            gfx.DrawString(text, Font, new XSolidBrush(ForeColor), xRect + new XPoint(2, 2), XStringFormats.TopLeft);
+                            gfx.DrawString(text, font, new XSolidBrush(ForeColor), xRect + new XPoint(2, 2), format);
                             gfx.Restore();
                         }
                     }
                 }
+            }
+        }
+
+        internal XFont GetFontFromElement(PdfAcroField element)
+        {
+            string[] name = element.Font.FamilyName.Split(',');
+            double size = element.Font.Size;
+            XFontStyle style;
+
+            if (name.Length > 1)
+            {
+                switch (name[1])
+                {
+                    case "Bold":
+                        style = XFontStyle.Bold;
+                        break;
+                    case "Italic":
+                        style = XFontStyle.Italic;
+                        break;
+                    case "BoldItalic":
+                        style = XFontStyle.BoldItalic;
+                        break;
+                    default:
+                        style = XFontStyle.Regular;
+                        break;
+                }
+            }
+            else
+            {
+                style = XFontStyle.Regular;
+            }
+
+            return new XFont(name[0], size, style);
+        }
+
+        internal XStringFormat GetAlignment(DictionaryElements dict)
+        {
+            PdfItem item = dict.GetValue("/Q");
+            if (item != null)
+            {
+                int alignment = Int32.Parse(item.ToString());
+
+                switch (alignment)
+                {
+                    case 0:
+                        return XStringFormats.TopLeft;
+                    case 1:
+                        return XStringFormats.TopCenter;
+                    case 2:
+                        return XStringFormats.TopRight;
+                    default:
+                        return XStringFormats.TopLeft;
+                    }
+                }
+            else
+            {
+                return XStringFormats.TopLeft;
             }
         }
 
