@@ -5,7 +5,7 @@
 //
 // Copyright (c) 2005-2016 empira Software GmbH, Cologne Area (Germany)
 //
-// http://www.PdfSharper.com
+// http://www.pdfsharp.com
 // http://sourceforge.net/projects/pdfsharp
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -225,6 +225,7 @@ namespace PdfSharper.Pdf.AcroForms
             PdfRectangle rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
             XForm form = new XForm(_document, rect.Size);
             XGraphics gfx = XGraphics.FromForm(form);
+            XRect xrect = (rect.ToXRect() - rect.Location);
 
             if (BackColor != XColor.Empty)
                 gfx.DrawRectangle(new XSolidBrush(BackColor), rect.ToXRect() - rect.Location);
@@ -233,6 +234,8 @@ namespace PdfSharper.Pdf.AcroForms
                 gfx.DrawRectangle(new XPen(BorderColor), rect.ToXRect() - rect.Location);
 
             string text = Text;
+            
+
             if (text.Length > 0)
             {
                 var xRect = rect.ToXRect();

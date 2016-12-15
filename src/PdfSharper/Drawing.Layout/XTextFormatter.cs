@@ -137,8 +137,8 @@ namespace PdfSharper.Drawing.Layout
                 throw new ArgumentNullException("font");
             if (brush == null)
                 throw new ArgumentNullException("brush");
-            if (format.Alignment != XStringAlignment.Near || format.LineAlignment != XLineAlignment.Near)
-                throw new ArgumentException("Only TopLeft alignment is currently implemented.");
+            //if (format.Alignment != XStringAlignment.Near || format.LineAlignment != XLineAlignment.Near)
+                //throw new ArgumentException("Only TopLeft alignment is currently implemented.");
 
             Text = text;
             Font = font;
@@ -161,7 +161,7 @@ namespace PdfSharper.Drawing.Layout
                     break;
                 if (block.Type == BlockType.LineBreak)
                     continue;
-                _gfx.DrawString(block.Text, font, brush, dx + block.Location.X, dy + block.Location.Y);
+                _gfx.DrawString(block.Text, font, brush, dx + block.Location.X, dy + block.Location.Y, format);
             }
         }
 
