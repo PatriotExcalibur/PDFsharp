@@ -725,8 +725,7 @@ namespace PdfSharper.Pdf
         /// </summary>
         public PdfAcroForm AcroForm
         {
-            get { return Catalog.AcroForm; }
-            set { Catalog.AcroForm = value; }
+            get { return Catalog.AcroForm; }            
         }
 
         /// <summary>

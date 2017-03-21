@@ -123,18 +123,12 @@ namespace PdfSharper.Pdf
             return array;
         }
 
-        ArrayElements elements;
         /// <summary>
         /// Gets the collection containing the elements of this object.
         /// </summary>
         public ArrayElements Elements
         {
-            get
-            {
-                if (this.elements == null)
-                    this.elements = new ArrayElements(this);
-                return this.elements;
-            }
+            get { return _elements ?? (_elements = new ArrayElements(this)); }
         }
 
         public int PaddingRight { get; private set; }
