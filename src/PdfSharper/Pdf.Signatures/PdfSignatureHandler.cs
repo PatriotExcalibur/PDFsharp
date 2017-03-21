@@ -1,16 +1,16 @@
-﻿using PdfSharp.Pdf;
-using PdfSharp.Pdf.AcroForms;
-using PdfSharp.Pdf.Advanced;
-using PdfSharp.Pdf.Annotations;
+﻿using PdfSharper.Pdf;
+using PdfSharper.Pdf.AcroForms;
+using PdfSharper.Pdf.Advanced;
+using PdfSharper.Pdf.Annotations;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using static PdfSharp.Pdf.AcroForms.PdfAcroField;
+using static PdfSharper.Pdf.AcroForms.PdfAcroField;
 
-namespace PdfSharp.Signatures
+namespace PdfSharper.Signatures
 {
     public class IntEventArgs : EventArgs { public int Value { get; set; } }
 

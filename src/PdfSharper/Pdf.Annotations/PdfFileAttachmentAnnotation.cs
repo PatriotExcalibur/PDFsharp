@@ -1,7 +1,7 @@
-﻿using PdfSharp.Pdf.Advanced;
+﻿using PdfSharper.Pdf.Advanced;
 using System;
 
-namespace PdfSharp.Pdf.Annotations
+namespace PdfSharper.Pdf.Annotations
 {
     /// <summary>
     /// Represent a file that is attached to the PDF

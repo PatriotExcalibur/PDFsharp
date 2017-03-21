@@ -1,9 +1,9 @@
-﻿using PdfSharp.Pdf;
+﻿using PdfSharper.Pdf;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PdfSharp.Signatures
+namespace PdfSharper.Signatures
 {
     internal class PositionTracker
     {

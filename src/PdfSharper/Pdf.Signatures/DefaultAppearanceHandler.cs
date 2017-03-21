@@ -1,8 +1,8 @@
 ﻿using System;
-using PdfSharp.Drawing;
-using PdfSharp.Drawing.Layout;
+using PdfSharper.Drawing;
+using PdfSharper.Drawing.Layout;
 
-namespace PdfSharp.Signatures
+namespace PdfSharper.Signatures
 {
     internal class DefaultAppearanceHandler : ISignatureAppearanceHandler
     {

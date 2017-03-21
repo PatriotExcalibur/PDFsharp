@@ -696,7 +696,7 @@
     <Compile Include="..\PdfSharper\Pdf.Annotations\PdfGenericAnnotation.cs">
       <Link>Pdf.Annotations\PdfGenericAnnotation.cs</Link>
     </Compile>	
-    <Compile Include="..\PdfSharp\Pdf.Annotations\PdfFileAttachmentAnnotation.cs">
+    <Compile Include="..\PdfSharper\Pdf.Annotations\PdfFileAttachmentAnnotation.cs">
       <Link>Pdf.Annotations\PdfFileAttachmentAnnotation.cs</Link>
     </Compile>
     <Compile Include="..\PdfSharper\Pdf.Annotations\PdfLinkAnnotation.cs">

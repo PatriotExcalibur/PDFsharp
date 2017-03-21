@@ -1,9 +1,9 @@
-﻿using PdfSharp.Drawing;
+﻿using PdfSharper.Drawing;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PdfSharp.Signatures
+namespace PdfSharper.Signatures
 {
     public class PdfSignatureOptions
     {
