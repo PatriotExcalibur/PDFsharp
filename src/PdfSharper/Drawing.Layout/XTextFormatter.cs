@@ -137,8 +137,6 @@ namespace PdfSharper.Drawing.Layout
                 throw new ArgumentNullException("font");
             if (brush == null)
                 throw new ArgumentNullException("brush");
-            //if (format.Alignment != XStringAlignment.Near || format.LineAlignment != XLineAlignment.Near)
-                //throw new ArgumentException("Only TopLeft alignment is currently implemented.");
 
             Text = text;
             Font = font;
