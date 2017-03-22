@@ -98,10 +98,10 @@ namespace PdfSharper.Pdf.AcroForms
                 return (PdfRectangle)Elements[Keys.Rect];
             }
             set
-            {                
+            {
                 Elements.Add(Keys.Rect, value);
-                this.visible = !(value.X1 + value.X2 + value.Y1 + value.Y2 == 0);   
-                
+                this.visible = !(value.X1 + value.X2 + value.Y1 + value.Y2 == 0);
+
             }
         }
 
@@ -111,7 +111,7 @@ namespace PdfSharper.Pdf.AcroForms
         /// <summary>
         /// Initializes a new instance of PdfSignatureField.
         /// </summary>
-        internal PdfSignatureField(PdfDocument document) 
+        internal PdfSignatureField(PdfDocument document)
             : base(document)
         {
             Elements.Add(Keys.FT, new PdfName("/Sig"));
@@ -120,7 +120,7 @@ namespace PdfSharper.Pdf.AcroForms
             Elements.Add(Keys.DR, new PdfDictionary());
             Elements.Add(Keys.Type, new PdfName("/Annot"));
             Elements.Add(Keys.Subtype, new PdfName("/Widget"));
-            Elements.Add(Keys.P, document.Pages[0]);
+            Elements.Add(Keys.Page, document.Pages[0]);
 
 
             PdfDictionary sign = new PdfDictionary(document);
@@ -133,7 +133,7 @@ namespace PdfSharper.Pdf.AcroForms
             document._irefTable.Add(this);
 
             Elements.Add(Keys.V, sign);
-            
+
         }
 
         internal PdfSignatureField(PdfDictionary dict)
@@ -176,7 +176,7 @@ namespace PdfSharper.Pdf.AcroForms
         /// The description comes from PDF 1.4 Reference.
         /// </summary>
         public new class Keys : PdfAcroField.Keys
-        {        
+        {
 
             /// <summary>
             /// (Required; inheritable) The name of the signature handler to be used for
