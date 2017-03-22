@@ -28,6 +28,7 @@
 #endregion
 
 using PdfSharper.Drawing;
+using PdfSharper.Drawing.Layout;
 using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Annotations;
 using PdfSharper.Pdf.Internal;
@@ -63,7 +64,8 @@ namespace PdfSharper.Pdf.AcroForms
 
         public XStringFormat Alignment
         {
-            get {
+            get
+            {
                 XStringFormat _alignment;
                 if (MultiLine)
                 {
@@ -104,20 +106,21 @@ namespace PdfSharper.Pdf.AcroForms
                 }
                 return _alignment;
             }
-            set {
+            set
+            {
 
-                    if (XStringFormats.Equals(value, XStringFormats.CenterLeft) || XStringFormats.Equals(value, XStringFormats.BottomLeft) || XStringFormats.Equals(value, XStringFormats.TopLeft))
-                    {
-                        Elements.SetInteger(Keys.Q, 0);
-                    }
-                    else if (XStringFormats.Equals(value, XStringFormats.Center) || XStringFormats.Equals(value, XStringFormats.TopCenter) || XStringFormats.Equals(value, XStringFormats.BottomCenter))
-                    {
-                        Elements.SetInteger(Keys.Q, 1);
-                    }
-                    else if (XStringFormats.Equals(value, XStringFormats.CenterRight) || XStringFormats.Equals(value, XStringFormats.TopRight) || XStringFormats.Equals(value, XStringFormats.BottomRight))
-                    {
-                        Elements.SetInteger(Keys.Q, 2);
-                    }               
+                if (XStringFormats.Equals(value, XStringFormats.CenterLeft) || XStringFormats.Equals(value, XStringFormats.BottomLeft) || XStringFormats.Equals(value, XStringFormats.TopLeft))
+                {
+                    Elements.SetInteger(Keys.Q, 0);
+                }
+                else if (XStringFormats.Equals(value, XStringFormats.Center) || XStringFormats.Equals(value, XStringFormats.TopCenter) || XStringFormats.Equals(value, XStringFormats.BottomCenter))
+                {
+                    Elements.SetInteger(Keys.Q, 1);
+                }
+                else if (XStringFormats.Equals(value, XStringFormats.CenterRight) || XStringFormats.Equals(value, XStringFormats.TopRight) || XStringFormats.Equals(value, XStringFormats.BottomRight))
+                {
+                    Elements.SetInteger(Keys.Q, 2);
+                }
             }
         }
 
@@ -326,15 +329,19 @@ namespace PdfSharper.Pdf.AcroForms
 
             if (text.Length > 0)
             {
-                var xRect = rect.ToXRect();
+                xrect.Y = xrect.Y + TopMargin;
+                xrect.X = xrect.X + LeftMargin;
+                xrect.Width = xrect.Width + RightMargin;
+                xrect.Height = xrect.Height + BottomMargin;
+
                 if ((Flags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
                 {
-                    var combWidth = xRect.Width / MaxLength;
+                    var combWidth = xrect.Width / MaxLength;
                     var format = XStringFormats.TopLeft;
                     format.Comb = true;
                     format.CombWidth = combWidth;
                     gfx.Save();
-                    gfx.IntersectClip(xRect);
+                    gfx.IntersectClip(xrect);
                     if (this.MultiLine)
                     {
                         XTextFormatter formatter = new XTextFormatter(gfx);
@@ -344,7 +351,7 @@ namespace PdfSharper.Pdf.AcroForms
                     }
                     else
                     {
-                        gfx.DrawString(text, Font, new XSolidBrush(ForeColor), xRect + new XPoint(0, 1.5), format);
+                        gfx.DrawString(text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
                     }
                     gfx.Restore();
                 }
