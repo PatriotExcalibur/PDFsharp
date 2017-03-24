@@ -841,6 +841,15 @@ namespace PdfSharper.Pdf.AcroForms
                 return null;
             }
 
+            public void Add(PdfAcroField field, int pageNumber)
+            {
+                //TODO: go add the constructor for the field, add setter for parent
+                field.Elements.Add(Keys.Page, _document.Pages[pageNumber - 1]);
+                _document._irefTable.Add(field);
+                _document.Pages[pageNumber - 1].Annotations.Elements.Add(field); //directly adding to elements prevents cast
+                Elements.Add(field);
+            }
+
             /// <summary>
             /// Create a derived type like PdfTextField or PdfCheckBox if possible.
             /// If the actual cannot be guessed by PDFsharp the function returns an instance
