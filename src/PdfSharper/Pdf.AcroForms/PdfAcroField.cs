@@ -72,6 +72,11 @@ namespace PdfSharper.Pdf.AcroForms
                 string name = Elements.GetString(Keys.T);
                 return name;
             }
+
+            set
+            {
+                Elements.SetString(Keys.T, value);
+            }
         }
 
         /// <summary>
@@ -104,6 +109,20 @@ namespace PdfSharper.Pdf.AcroForms
                         _parent = PdfAcroFieldCollection.CreateAcroField(parentRef.Value as PdfDictionary);
                 }
                 return _parent;
+            }
+            set
+            {
+                if (value.Reference == null)
+                {
+                    throw new ArgumentException("Parent must be indirect reference.");
+                }
+
+                var parentRef = Elements.GetReference(Keys.Parent);
+                if (parentRef == null)
+                {
+                    _parent = PdfAcroFieldCollection.CreateAcroField(value as PdfDictionary);
+                    Elements.SetReference(Keys.Parent, value.Reference);
+                }
             }
         }
         private PdfAcroField _parent;

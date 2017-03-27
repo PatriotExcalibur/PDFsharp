@@ -44,9 +44,21 @@ namespace PdfSharper.Pdf.AcroForms
         /// <summary>
         /// Initializes a new instance of PdfTextField.
         /// </summary>
-        internal PdfTextField(PdfDocument document)
+        public PdfTextField(PdfDocument document)
             : base(document)
-        { }
+        {
+            Elements.SetName(Keys.FT, "/Tx");
+            Elements.SetString(Keys.TU, string.Empty);
+            Elements.SetInteger(Keys.Ff, 0);
+            //TODO: DA stream
+
+            //annotation elements
+            Elements.SetInteger(PdfAnnotation.Keys.F, 0);
+            Elements.Add(PdfWidgetAnnotation.Keys.MK, new PdfDictionary(document));
+            Elements.SetString(PdfAnnotation.Keys.Subtype, "/Widget");
+            Elements.SetString(PdfAnnotation.Keys.Type, "/Annot");
+
+        }
 
         public PdfTextField(PdfDictionary dict)
             : base(dict)
