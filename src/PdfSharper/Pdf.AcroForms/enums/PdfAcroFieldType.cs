@@ -7,15 +7,15 @@ using AcroFieldKeys = PdfSharper.Pdf.AcroForms.PdfAcroField.Keys;
 
 namespace PdfSharper.Pdf.AcroForms.enums
 {
-	public enum PdfAcroFieldType
-	{
-		Unknown,
-		PushButton,
-		RadioButton,
-		CheckBox,
-		Text,
-		ComboBox,
-		ListBox,
-		Signature,
-	}
+    public enum PdfAcroFieldType
+    {
+        Unknown,
+        PushButton,
+        RadioButton,
+        CheckBox,
+        Text,
+        ComboBox,
+        ListBox,
+        Signature,
+    }
 }
