@@ -117,12 +117,19 @@ namespace PdfSharper.Pdf.AcroForms
                     throw new ArgumentException("Parent must be indirect reference.");
                 }
 
-                var parentRef = Elements.GetReference(Keys.Parent);
-                if (parentRef == null)
+                _parent = PdfAcroFieldCollection.CreateAcroField(value as PdfDictionary);
+                Elements.SetReference(Keys.Parent, value.Reference);
+
+                PdfArray parentKids = _parent.Elements.GetArray(Keys.Kids);
+                if (parentKids == null)
                 {
-                    _parent = PdfAcroFieldCollection.CreateAcroField(value as PdfDictionary);
-                    Elements.SetReference(Keys.Parent, value.Reference);
+                    parentKids = new PdfArray(_document);
+
+                    _parent.Elements.Add(Keys.Kids, parentKids);
                 }
+
+                //TODO: check for duplicates?
+                parentKids.Elements.Add(this.Reference);
             }
         }
         private PdfAcroField _parent;
@@ -862,8 +869,7 @@ namespace PdfSharper.Pdf.AcroForms
 
             public void Add(PdfAcroField field, int pageNumber)
             {
-                //TODO: go add the constructor for the field, add setter for parent
-                field.Elements.Add(Keys.Page, _document.Pages[pageNumber - 1]);
+                field.Elements.Add(Keys.Page, _document.Pages[pageNumber - 1].Reference);
                 _document._irefTable.Add(field);
                 _document.Pages[pageNumber - 1].Annotations.Elements.Add(field); //directly adding to elements prevents cast
                 Elements.Add(field);
