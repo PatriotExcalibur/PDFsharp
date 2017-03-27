@@ -47,10 +47,10 @@ namespace PdfSharper.Pdf.AcroForms
         public PdfTextField(PdfDocument document)
             : base(document)
         {
-            Elements.SetName(Keys.FT, "/Tx");
+            Elements.SetName(Keys.FT, PdfAcroFieldTypes.Text);
             Elements.SetString(Keys.TU, string.Empty);
             Elements.SetInteger(Keys.Ff, 0);
-            //TODO: DA stream
+            Elements.SetString(Keys.DA, "/Helvetica 9.00 Tf 0 g"); //HACK: set a default font size and color, need to use variables here or apply later
 
             //annotation elements
             Elements.SetInteger(PdfAnnotation.Keys.F, 0);
