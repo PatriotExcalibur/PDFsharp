@@ -50,7 +50,7 @@ namespace PdfSharper.Pdf.AcroForms
             Elements.SetName(Keys.FT, PdfAcroFieldTypes.Text);
             Elements.SetString(Keys.TU, string.Empty);
             Elements.SetInteger(Keys.Ff, 0);
-            Elements.SetString(Keys.DA, "/Helvetica 9.00 Tf 0 g"); //HACK: set a default font size and color, need to use variables here or apply later
+            Elements.SetString(Keys.DA, "/Helv 9 Tf 0 g"); //HACK: set a default font size and color, need to use variables here or apply later
 
             //annotation elements
             Elements.SetInteger(PdfAnnotation.Keys.F, 0);
