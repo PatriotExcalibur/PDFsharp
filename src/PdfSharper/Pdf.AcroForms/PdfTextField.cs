@@ -55,8 +55,8 @@ namespace PdfSharper.Pdf.AcroForms
             //annotation elements
             Elements.SetInteger(PdfAnnotation.Keys.F, 0);
             Elements.Add(PdfWidgetAnnotation.Keys.MK, new PdfDictionary(document));
-            Elements.SetString(PdfAnnotation.Keys.Subtype, "/Widget");
-            Elements.SetString(PdfAnnotation.Keys.Type, "/Annot");
+            Elements.SetName(PdfAnnotation.Keys.Subtype, "/Widget");
+            Elements.SetName(PdfAnnotation.Keys.Type, "/Annot");
 
         }
 
