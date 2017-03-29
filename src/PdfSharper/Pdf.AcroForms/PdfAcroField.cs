@@ -288,7 +288,7 @@ namespace PdfSharper.Pdf.AcroForms
 
             Fields.Add(kid, this.Page);
 
-            kid.Elements.SetReference(Keys.Parent, this.PageReference);
+            kid.Elements.SetReference(Keys.Parent, this.Reference);
         }
 
         /// <summary>
