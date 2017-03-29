@@ -110,29 +110,6 @@ namespace PdfSharper.Pdf.AcroForms
                 }
                 return _parent;
             }
-            set
-            {
-                if (value.Reference == null)
-                {
-                    throw new ArgumentException("Parent must be indirect reference.");
-                }
-
-                _parent = PdfAcroFieldCollection.CreateAcroField(value as PdfDictionary);
-                Elements.SetReference(Keys.Parent, value.Reference);
-
-                PdfArray parentKids = _parent.Elements.GetArray(Keys.Kids);
-                if (parentKids == null)
-                {
-                    parentKids = new PdfArray(_document);
-
-                    _parent.Elements.Add(Keys.Kids, parentKids);
-                }
-
-                //TODO: check for duplicates?
-                parentKids.Elements.Add(this.Reference);
-
-                //TODO: find all references to this..
-            }
         }
         private PdfAcroField _parent;
 
