@@ -44,7 +44,7 @@ namespace PdfSharper.Pdf.AcroForms
             _document = document;
         }
 
-        public PdfAcroForm(PdfDictionary dictionary)
+        internal PdfAcroForm(PdfDictionary dictionary)
             : base(dictionary)
         { }
 
