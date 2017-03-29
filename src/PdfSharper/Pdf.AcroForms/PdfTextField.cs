@@ -50,10 +50,9 @@ namespace PdfSharper.Pdf.AcroForms
             Elements.SetName(Keys.FT, PdfAcroFieldTypes.Text);
             Elements.SetString(Keys.TU, string.Empty);
             Elements.SetInteger(Keys.Ff, 0);
-            Elements.SetString(Keys.DA, "/Helv 9 Tf 0 g"); //HACK: set a default font size and color, need to use variables here or apply later
 
-            //annotation elements
-            Elements.SetInteger(PdfAnnotation.Keys.F, 0);
+            //annotation elements            
+            Elements.SetInteger(PdfAnnotation.Keys.F, (int)PdfAnnotationFlags.Print);
             Elements.Add(PdfWidgetAnnotation.Keys.MK, new PdfDictionary(document));
             Elements.SetName(PdfAnnotation.Keys.Subtype, "/Widget");
             Elements.SetName(PdfAnnotation.Keys.Type, "/Annot");
@@ -221,6 +220,16 @@ namespace PdfSharper.Pdf.AcroForms
         }
 
         /// <summary>
+        /// Sets the font size by constructing a copy with the same options
+        /// and updating the default appearance stream.
+        /// </summary>
+        /// <param name="size">Em size of the font</param>
+        public void SetFontSize(double size)
+        {
+            Font = new XFont(Font.FamilyName, size, Font.Style, Font.PdfOptions, Font.StyleSimulations);
+        }
+
+        /// <summary>
         /// Creates the normal appearance form X object for the annotation that represents
         /// this acro form text field.
         /// </summary>
@@ -370,7 +379,7 @@ namespace PdfSharper.Pdf.AcroForms
                 else
                 {
                     gfx.DrawString(Text, Font, new XSolidBrush(ForeColor),
-                      rect.ToXRect() - rect.Location + new XPoint(2, 0), XStringFormats.TopLeft);
+                      rect.ToXRect() - rect.Location + new XPoint(2, 0), Alignment);
                 }
             }
 
