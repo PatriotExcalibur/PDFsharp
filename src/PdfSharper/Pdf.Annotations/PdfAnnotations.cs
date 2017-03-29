@@ -157,9 +157,7 @@ namespace PdfSharper.Pdf.Annotations
                     {
                         dict = (PdfDictionary)Elements[i];
                     }
-                    var titlePdf = dict.Elements[PdfAnnotation.Keys.T] as PdfString;
-
-                    if (!string.Equals(name, titlePdf.Value))
+                    if (!string.Equals(name, dict.Elements.GetString(PdfAnnotation.Keys.T)))
                     {
                         continue;
                     }
