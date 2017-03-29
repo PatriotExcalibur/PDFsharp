@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDFsharper", "PdfSharper\PDFsharper.csproj", "{5A6055BC-BF86-4FDD-9F62-0109DB7A303B}"
 EndProject
@@ -13,6 +13,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PdfSharper-wpf", "PdfSharper-wpf\PdfSharper-wpf.csproj", "{02FCC0BB-2AA2-43BA-8D2F-66D168B87A1D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PdfSharper.Charting-wpf", "PdfSharper.Charting-wpf\PdfSharper.Charting-wpf.csproj", "{E6A2734E-0CD6-4210-8AEC-47EE348F8D78}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDFsharper.UnitTests", "PDFsharper.UnitTests\PDFsharper.UnitTests.csproj", "{628CD848-E444-4222-8E4C-1B599EA4D7C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,6 +46,10 @@ Global
 		{E6A2734E-0CD6-4210-8AEC-47EE348F8D78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E6A2734E-0CD6-4210-8AEC-47EE348F8D78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E6A2734E-0CD6-4210-8AEC-47EE348F8D78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{628CD848-E444-4222-8E4C-1B599EA4D7C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{628CD848-E444-4222-8E4C-1B599EA4D7C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{628CD848-E444-4222-8E4C-1B599EA4D7C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{628CD848-E444-4222-8E4C-1B599EA4D7C9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
