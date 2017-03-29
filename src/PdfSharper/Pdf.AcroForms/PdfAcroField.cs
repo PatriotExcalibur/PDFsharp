@@ -555,7 +555,17 @@ namespace PdfSharper.Pdf.AcroForms
                                 if (fontSize < 0.1)
                                     fontSize = Rectangle.Height * 0.8;  // TODO: don't know how to determine correct size...
                                 break;
-                                // TODO: Determine text-color (possibly OpCodeName.rg or RG but not sure)
+                            case OpCodeName.g:
+                                double greyValue = Double.Parse(op.Operands[0].ToString());
+                                int rgbColorValue = (int)(greyValue * 255d);
+                                ForeColor = XColor.FromArgb(rgbColorValue, rgbColorValue, rgbColorValue);
+                                break;
+                            case OpCodeName.rg:
+                                int redValue = (int)(Double.Parse(op.Operands[0].ToString()) * 255d);
+                                int greenValue = (int)(Double.Parse(op.Operands[1].ToString()) * 255d);
+                                int blueValue = (int)(Double.Parse(op.Operands[2].ToString()) * 255d);
+                                ForeColor = XColor.FromArgb(redValue, greenValue, blueValue);
+                                break;
                         }
                     }
                 }
