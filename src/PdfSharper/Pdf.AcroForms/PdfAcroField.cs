@@ -557,8 +557,7 @@ namespace PdfSharper.Pdf.AcroForms
                                 break;
                             case OpCodeName.g:
                                 double greyValue = Double.Parse(op.Operands[0].ToString());
-                                int rgbColorValue = (int)(greyValue * 255d);
-                                ForeColor = XColor.FromArgb(rgbColorValue, rgbColorValue, rgbColorValue);
+                                ForeColor = XColor.FromGrayScale(greyValue);
                                 break;
                             case OpCodeName.rg:
                                 int redValue = (int)(Double.Parse(op.Operands[0].ToString()) * 255d);
