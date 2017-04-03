@@ -510,11 +510,12 @@ namespace PdfSharper.Drawing.Pdf
             realizedFont.AddChars(s);
 
             const string format2 = Config.SignificantFigures4;
-            OpenTypeDescriptor descriptor = realizedFont.FontDescriptor._descriptor;
+
 
             string text = null;
             if (font.Unicode)
             {
+                OpenTypeDescriptor descriptor = realizedFont.FontDescriptor._descriptor;
                 StringBuilder sb = new StringBuilder();
                 bool isSymbolFont = descriptor.FontFace.cmap.symbol;
                 for (int idx = 0; idx < s.Length; idx++)
