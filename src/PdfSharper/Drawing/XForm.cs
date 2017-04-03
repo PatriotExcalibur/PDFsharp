@@ -448,6 +448,7 @@ namespace PdfSharper.Drawing
             else
             {
                 pdfFont = GetFontFromResources(font);
+                Debug.Assert(pdfFont != null);
             }
             return name;
         }
