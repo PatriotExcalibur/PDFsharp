@@ -406,18 +406,18 @@ namespace PdfSharper.Pdf.AcroForms
 
             var normalStateDict = ap.Elements.GetDictionary("/N");
             var resourceDict = new PdfDictionary(Owner);
-            resourceDict.Elements["/ProcSet"] = new PdfArray(Owner, new PdfName("/PDF"), new PdfName("/Text"));
+            resourceDict.Elements[PdfResources.Keys.ProcSet] = new PdfArray(Owner, new PdfName("/PDF"), new PdfName("/Text"));
 
             var defaultFormResources = Owner.AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
             if (defaultFormResources != null && defaultFormResources.Elements.ContainsKey(PdfResources.Keys.Font))
             {
                 var fontResourceItem = XForm.GetFontResourceItem(Font.FamilyName, defaultFormResources);
                 PdfDictionary fontDict = new PdfDictionary(Owner);
-                resourceDict.Elements["/Font"] = fontDict;
+                resourceDict.Elements[PdfResources.Keys.Font] = fontDict;
                 fontDict.Elements[fontResourceItem.Key] = fontResourceItem.Value;
             }
 
-            normalStateDict.Elements.SetObject("/Resources", resourceDict);
+            normalStateDict.Elements.SetObject(PdfPage.Keys.Resources, resourceDict);
 
             PdfFormXObject xobj = form.PdfForm;
             if (xobj.Stream == null)
