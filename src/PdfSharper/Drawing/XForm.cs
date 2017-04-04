@@ -494,7 +494,7 @@ namespace PdfSharper.Drawing
             return null;
         }
 
-        private static KeyValuePair<string, PdfItem> GetFontResourceItem(string familyName, PdfDictionary defaultFormResources)
+        internal static KeyValuePair<string, PdfItem> GetFontResourceItem(string familyName, PdfDictionary defaultFormResources)
         {
             var fontList = defaultFormResources.Elements.GetDictionary(PdfResources.Keys.Font);
 
