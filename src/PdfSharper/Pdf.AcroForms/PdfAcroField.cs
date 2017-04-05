@@ -134,8 +134,18 @@ namespace PdfSharper.Pdf.AcroForms
         public XFont Font
         {
             get { return this.font; }
-            set { this.font = value; }
+            set
+            {
+                this.font = value;
+                PrepareForSave();
+                FontChanged();
+            }
         }
+
+        protected virtual void FontChanged()
+        {
+        }
+
         XFont font = new XFont("Arial", 10);
 
         /// <summary>
@@ -154,7 +164,11 @@ namespace PdfSharper.Pdf.AcroForms
         public XColor ForeColor
         {
             get { return this.foreColor; }
-            set { this.foreColor = value; }
+            set
+            {
+                this.foreColor = value;
+                PrepareForSave();
+            }
         }
         XColor foreColor = XColors.Black;
 
@@ -164,7 +178,11 @@ namespace PdfSharper.Pdf.AcroForms
         public XColor BackColor
         {
             get { return this.backColor; }
-            set { this.backColor = value; }
+            set
+            {
+                this.backColor = value;
+                PrepareForSave();
+            }
         }
         XColor backColor = XColor.Empty;
 
@@ -174,7 +192,11 @@ namespace PdfSharper.Pdf.AcroForms
         public XColor BorderColor
         {
             get { return this.borderColor; }
-            set { this.borderColor = value; }
+            set
+            {
+                this.borderColor = value;
+                PrepareForSave();
+            }
         }
         XColor borderColor = XColor.Empty;
 
@@ -518,6 +540,74 @@ namespace PdfSharper.Pdf.AcroForms
         }
 
         /// <summary>
+        /// Sets the font size by constructing a copy with the same options
+        /// and updating the default appearance stream.
+        /// </summary>
+        /// <param name="size">Em size of the font</param>
+        public void SetFontSize(double size)
+        {
+            Font = new XFont(Font.FamilyName, size, Font.Style, Font.PdfOptions, Font.StyleSimulations);
+        }
+
+
+        internal override void PrepareForSave()
+        {
+            base.PrepareForSave();
+            //set or update the default appearance stream
+            string textAppearanceStream = string.Format("/{0} {1:0.##} Tf", Font.FamilyName, Font.Size);
+
+            string colorStream = string.Empty;
+
+            switch (ForeColor.ColorSpace)
+            {
+                case XColorSpace.Rgb:
+                    colorStream = string.Format("{0:0.#} {1:0.#} {2:0.#} rg", ForeColor.R / 255d, ForeColor.G / 255d, ForeColor.B / 255);
+                    break;
+                case XColorSpace.GrayScale:
+                    colorStream = string.Format("{0:0.#} g", ForeColor.GS);
+                    break;
+            }
+
+            var mk = Elements.GetDictionary(PdfWidgetAnnotation.Keys.MK);
+
+
+            if (mk == null && (BorderColor != XColor.Empty || BackColor != XColor.Empty))
+            {
+                mk = new PdfDictionary(_document);
+                Elements.SetObject(PdfWidgetAnnotation.Keys.MK, mk);
+            }
+
+            if (BorderColor != XColor.Empty)
+            {
+                var bc = BorderColor.ToArray();
+                mk.Elements.SetObject("/BC", bc);
+            }
+            else
+            {
+                if (mk != null)
+                {
+                    mk.Elements.Remove("/BC");
+                }
+            }
+
+            if (BackColor != XColor.Empty)
+            {
+                var bg = BackColor.ToArray();
+                mk.Elements.SetObject("/BG", bg);
+            }
+            else
+            {
+                if (mk != null)
+                {
+                    mk.Elements.Remove("/BG");
+                }
+            }
+
+
+            Elements.SetString(Keys.DA, textAppearanceStream + " " + colorStream);
+        }
+
+        /// <summary>
         /// Tries to determine the Appearance of the Field by checking elements of its dictionary
         /// </summary>
         protected internal void DetermineAppearance()
@@ -537,6 +627,8 @@ namespace PdfSharper.Pdf.AcroForms
                         var bc = mk.Elements.GetArray("/BC");
                         if (bc == null || bc.Elements.Count == 0)
                             BorderColor = XColor.Empty;
+                        else if (bc.Elements.Count == 1)
+                            BorderColor = XColor.FromGrayScale(bc.Elements.GetReal(0));
                         else if (bc.Elements.Count == 3)
                             BorderColor = XColor.FromArgb((int)(bc.Elements.GetReal(0) * 255.0), (int)(bc.Elements.GetReal(1) * 255.0), (int)(bc.Elements.GetReal(2) * 255.0));
                         else if (bc.Elements.Count == 4)
@@ -545,6 +637,8 @@ namespace PdfSharper.Pdf.AcroForms
                         var bg = mk.Elements.GetArray("/BG");
                         if (bg == null || bg.Elements.Count == 0)
                             BackColor = XColor.Empty;
+                        else if (bg.Elements.Count == 1)
+                            backColor = XColor.FromGrayScale(bg.Elements.GetReal(0));
                         else if (bg.Elements.Count == 3)
                             BackColor = XColor.FromArgb((int)(bg.Elements.GetReal(0) * 255.0), (int)(bg.Elements.GetReal(1) * 255.0), (int)(bg.Elements.GetReal(2) * 255.0));
                         else if (bg.Elements.Count == 4)
