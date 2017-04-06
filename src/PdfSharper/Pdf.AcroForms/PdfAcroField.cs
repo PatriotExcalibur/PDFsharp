@@ -582,12 +582,9 @@ namespace PdfSharper.Pdf.AcroForms
                 var bc = BorderColor.ToArray();
                 mk.Elements.SetObject("/BC", bc);
             }
-            else
+            else if (mk != null && mk.Elements.ContainsKey("/BC"))
             {
-                if (mk != null)
-                {
-                    mk.Elements.Remove("/BC");
-                }
+                mk.Elements.Remove("/BC");
             }
 
             if (BackColor != XColor.Empty)
@@ -595,14 +592,10 @@ namespace PdfSharper.Pdf.AcroForms
                 var bg = BackColor.ToArray();
                 mk.Elements.SetObject("/BG", bg);
             }
-            else
+            else if (mk != null && mk.Elements.ContainsKey("/BG"))
             {
-                if (mk != null)
-                {
-                    mk.Elements.Remove("/BG");
-                }
+                mk.Elements.Remove("/BG");
             }
-
 
             Elements.SetString(Keys.DA, textAppearanceStream + " " + colorStream);
         }
@@ -626,23 +619,23 @@ namespace PdfSharper.Pdf.AcroForms
                     {
                         var bc = mk.Elements.GetArray("/BC");
                         if (bc == null || bc.Elements.Count == 0)
-                            BorderColor = XColor.Empty;
+                            borderColor = XColor.Empty;
                         else if (bc.Elements.Count == 1)
-                            BorderColor = XColor.FromGrayScale(bc.Elements.GetReal(0));
+                            borderColor = XColor.FromGrayScale(bc.Elements.GetReal(0));
                         else if (bc.Elements.Count == 3)
-                            BorderColor = XColor.FromArgb((int)(bc.Elements.GetReal(0) * 255.0), (int)(bc.Elements.GetReal(1) * 255.0), (int)(bc.Elements.GetReal(2) * 255.0));
+                            borderColor = XColor.FromArgb((int)(bc.Elements.GetReal(0) * 255.0), (int)(bc.Elements.GetReal(1) * 255.0), (int)(bc.Elements.GetReal(2) * 255.0));
                         else if (bc.Elements.Count == 4)
-                            BorderColor = XColor.FromCmyk(bc.Elements.GetReal(0), bc.Elements.GetReal(1), bc.Elements.GetReal(2), bc.Elements.GetReal(3));
+                            borderColor = XColor.FromCmyk(bc.Elements.GetReal(0), bc.Elements.GetReal(1), bc.Elements.GetReal(2), bc.Elements.GetReal(3));
 
                         var bg = mk.Elements.GetArray("/BG");
                         if (bg == null || bg.Elements.Count == 0)
-                            BackColor = XColor.Empty;
+                            backColor = XColor.Empty;
                         else if (bg.Elements.Count == 1)
                             backColor = XColor.FromGrayScale(bg.Elements.GetReal(0));
                         else if (bg.Elements.Count == 3)
-                            BackColor = XColor.FromArgb((int)(bg.Elements.GetReal(0) * 255.0), (int)(bg.Elements.GetReal(1) * 255.0), (int)(bg.Elements.GetReal(2) * 255.0));
+                            backColor = XColor.FromArgb((int)(bg.Elements.GetReal(0) * 255.0), (int)(bg.Elements.GetReal(1) * 255.0), (int)(bg.Elements.GetReal(2) * 255.0));
                         else if (bg.Elements.Count == 4)
-                            BackColor = XColor.FromCmyk(bg.Elements.GetReal(0), bg.Elements.GetReal(1), bg.Elements.GetReal(2), bg.Elements.GetReal(3));
+                            backColor = XColor.FromCmyk(bg.Elements.GetReal(0), bg.Elements.GetReal(1), bg.Elements.GetReal(2), bg.Elements.GetReal(3));
                     }
                     field = field.Parent;
                 }
@@ -666,13 +659,13 @@ namespace PdfSharper.Pdf.AcroForms
                                 break;
                             case OpCodeName.g:
                                 double greyValue = Double.Parse(op.Operands[0].ToString());
-                                ForeColor = XColor.FromGrayScale(greyValue);
+                                foreColor = XColor.FromGrayScale(greyValue);
                                 break;
                             case OpCodeName.rg:
                                 int redValue = (int)(Double.Parse(op.Operands[0].ToString()) * 255d);
                                 int greenValue = (int)(Double.Parse(op.Operands[1].ToString()) * 255d);
                                 int blueValue = (int)(Double.Parse(op.Operands[2].ToString()) * 255d);
-                                ForeColor = XColor.FromArgb(redValue, greenValue, blueValue);
+                                foreColor = XColor.FromArgb(redValue, greenValue, blueValue);
                                 break;
                         }
                     }
@@ -700,10 +693,7 @@ namespace PdfSharper.Pdf.AcroForms
                     font = new XFont(BaseContentFontName, fontSize);
                 }
             }
-            catch
-            {
-                font = new XFont("Arial", 10);
-            }
+            catch { }
         }
 
         internal virtual void Flatten()
