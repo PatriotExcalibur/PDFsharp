@@ -473,12 +473,15 @@ namespace PdfSharper.Pdf
             // Let catalog do the rest.
             Catalog.PrepareForSave();
 
-#if true
-            // Remove all unreachable objects (e.g. from deleted pages)
-            int removed = _irefTable.Compact();
-            if (removed != 0)
-                Debug.WriteLine("PrepareForSave: Number of deleted unreachable objects: " + removed);
-            _irefTable.Renumber();
+#if true     
+            if (_openMode == PdfDocumentOpenMode.Modify)
+            {
+                // Remove all unreachable objects (e.g. from deleted pages)
+                int removed = _irefTable.Compact();
+                if (removed != 0)
+                    Debug.WriteLine("PrepareForSave: Number of deleted unreachable objects: " + removed);
+                _irefTable.Renumber();
+            }
 #endif
         }
 
@@ -725,7 +728,7 @@ namespace PdfSharper.Pdf
         /// </summary>
         public PdfAcroForm AcroForm
         {
-            get { return Catalog.AcroForm; }            
+            get { return Catalog.AcroForm; }
         }
 
         /// <summary>

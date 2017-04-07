@@ -480,19 +480,6 @@ namespace PdfSharper.Pdf.IO
             header.Append((version / 10).ToString(CultureInfo.InvariantCulture) + "." +
               (version % 10).ToString(CultureInfo.InvariantCulture) + "\n%\xD3\xF4\xCC\xE1\n");
             WriteRaw(header.ToString());
-
-            if (_layout == PdfWriterLayout.Verbose)
-            {
-                WriteRaw(String.Format("% PDFsharp Version {0} (verbose mode)\n", VersionInfo.Version));
-                // Keep some space for later fix-up.
-                _commentPosition = (int)_stream.Position + 2;
-                WriteRaw("%                                                \n");
-                WriteRaw("%                                                \n");
-                WriteRaw("%                                                \n");
-                WriteRaw("%                                                \n");
-                WriteRaw("%                                                \n");
-                WriteRaw("%--------------------------------------------------------------------------------------------------\n");
-            }
         }
 
         public void WriteEof(PdfDocument document, int startxref)
@@ -501,24 +488,6 @@ namespace PdfSharper.Pdf.IO
             WriteRaw(startxref.ToString(CultureInfo.InvariantCulture));
             WriteRaw("\n%%EOF\n");
             int fileSize = (int)_stream.Position;
-            if (_layout == PdfWriterLayout.Verbose)
-            {
-                TimeSpan duration = DateTime.Now - document._creation;
-
-                _stream.Position = _commentPosition;
-                // Without InvariantCulture parameter the following line fails if the current culture is e.g.
-                // a Far East culture, because the date string contains non-ASCII characters.
-                // So never never never never use ToString without a culture info.
-                WriteRaw("Creation date: " + document._creation.ToString("G", CultureInfo.InvariantCulture));
-                _stream.Position = _commentPosition + 50;
-                WriteRaw("Creation time: " + duration.TotalSeconds.ToString("0.000", CultureInfo.InvariantCulture) + " seconds");
-                _stream.Position = _commentPosition + 100;
-                WriteRaw("File size: " + fileSize.ToString(CultureInfo.InvariantCulture) + " bytes");
-                _stream.Position = _commentPosition + 150;
-                WriteRaw("Pages: " + document.Pages.Count.ToString(CultureInfo.InvariantCulture));
-                _stream.Position = _commentPosition + 200;
-                WriteRaw("Objects: " + document._irefTable.ObjectTable.Count.ToString(CultureInfo.InvariantCulture));
-            }
         }
 
         /// <summary>
@@ -652,6 +621,5 @@ namespace PdfSharper.Pdf.IO
         }
 
         readonly List<StackItem> _stack = new List<StackItem>();
-        int _commentPosition;
     }
 }
