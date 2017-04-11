@@ -32,6 +32,7 @@ using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
 using PdfSharper.Pdf.IO;
+using System.Linq;
 
 namespace PdfSharper.Pdf.Advanced
 {
@@ -64,10 +65,6 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         public void Add(PdfReference iref)
         {
-#if DEBUG
-            if (iref.ObjectID.ObjectNumber == 948)
-                GetType();
-#endif
             if (iref.ObjectID.IsEmpty)
                 iref.ObjectID = new PdfObjectID(GetNewObjectNumber());
 
@@ -153,22 +150,47 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         internal void WriteObject(PdfWriter writer)
         {
+            //TODO: write prev entry
             writer.WriteRaw("xref\n");
 
             PdfReference[] irefs = AllReferences;
 
-            int count = irefs.Length;
-            writer.WriteRaw(String.Format("0 {0}\n", count + 1));
-            writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2} \n", 0, 65535, "f"));
-            //PdfEncoders.WriteAnsi(stream, text);
+            var xrefGroupings = irefs.GroupWhile((prev, next) => prev.ObjectNumber + 1 == next.ObjectNumber)
+                .Select(anon => new
+                {
+                    Count = anon.Count(),
+                    Irefs = anon.ToList()
+                }).ToList();
 
-            for (int idx = 0; idx < count; idx++)
+            if (irefs.Min(ir => ir.ObjectNumber) > 1)
             {
-                PdfReference iref = irefs[idx];
-
-                // Acrobat is very pedantic; it must be exactly 20 bytes per line.
-                writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2} \n", iref.Position, iref.GenerationNumber, "n"));
+                writer.WriteRaw("0 1\n");
+                writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2} \n", 0, 65535, "f"));
             }
+
+            foreach (var xrefGroup in xrefGroupings)
+            {
+                int count = xrefGroup.Count;
+                int startingObjectNumber = xrefGroup.Irefs.FirstOrDefault().ObjectNumber;
+
+                if (startingObjectNumber == 1)
+                {
+                    writer.WriteRaw(String.Format("0 {0}\n", count + 1));
+                    writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2} \n", 0, 65535, "f"));
+                }
+                else
+                {
+                    writer.WriteRaw(String.Format("{0} {1}\n", startingObjectNumber, count));
+                }
+
+                for (int idx = 0; idx < count; idx++)
+                {
+                    PdfReference iref = xrefGroup.Irefs[idx];
+                    // Acrobat is very pedantic; it must be exactly 20 bytes per line.
+                    writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2} \n", iref.Position, iref.GenerationNumber, "n"));
+                }
+            }
+
         }
 
         /// <summary>
@@ -213,8 +235,8 @@ namespace PdfSharper.Pdf.Advanced
             // TODO: remove PdfBooleanObject, PdfIntegerObject etc.
             int removed = ObjectTable.Count;
             //CheckConsistence();
-            // TODO: Is this really so easy?
-            PdfReference[] irefs = TransitiveClosure(_document._trailer);
+            // We can only compact the last trailer, if at all
+            PdfReference[] irefs = TransitiveClosure(_document._trailers.Last());
 
 #if DEBUG
             // Have any two objects the same ID?
@@ -382,7 +404,7 @@ namespace PdfSharper.Pdf.Advanced
             Dictionary<PdfItem, object> objects = new Dictionary<PdfItem, object>();
             _overflow = new Dictionary<PdfItem, object>();
             TransitiveClosureImplementation(objects, pdfObject);
-        TryAgain:
+            TryAgain:
             if (_overflow.Count > 0)
             {
                 PdfObject[] array = new PdfObject[_overflow.Count];

@@ -38,6 +38,8 @@ using PdfSharper.Pdf.Internal;
 using PdfSharper.Pdf.IO;
 using PdfSharper.Pdf.AcroForms;
 using PdfSharper.Pdf.Security;
+using System.Collections.Generic;
+using System.Linq;
 
 // ReSharper disable ConvertPropertyToExpressionBody
 
@@ -378,9 +380,15 @@ namespace PdfSharper.Pdf
 
             try
             {
+
+                bool wasPdfCrossRef = false;
                 // HACK: Remove XRefTrailer
                 if (_trailer is PdfCrossReferenceStream)
+                {
                     _trailer = new PdfTrailer((PdfCrossReferenceStream)_trailer);
+                    _trailer.XRefTable = _irefTable;
+                    wasPdfCrossRef = true;
+                }
 
                 bool encrypt = _securitySettings.DocumentSecurityLevel != PdfDocumentSecurityLevel.None;
                 if (encrypt)
@@ -401,24 +409,18 @@ namespace PdfSharper.Pdf
                     _securitySettings.SecurityHandler.PrepareEncryption();
 
                 writer.WriteFileHeader(this);
-                PdfReference[] irefs = _irefTable.AllReferences;
-                int count = irefs.Length;
-                for (int idx = 0; idx < count; idx++)
+
+                if (wasPdfCrossRef) //todo: support cross ref writing!
                 {
-                    PdfReference iref = irefs[idx];
-#if DEBUG_
-                    if (iref.ObjectNumber == 378)
-                        GetType();
-#endif
-                    iref.Position = writer.Position;
-                    iref.Value.Write(writer);
+                    WriteTrailer(writer, _trailer); //HACK! this will lose incremental updates 
                 }
-                int startxref = writer.Position;
-                _irefTable.WriteObject(writer);
-                writer.WriteRaw("trailer\n");
-                _trailer.Elements.SetInteger("/Size", count + 1);
-                _trailer.Write(writer);
-                writer.WriteEof(this, startxref);
+                else
+                {
+                    foreach (var trailer in _trailers.OrderByDescending(t => t.RevisionNumber))
+                    {
+                        WriteTrailer(writer, trailer);
+                    }
+                }
 
                 //if (encrypt)
                 //{
@@ -436,6 +438,28 @@ namespace PdfSharper.Pdf
                     //writer.Close();
                 }
             }
+        }
+
+        private void WriteTrailer(PdfWriter writer, PdfTrailer trailer)
+        {
+            PdfReference[] irefs = trailer.XRefTable.AllReferences;
+            int count = irefs.Length;
+            for (int idx = 0; idx < count; idx++)
+            {
+                PdfReference iref = irefs[idx];
+#if DEBUG_
+                    if (iref.ObjectNumber == 378)
+                        GetType();
+#endif
+                iref.Position = writer.Position;
+                iref.Value.Write(writer);
+            }
+            int startxref = writer.Position;
+            trailer.XRefTable.WriteObject(writer);
+            writer.WriteRaw("trailer\n");
+            trailer.Elements.SetInteger("/Size", count + 1);
+            trailer.Write(writer);
+            writer.WriteEof(this, startxref);
         }
 
         /// <summary>
@@ -866,7 +890,11 @@ namespace PdfSharper.Pdf
             get { return _trailer.SecurityHandler; }
         }
 
-        internal PdfTrailer _trailer;
+        internal List<PdfTrailer> _trailers = new List<PdfTrailer>();
+        private IReadOnlyCollection<PdfTrailer> _trailersAsc;
+        private IReadOnlyCollection<PdfTrailer> _trailersDesc;
+
+        internal PdfTrailer _trailer; //always the last one
         internal PdfCrossReferenceTable _irefTable;
         internal Stream _outStream;
 
@@ -874,6 +902,28 @@ namespace PdfSharper.Pdf
         internal Lexer _lexer;
 
         internal DateTime _creation;
+
+        internal IReadOnlyCollection<PdfTrailer> GetSortedTrailers(bool ascending)
+        {
+            if (ascending)
+            {
+                if (_trailersAsc == null || _trailersAsc.Count != _trailers.Count)
+                {
+                    _trailersAsc = _trailers.OrderBy(t => t.RevisionNumber).ToList().AsReadOnly();
+                }
+
+                return _trailersAsc;
+            }
+            else
+            {
+                if (_trailersDesc == null || _trailersDesc.Count != _trailers.Count)
+                {
+                    _trailersDesc = _trailers.OrderByDescending(t => t.RevisionNumber).ToList().AsReadOnly();
+                }
+
+                return _trailersDesc;
+            }
+        }
 
         /// <summary>
         /// Occurs when the specified document is not used anymore for importing content.

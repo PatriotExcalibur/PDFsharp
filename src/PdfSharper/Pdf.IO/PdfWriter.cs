@@ -465,12 +465,12 @@ namespace PdfSharper.Pdf.IO
 
         void WriteObjectAddress(PdfObject value)
         {
-            if (_layout == PdfWriterLayout.Verbose)
-                WriteRaw(String.Format("{0} {1} obj   % {2}\n",
-                    value.ObjectID.ObjectNumber, value.ObjectID.GenerationNumber,
-                    value.GetType().FullName));
-            else
-                WriteRaw(String.Format("{0} {1} obj\n", value.ObjectID.ObjectNumber, value.ObjectID.GenerationNumber));
+            //if (_layout == PdfWriterLayout.Verbose)
+            //    WriteRaw(String.Format("{0} {1} obj   % {2}\n",
+            //        value.ObjectID.ObjectNumber, value.ObjectID.GenerationNumber,
+            //        value.GetType().FullName));
+            //else
+            WriteRaw(String.Format("{0} {1} obj\n", value.ObjectID.ObjectNumber, value.ObjectID.GenerationNumber));
         }
 
         public void WriteFileHeader(PdfDocument document)
