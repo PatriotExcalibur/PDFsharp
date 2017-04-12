@@ -250,7 +250,7 @@ namespace PdfSharper.Pdf.Internal
         /// <summary>
         /// Converts a raw string into a raw hexadecimal string literal, possibly encrypted.
         /// </summary>
-        public static string ToHexStringLiteral(string text, PdfStringEncoding encoding, PdfStandardSecurityHandler securityHandler, int paddingLeft)
+        public static string ToHexStringLiteral(string text, PdfStringEncoding encoding, PdfStandardSecurityHandler securityHandler, int paddingLeft, bool upperCase = false)
         {
             if (String.IsNullOrEmpty(text) && paddingLeft == 0)
                 return "<>";
@@ -286,7 +286,7 @@ namespace PdfSharper.Pdf.Internal
                 bytes = tmp;
             }
 
-            byte[] agTemp = FormatStringLiteral(bytes, encoding == PdfStringEncoding.Unicode, true, true, securityHandler);
+            byte[] agTemp = FormatStringLiteral(bytes, encoding == PdfStringEncoding.Unicode, true, true, securityHandler, upperCase ? "{0:X2}" : "{0:x2}");
             return RawEncoding.GetString(agTemp, 0, agTemp.Length);
         }
 
@@ -311,7 +311,7 @@ namespace PdfSharper.Pdf.Internal
         /// <param name="hex">Indicates whether to create a hexadecimal string literal.</param>
         /// <param name="securityHandler">Encrypts the bytes if specified.</param>
         /// <returns>The PDF bytes.</returns>
-        public static byte[] FormatStringLiteral(byte[] bytes, bool unicode, bool prefix, bool hex, PdfStandardSecurityHandler securityHandler)
+        public static byte[] FormatStringLiteral(byte[] bytes, bool unicode, bool prefix, bool hex, PdfStandardSecurityHandler securityHandler, string hexFormat = "{0:x2}")
         {
             if (bytes == null || bytes.Length == 0)
                 return hex ? new byte[] { (byte)'<', (byte)'>' } : new byte[] { (byte)'(', (byte)')' };
@@ -404,7 +404,7 @@ namespace PdfSharper.Pdf.Internal
                 {
                     pdf.Append('<');
                     for (int idx = 0; idx < count; idx++)
-                        pdf.AppendFormat("{0:X2}", bytes[idx]);
+                        pdf.AppendFormat(hexFormat, bytes[idx]);
                     pdf.Append('>');
                 }
             }

@@ -358,7 +358,7 @@ namespace PdfSharper.Pdf.IO
                     }
                 }
 
-                foreach (var trailer in document._trailers)
+                foreach (var trailer in document.GetSortedTrailers(true))
                 {
                     ReadObjects(parser, trailer.XRefTable, trailer.RevisionNumber);
                 }

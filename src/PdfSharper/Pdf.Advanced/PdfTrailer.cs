@@ -46,6 +46,8 @@ namespace PdfSharper.Pdf.Advanced
 
         internal int RevisionNumber { get; set; }
 
+        internal int StartXRef { get; set; } = -1;
+
         /// <summary>
         /// Initializes a new instance of PdfTrailer.
         /// </summary>

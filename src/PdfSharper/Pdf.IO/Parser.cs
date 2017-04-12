@@ -316,7 +316,18 @@ namespace PdfSharper.Pdf.IO
                 End: ;
                 }
 #endif
-                PdfDictionary.PdfStream stream = new PdfDictionary.PdfStream(bytes, dict);
+                int endStreamPosition = _lexer.Position;
+
+                _lexer.MoveToNonLineEnding();
+                int streamTrailerSize = _lexer.Position - endStreamPosition;
+                string trailer = null;
+                if (streamTrailerSize > 0)
+                {
+                    int originalLexPosition = _lexer.Position;
+                    trailer = _lexer.ReadRawString(endStreamPosition, streamTrailerSize);
+                    _lexer.Position = originalLexPosition;
+                }
+                PdfDictionary.PdfStream stream = new PdfDictionary.PdfStream(bytes, dict, trailer);
                 dict.Stream = stream;
                 ReadSymbol(Symbol.EndStream);
                 symbol = ScanNextToken();
@@ -371,12 +382,22 @@ namespace PdfSharper.Pdf.IO
         public PdfArray ReadArray(PdfArray array, bool includeReferences)
         {
             Debug.Assert(Symbol == Symbol.BeginArray);
-
+            int arrayStart = _lexer.Position;
+            _lexer.MoveToNonSpace();
             if (array == null)
                 array = new PdfArray(_document);
 
+            array.PaddingLeft = _lexer.Position - arrayStart;
+
             int sp = _stack.SP;
             ParseObject(Symbol.EndArray);
+
+            int scanPosition = _lexer.Position;
+
+            _lexer.MoveToNonSpace();
+            int padding = (_lexer.Position - scanPosition);
+            array.PaddingRight = Math.Max(0, padding);
+
             int count = _stack.SP - sp;
             PdfItem[] items = _stack.ToArray(sp, count);
             _stack.Reduce(count);
@@ -387,6 +408,7 @@ namespace PdfSharper.Pdf.IO
                     val = ReadReference((PdfReference)val, true);
                 array.Elements.Add(val);
             }
+
             return array;
         }
 
@@ -396,6 +418,7 @@ namespace PdfSharper.Pdf.IO
 
         internal PdfDictionary ReadDictionary(PdfDictionary dict, bool includeReferences)
         {
+            _lexer.HasReadNewLineOrCarriageReturn = false;
             Debug.Assert(Symbol == Symbol.BeginDictionary);
 
 #if DEBUG_
@@ -427,6 +450,8 @@ namespace PdfSharper.Pdf.IO
                     val = ReadReference((PdfReference)val, true);
                 dict.Elements[key] = val;
             }
+
+            dict.IsCompact = !_lexer.HasReadNewLineOrCarriageReturn;
             return dict;
         }
 
@@ -445,6 +470,8 @@ namespace PdfSharper.Pdf.IO
             if (ParseObjectCounter == 178)
                 GetType();
 #endif
+            bool trackValuePadding = stop == Symbol.EndDictionary;
+
             Symbol symbol;
             while ((symbol = ScanNextToken()) != Symbol.Eof)
             {
@@ -487,7 +514,7 @@ namespace PdfSharper.Pdf.IO
                         break;
 
                     case Symbol.HexString:
-                        _stack.Shift(new PdfString(_lexer.Token, PdfStringFlags.HexLiteral));
+                        _stack.Shift(new PdfString(_lexer.Token, PdfStringFlags.HexLiteral, isUpper: _lexer._hexUpper));
                         break;
 
                     case Symbol.UnicodeHexString:

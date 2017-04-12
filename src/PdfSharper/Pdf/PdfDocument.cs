@@ -412,6 +412,7 @@ namespace PdfSharper.Pdf
 
                 if (wasPdfCrossRef) //todo: support cross ref writing!
                 {
+                    _trailers.Clear();
                     WriteTrailer(writer, _trailer); //HACK! this will lose incremental updates 
                 }
                 else
@@ -454,12 +455,20 @@ namespace PdfSharper.Pdf
                 iref.Position = writer.Position;
                 iref.Value.Write(writer);
             }
-            int startxref = writer.Position;
+            trailer.StartXRef = writer.Position;
             trailer.XRefTable.WriteObject(writer);
-            writer.WriteRaw("trailer\n");
-            trailer.Elements.SetInteger("/Size", count + 1);
+            writer.WriteRaw("trailer\r\n");
+            trailer.Elements.SetInteger("/Size", trailer.XRefTable._maxObjectNumber + 1); //0 record isn't in count
+            var previousRevision = GetSortedTrailers(true).FirstOrDefault(t => t.RevisionNumber > trailer.RevisionNumber);
+            if (previousRevision != null)
+            {
+                Debug.Assert(previousRevision.StartXRef != -1, "Previous trailer was not written yet");
+                trailer.Elements.SetInteger("/Prev", previousRevision.StartXRef);
+            }
             trailer.Write(writer);
-            writer.WriteEof(this, startxref);
+            writer.WriteEof(this, trailer.StartXRef);
+
+
         }
 
         /// <summary>
@@ -478,17 +487,18 @@ namespace PdfSharper.Pdf
             if (info.Elements[PdfDocumentInformation.Keys.Creator] == null)
                 info.Creator = pdfSharpProducer;
 
-            // Keep original producer if file was imported.
-            string producer = info.Producer;
-            if (producer.Length == 0)
-                producer = pdfSharpProducer;
-            else
-            {
-                // Prevent endless concatenation if file is edited with PDFsharp more than once.
-                if (!producer.StartsWith(VersionInfo.Title))
-                    producer = pdfSharpProducer + " (Original: " + producer + ")";
-            }
-            info.Elements.SetString(PdfDocumentInformation.Keys.Producer, producer);
+            //TODO: Update info when incremental is fully supported
+            //// Keep original producer if file was imported.
+            //string producer = info.Producer;
+            //if (producer.Length == 0)
+            //    producer = pdfSharpProducer;
+            //else
+            //{
+            //    // Prevent endless concatenation if file is edited with PDFsharp more than once.
+            //    if (!producer.StartsWith(VersionInfo.Title))
+            //        producer = pdfSharpProducer + " (Original: " + producer + ")";
+            //}
+            //info.Elements.SetString(PdfDocumentInformation.Keys.Producer, producer);
 
             // Prepare used fonts.
             if (_fontTable != null)

@@ -150,8 +150,7 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         internal void WriteObject(PdfWriter writer)
         {
-            //TODO: write prev entry
-            writer.WriteRaw("xref\n");
+            writer.WriteRaw("xref\r\n");
 
             PdfReference[] irefs = AllReferences;
 
@@ -164,8 +163,8 @@ namespace PdfSharper.Pdf.Advanced
 
             if (irefs.Min(ir => ir.ObjectNumber) > 1)
             {
-                writer.WriteRaw("0 1\n");
-                writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2} \n", 0, 65535, "f"));
+                writer.WriteRaw("0 1\r\n");
+                writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2}\r\n", 0, 65535, "f"));
             }
 
             foreach (var xrefGroup in xrefGroupings)
@@ -175,19 +174,19 @@ namespace PdfSharper.Pdf.Advanced
 
                 if (startingObjectNumber == 1)
                 {
-                    writer.WriteRaw(String.Format("0 {0}\n", count + 1));
-                    writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2} \n", 0, 65535, "f"));
+                    writer.WriteRaw(String.Format("0 {0}\r\n", count + 1));
+                    writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2}\r\n", 0, 65535, "f"));
                 }
                 else
                 {
-                    writer.WriteRaw(String.Format("{0} {1}\n", startingObjectNumber, count));
+                    writer.WriteRaw(String.Format("{0} {1}\r\n", startingObjectNumber, count));
                 }
 
                 for (int idx = 0; idx < count; idx++)
                 {
                     PdfReference iref = xrefGroup.Irefs[idx];
                     // Acrobat is very pedantic; it must be exactly 20 bytes per line.
-                    writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2} \n", iref.Position, iref.GenerationNumber, "n"));
+                    writer.WriteRaw(String.Format("{0:0000000000} {1:00000} {2}\r\n", iref.Position, iref.GenerationNumber, "n"));
                 }
             }
 

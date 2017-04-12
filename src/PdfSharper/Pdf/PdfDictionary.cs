@@ -39,6 +39,7 @@ using PdfSharper.Pdf.IO;
 using PdfSharper.Pdf.Filters;
 using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Internal;
+using PdfSharper.Pdf.AcroForms;
 
 namespace PdfSharper.Pdf
 {
@@ -71,6 +72,8 @@ namespace PdfSharper.Pdf
     [DebuggerDisplay("{DebuggerDisplay}")]
     public class PdfDictionary : PdfObject, IEnumerable<KeyValuePair<string, PdfItem>>
     {
+        internal bool IsCompact { get; set; }
+
         // Reference: 3.2.6  Dictionary Objects / Page 59
 
         /// <summary>
@@ -97,6 +100,8 @@ namespace PdfSharper.Pdf
                 dict._elements.ChangeOwner(this);
             if (dict._stream != null)
                 dict._stream.ChangeOwner(this);
+
+            IsCompact = dict.IsCompact;
         }
 
         /// <summary>
@@ -188,6 +193,13 @@ namespace PdfSharper.Pdf
 
         protected override void WriteObject(PdfWriter writer)
         {
+            PdfWriterLayout originalLayout = writer.Layout;
+
+            if (IsCompact)
+            {
+                writer.Layout = PdfWriterLayout.Compact;
+            }
+
             writer.WriteBeginObject(this);
             //int count = Elements.Count;
             PdfName[] keys = Elements.KeyNames;
@@ -214,6 +226,8 @@ namespace PdfSharper.Pdf
             if (Stream != null)
                 WriteDictionaryStream(writer);
             writer.WriteEndObject();
+
+            writer.Layout = originalLayout;
         }
 
         /// <summary>
@@ -236,7 +250,11 @@ namespace PdfSharper.Pdf
 #endif
             key.Write(writer);
             item.Write(writer);
-            writer.NewLine();
+
+            if (IsCompact == false)
+            {
+                writer.NewLine();
+            }
         }
 
         /// <summary>
@@ -1567,6 +1585,7 @@ namespace PdfSharper.Pdf
         /// </summary>
         public sealed class PdfStream
         {
+            private string _trailer;
             internal PdfStream(PdfDictionary ownerDictionary)
             {
                 if (ownerDictionary == null)
@@ -1577,10 +1596,11 @@ namespace PdfSharper.Pdf
             /// <summary>
             /// A .NET string can contain char(0) as a valid character.
             /// </summary>
-            internal PdfStream(byte[] value, PdfDictionary owner)
+            internal PdfStream(byte[] value, PdfDictionary owner, string trailer = null)
                 : this(owner)
             {
                 _value = value;
+                _trailer = trailer;
             }
 
             /// <summary>
@@ -1680,6 +1700,8 @@ namespace PdfSharper.Pdf
                     return 0;
                 }
             }
+
+            public string Trailer { get { return _trailer; } }
 
             /// <summary>
             /// Get or sets the bytes of the stream as they are, i.e. if one or more filters exist the bytes are
@@ -1904,8 +1926,8 @@ namespace PdfSharper.Pdf
             get
             {
 #if true
-                return String.Format(CultureInfo.InvariantCulture, "dictionary({0},[{1}])={2}", 
-                    ObjectID.DebuggerDisplay, 
+                return String.Format(CultureInfo.InvariantCulture, "dictionary({0},[{1}])={2}",
+                    ObjectID.DebuggerDisplay,
                     Elements.Count,
                     _elements.DebuggerDisplay);
 #else
