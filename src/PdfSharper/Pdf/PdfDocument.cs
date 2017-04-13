@@ -413,11 +413,16 @@ namespace PdfSharper.Pdf
                 if (wasPdfCrossRef) //todo: support cross ref writing!
                 {
                     _trailers.Clear();
+                    _irefTable.Compact();
+                    _irefTable.CheckConsistence();
+                    _irefTable.Renumber();
+                    _irefTable.CheckConsistence();
+
                     WriteTrailer(writer, _trailer); //HACK! this will lose incremental updates 
                 }
                 else
                 {
-                    foreach (var trailer in _trailers.OrderByDescending(t => t.RevisionNumber))
+                    foreach (var trailer in GetSortedTrailers())
                     {
                         WriteTrailer(writer, trailer);
                     }
@@ -459,7 +464,7 @@ namespace PdfSharper.Pdf
             trailer.XRefTable.WriteObject(writer);
             writer.WriteRaw("trailer\r\n");
             trailer.Elements.SetInteger("/Size", trailer.XRefTable._maxObjectNumber + 1); //0 record isn't in count
-            var previousRevision = GetSortedTrailers(true).FirstOrDefault(t => t.RevisionNumber > trailer.RevisionNumber);
+            var previousRevision = GetSortedTrailers().FirstOrDefault(t => t.Info.ModificationDate < trailer.Info.ModificationDate);
             if (previousRevision != null)
             {
                 Debug.Assert(previousRevision.StartXRef != -1, "Previous trailer was not written yet");
@@ -902,7 +907,6 @@ namespace PdfSharper.Pdf
 
         internal List<PdfTrailer> _trailers = new List<PdfTrailer>();
         private IReadOnlyCollection<PdfTrailer> _trailersAsc;
-        private IReadOnlyCollection<PdfTrailer> _trailersDesc;
 
         internal PdfTrailer _trailer; //always the last one
         internal PdfCrossReferenceTable _irefTable;
@@ -913,26 +917,14 @@ namespace PdfSharper.Pdf
 
         internal DateTime _creation;
 
-        internal IReadOnlyCollection<PdfTrailer> GetSortedTrailers(bool ascending)
+        internal IReadOnlyCollection<PdfTrailer> GetSortedTrailers()
         {
-            if (ascending)
+            if (_trailersAsc == null || _trailersAsc.Count != _trailers.Count)
             {
-                if (_trailersAsc == null || _trailersAsc.Count != _trailers.Count)
-                {
-                    _trailersAsc = _trailers.OrderBy(t => t.RevisionNumber).ToList().AsReadOnly();
-                }
-
-                return _trailersAsc;
+                _trailersAsc = _trailers.OrderBy(t => t.Info.ModificationDate).ToList().AsReadOnly();
             }
-            else
-            {
-                if (_trailersDesc == null || _trailersDesc.Count != _trailers.Count)
-                {
-                    _trailersDesc = _trailers.OrderByDescending(t => t.RevisionNumber).ToList().AsReadOnly();
-                }
 
-                return _trailersDesc;
-            }
+            return _trailersAsc;
         }
 
         /// <summary>

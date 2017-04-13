@@ -75,14 +75,9 @@ namespace PdfSharper.Pdf.IO
         /// <summary>
         /// Sets PDF input stream position to the specified object.
         /// </summary>
-        public int MoveToObject(PdfObjectID objectID, int revisionNumber)
+        public int MoveToObject(PdfObjectID objectID, PdfCrossReferenceTable xRefTable)
         {
-            PdfCrossReferenceTable xRefTable = null;
-            if (revisionNumber != -1)
-            {
-                xRefTable = _document._trailers.Where(t => t.RevisionNumber == revisionNumber).Select(t => t.XRefTable).FirstOrDefault();
-            }
-            else
+            if (xRefTable == null)
             {
                 xRefTable = _document._irefTable;
             }
@@ -118,7 +113,7 @@ namespace PdfSharper.Pdf.IO
         /// <param name="includeReferences">If true, specifies that all indirect objects
         /// are included recursively.</param>
         /// <param name="fromObjecStream">If true, the objects is parsed from an object stream.</param>
-        public PdfObject ReadObject(PdfObject pdfObject, PdfObjectID objectID, bool includeReferences, bool fromObjecStream, bool setObjectID = true, int revisionNumber = -1)
+        public PdfObject ReadObject(PdfObject pdfObject, PdfObjectID objectID, bool includeReferences, bool fromObjecStream, bool setObjectID = true, PdfCrossReferenceTable xRefTable = null)
         {
 #if DEBUG_
             Debug.WriteLine("ReadObject: " + objectID);
@@ -129,7 +124,7 @@ namespace PdfSharper.Pdf.IO
             int generationNumber = objectID.GenerationNumber;
             if (!fromObjecStream)
             {
-                MoveToObject(objectID, revisionNumber);
+                MoveToObject(objectID, xRefTable);
                 objectNumber = ReadInteger();
                 generationNumber = ReadInteger();
             }
@@ -183,7 +178,7 @@ namespace PdfSharper.Pdf.IO
                     else
                         array = (PdfArray)pdfObject;
                     //PdfObject.RegisterObject(array, objectID, generation);
-                    pdfObject = ReadArray(array, includeReferences);
+                    pdfObject = ReadArray(array, includeReferences, xRefTable);
                     if (setObjectID)
                     {
                         pdfObject.SetObjectID(objectNumber, generationNumber);
@@ -198,7 +193,7 @@ namespace PdfSharper.Pdf.IO
                         dict = (PdfDictionary)pdfObject;
                     //PdfObject.RegisterObject(dict, objectID, generation);
                     checkForStream = true;
-                    pdfObject = ReadDictionary(dict, includeReferences);
+                    pdfObject = ReadDictionary(dict, includeReferences, xRefTable);
                     if (setObjectID)
                     {
                         pdfObject.SetObjectID(objectNumber, generationNumber);
@@ -379,7 +374,7 @@ namespace PdfSharper.Pdf.IO
             throw new InvalidOperationException("Cannot retrieve stream length.");
         }
 
-        public PdfArray ReadArray(PdfArray array, bool includeReferences)
+        public PdfArray ReadArray(PdfArray array, bool includeReferences, PdfCrossReferenceTable xRefTable)
         {
             Debug.Assert(Symbol == Symbol.BeginArray);
             int arrayStart = _lexer.Position;
@@ -390,7 +385,7 @@ namespace PdfSharper.Pdf.IO
             array.PaddingLeft = _lexer.Position - arrayStart;
 
             int sp = _stack.SP;
-            ParseObject(Symbol.EndArray);
+            ParseObject(Symbol.EndArray, xRefTable);
 
             int scanPosition = _lexer.Position;
 
@@ -416,7 +411,7 @@ namespace PdfSharper.Pdf.IO
         static int ReadDictionaryCounter;
 #endif
 
-        internal PdfDictionary ReadDictionary(PdfDictionary dict, bool includeReferences)
+        internal PdfDictionary ReadDictionary(PdfDictionary dict, bool includeReferences, PdfCrossReferenceTable xRefTable)
         {
             _lexer.HasReadNewLineOrCarriageReturn = false;
             Debug.Assert(Symbol == Symbol.BeginDictionary);
@@ -433,7 +428,7 @@ namespace PdfSharper.Pdf.IO
             DictionaryMeta meta = dict.Meta;
 
             int sp = _stack.SP;
-            ParseObject(Symbol.EndDictionary);
+            ParseObject(Symbol.EndDictionary, xRefTable);
             int count = _stack.SP - sp;
             Debug.Assert(count % 2 == 0);
             PdfItem[] items = _stack.ToArray(sp, count);
@@ -462,7 +457,7 @@ namespace PdfSharper.Pdf.IO
         /// <summary>
         /// Parses whatever comes until the specified stop symbol is reached.
         /// </summary>
-        private void ParseObject(Symbol stop)
+        private void ParseObject(Symbol stop, PdfCrossReferenceTable xRefTable)
         {
 #if DEBUG_
             ParseObjectCounter++;
@@ -530,7 +525,7 @@ namespace PdfSharper.Pdf.IO
                             Debug.Assert(_stack.GetItem(-1) is PdfInteger && _stack.GetItem(-2) is PdfInteger);
                             PdfObjectID objectID = new PdfObjectID(_stack.GetInteger(-2), _stack.GetInteger(-1));
 
-                            PdfReference iref = _document._irefTable[objectID];
+                            PdfReference iref = xRefTable[objectID];
                             if (iref == null)
                             {
                                 // If a document has more than one PdfXRefTable it is possible that the first trailer has
@@ -539,7 +534,8 @@ namespace PdfSharper.Pdf.IO
                                 {
                                     // XRefTable not complete when trailer is read. Create temporary irefs that are
                                     // removed later in PdfTrailer.FixXRefs.
-                                    iref = new PdfReference(objectID, 0);
+                                    iref = new PdfReference(objectID, -1);
+                                    iref.Document = _document;
                                     _stack.Reduce(iref, 2);
                                     break;
                                 }
@@ -558,13 +554,13 @@ namespace PdfSharper.Pdf.IO
 
                     case Symbol.BeginArray:
                         PdfArray array = new PdfArray(_document);
-                        ReadArray(array, false);
+                        ReadArray(array, false, xRefTable);
                         _stack.Shift(array);
                         break;
 
                     case Symbol.BeginDictionary:
                         PdfDictionary dict = new PdfDictionary(_document);
-                        ReadDictionary(dict, false);
+                        ReadDictionary(dict, false, xRefTable);
                         _stack.Shift(dict);
                         break;
 
@@ -863,7 +859,7 @@ namespace PdfSharper.Pdf.IO
         /// Reads the irefs from the compressed object with the specified index in the object stream
         /// of the object with the specified object id.
         /// </summary>
-        internal void ReadIRefsFromCompressedObject(PdfObjectID objectID, PdfCrossReferenceTable xRefTable, int revisionNumber)
+        internal void ReadIRefsFromCompressedObject(PdfObjectID objectID, PdfCrossReferenceTable xRefTable)
         {
             PdfReference iref;
 
@@ -881,7 +877,7 @@ namespace PdfSharper.Pdf.IO
                 try
                 {
                     Debug.Assert(xRefTable.Contains(iref.ObjectID));
-                    PdfDictionary pdfObject = (PdfDictionary)ReadObject(null, iref.ObjectID, false, false, false, revisionNumber);
+                    PdfDictionary pdfObject = (PdfDictionary)ReadObject(null, iref.ObjectID, false, false, false, xRefTable);
 
                     if (!_document._irefTable.Contains(iref.ObjectID))
                     {
@@ -927,7 +923,7 @@ namespace PdfSharper.Pdf.IO
         /// Reads the compressed object with the specified index in the object stream
         /// of the object with the specified object id.
         /// </summary>
-        internal PdfReference ReadCompressedObject(PdfObjectID objectID, int index, PdfCrossReferenceTable xRefTable, int revisionNumber)
+        internal PdfReference ReadCompressedObject(PdfObjectID objectID, int index, PdfCrossReferenceTable xRefTable)
         {
             PdfReference iref;
 #if true
@@ -971,7 +967,7 @@ namespace PdfSharper.Pdf.IO
                 try
                 {
                     Debug.Assert(xRefTable.Contains(iref.ObjectID));
-                    PdfDictionary pdfObject = (PdfDictionary)ReadObject(null, iref.ObjectID, false, false, false, revisionNumber);
+                    PdfDictionary pdfObject = (PdfDictionary)ReadObject(null, iref.ObjectID, false, false, false, xRefTable);
                     if (!_document._irefTable.Contains(iref.ObjectID))
                     {
                         pdfObject.SetObjectID(iref.ObjectNumber, iref.GenerationNumber);
@@ -1025,13 +1021,17 @@ namespace PdfSharper.Pdf.IO
             // Generation is always 0 for compressed objects.
             PdfObjectID objectID = new PdfObjectID(objectNumber);
             _lexer.Position = offset;
-            PdfObject obj = ReadObject(null, objectID, false, true, false);
+            PdfObject obj = ReadObject(null, objectID, false, true, false, xRefTable);
 
             xRefTable[objectID].Value = obj;
 
             if (!_document._irefTable.Contains(objectID))
             {
                 _document._irefTable.Add(xRefTable[objectID]);
+            }
+            else
+            {
+                _document._irefTable[objectID].Value = obj;
             }
 
             return obj.Reference;
@@ -1103,18 +1103,16 @@ namespace PdfSharper.Pdf.IO
             ReadSymbol(Symbol.StartXRef);
             _lexer.Position = ReadInteger();
 
-            // Read all trailers.
-            int trailerRevisionNumber = 0;
+            // Read all trailers.            
             while (true)
             {
                 PdfTrailer trailer = ReadXRefTableAndTrailer(_document._irefTable);
 
-                trailer.RevisionNumber = trailerRevisionNumber++;
                 // 1st trailer seems to be the best.
                 if (_document._trailer == null)
                     _document._trailer = trailer;
 
-                _document._trailers.Insert(0, trailer);
+                _document._trailers.Add(trailer);
 
                 int prev = trailer.Elements.GetInteger(PdfTrailer.Keys.Prev);
                 if (prev == 0)
@@ -1170,10 +1168,15 @@ namespace PdfSharper.Pdf.IO
                                 PdfReference objReference = new PdfReference(objectID, position);
                                 trailerTable.Add(objReference);
                                 xrefTable.Add(objReference);
+                                objReference.Document = _document;
 
                             }
                             else
-                                trailerTable.Add(new PdfReference(objectID, position));
+                            {
+                                PdfReference objReference = new PdfReference(objectID, position);
+                                trailerTable.Add(objReference);
+                                objReference.Document = _document;
+                            }
                         }
                     }
                     else if (symbol == Symbol.Trailer)
@@ -1182,7 +1185,7 @@ namespace PdfSharper.Pdf.IO
                         ReadSymbol(Symbol.BeginDictionary);
                         PdfTrailer trailer = new PdfTrailer(_document);
                         trailer.XRefTable = trailerTable;
-                        ReadDictionary(trailer, false);
+                        ReadDictionary(trailer, false, trailerTable);
                         return trailer;
                     }
                     else
@@ -1222,12 +1225,13 @@ namespace PdfSharper.Pdf.IO
             PdfCrossReferenceStream xrefStream = new PdfCrossReferenceStream(_document);
             xrefStream.XRefTable = trailerTable;
             trailerTable.IsUnderConstruction = true;
-            ReadDictionary(xrefStream, false);
+            ReadDictionary(xrefStream, false, xrefTable);
             ReadSymbol(Symbol.BeginStream);
             ReadStream(xrefStream);
 
             //xrefTable.Add(new PdfReference(objectID, position));
             PdfReference iref = new PdfReference(xrefStream);
+            iref.Document = _document;
             iref.ObjectID = objectID;
             iref.Value = xrefStream;
             xrefTable.Add(iref);
@@ -1379,11 +1383,14 @@ namespace PdfSharper.Pdf.IO
                                 PdfReference objReference = new PdfReference(objectID, position);
                                 trailerTable.Add(objReference);
                                 xrefTable.Add(objReference);
+                                objReference.Document = _document;
 
                             }
                             else if (!trailerTable.Contains(objectID))
                             {
-                                trailerTable.Add(new PdfReference(objectID, position));
+                                PdfReference objReference = new PdfReference(objectID, position);
+                                trailerTable.Add(objReference);
+                                objReference.Document = _document;
                             }
                             break;
 

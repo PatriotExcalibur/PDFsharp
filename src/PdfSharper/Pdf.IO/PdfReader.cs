@@ -358,20 +358,18 @@ namespace PdfSharper.Pdf.IO
                     }
                 }
 
-                foreach (var trailer in document.GetSortedTrailers(true))
+                //only case where we want to read most recent first
+                //most recent needs to be what goes in the document_ireftable is why we read this first
+                foreach (var trailer in document._trailers)
                 {
-                    ReadObjects(parser, trailer.XRefTable, trailer.RevisionNumber);
+                    ReadObjects(document, parser, trailer.XRefTable);
                 }
-
-                var sortedTrailers = document._trailers.OrderBy(t => t.RevisionNumber).ToList();
-
-                //   ReadObjects(parser, document._irefTable);
 
                 foreach (var pdfRef in document._irefTable.AllReferences)
                 {
                     if (pdfRef.Value == null)
                     {
-                        pdfRef.Value = GetLatestRevisionOfObject(sortedTrailers, pdfRef.ObjectID);
+                        pdfRef.Value = GetLatestRevisionOfObject(document.GetSortedTrailers(), pdfRef.ObjectID);
                     }
 
                     document._irefTable._maxObjectNumber = Math.Max(document._irefTable._maxObjectNumber, pdfRef.ObjectNumber);
@@ -457,13 +455,13 @@ namespace PdfSharper.Pdf.IO
             return null;
         }
 
-        private static void ReadObjects(Parser parser, PdfCrossReferenceTable xRefTable, int revisionNumber = -1)
+        private static void ReadObjects(PdfDocument document, Parser parser, PdfCrossReferenceTable xRefTable)
         {
             PdfReference[] irefs2 = xRefTable.AllReferences;
 
             int count2 = irefs2.Length;
 
-            // 3rd: Create iRefs for all compressed objects.
+            // 1st: Create iRefs for all compressed objects.
             Dictionary<int, object> objectStreams = new Dictionary<int, object>();
             for (int idx = 0; idx < count2; idx++)
             {
@@ -484,14 +482,14 @@ namespace PdfSharper.Pdf.IO
                             {
                                 objectStreams.Add(objectNumber, null);
                                 PdfObjectID objectID = new PdfObjectID((int)item.Field2);
-                                parser.ReadIRefsFromCompressedObject(objectID, xRefTable, revisionNumber);
+                                parser.ReadIRefsFromCompressedObject(objectID, xRefTable);
                             }
                         }
                     }
                 }
             }
 
-            // 4th: Read compressed objects.
+            // 2nd: Read compressed objects.
             for (int idx = 0; idx < count2; idx++)
             {
                 PdfReference iref = irefs2[idx];
@@ -505,11 +503,34 @@ namespace PdfSharper.Pdf.IO
                         if (item.Type == 2)
                         {
                             PdfReference irefNew = parser.ReadCompressedObject(new PdfObjectID((int)item.Field2),
-                                (int)item.Field3, xRefTable, revisionNumber);
-                            Debug.Assert(xRefTable.Contains(iref.ObjectID));
+                                (int)item.Field3, xRefTable);
+                            Debug.Assert(xRefTable.Contains(irefNew.ObjectID));
                             //document._irefTable.Add(irefNew);
                         }
                     }
+
+                    xRefTable.Remove(iref); //we have parsed the cross reference stream out go away!
+                }
+            }
+
+
+            //3rd: Read object streams
+            for (int idx = 0; idx < count2; idx++)
+            {
+                PdfReference iref = irefs2[idx];
+                PdfObjectStream objStream = iref.Value as PdfObjectStream;
+                if (objStream != null)
+                {
+                    int objectCount = objStream.Elements.GetInteger(PdfObjectStream.Keys.N);
+
+                    for (int i = 0; i < objectCount; i++)
+                    {
+                        PdfReference irefNew = objStream.ReadCompressedObject(i, xRefTable);
+                        Debug.Assert(xRefTable.Contains(irefNew.ObjectID));
+                    }
+
+                    xRefTable.Remove(iref);
+                    document._irefTable.Remove(iref);
                 }
             }
 
@@ -530,7 +551,8 @@ namespace PdfSharper.Pdf.IO
                     try
                     {
                         Debug.Assert(xRefTable.Contains(iref.ObjectID));
-                        PdfObject pdfObject = parser.ReadObject(null, iref.ObjectID, false, false, false, revisionNumber);
+                        PdfObject pdfObject = parser.ReadObject(null, iref.ObjectID, false, false, false, xRefTable);
+
                         pdfObject.Reference = iref;
                         iref.Value = pdfObject;
                     }

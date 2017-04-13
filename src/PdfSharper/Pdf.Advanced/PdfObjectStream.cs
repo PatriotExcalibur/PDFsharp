@@ -108,6 +108,8 @@ namespace PdfSharper.Pdf.Advanced
                 {
                     _document._irefTable.Add(iref);
                 }
+
+                iref.Document = _document;
             }
         }
 

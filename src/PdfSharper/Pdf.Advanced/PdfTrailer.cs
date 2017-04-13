@@ -44,8 +44,6 @@ namespace PdfSharper.Pdf.Advanced
     {
         internal PdfCrossReferenceTable XRefTable { get; set; }
 
-        internal int RevisionNumber { get; set; }
-
         internal int StartXRef { get; set; } = -1;
 
         /// <summary>
@@ -258,7 +256,7 @@ namespace PdfSharper.Pdf.Advanced
                     {
                         if (iref.Value == null)
                         {
-                            PdfObject irefValue = GetObject(_document.GetSortedTrailers(true), iref.ObjectID, RevisionNumber);
+                            PdfObject irefValue = GetObject(_document.GetSortedTrailers(), iref.ObjectID, Info.ModificationDate);
                             if (irefValue.Reference == null)
                             {
                                 iref.Value = irefValue;
@@ -297,7 +295,7 @@ namespace PdfSharper.Pdf.Advanced
                     {
                         if (iref.Value == null)
                         {
-                            PdfObject irefValue = GetObject(_document.GetSortedTrailers(true), iref.ObjectID, RevisionNumber);
+                            PdfObject irefValue = GetObject(_document.GetSortedTrailers(), iref.ObjectID, Info.ModificationDate);
                             if (irefValue.Reference == null)
                             {
                                 iref.Value = irefValue;
@@ -336,11 +334,11 @@ namespace PdfSharper.Pdf.Advanced
             }
         }
 
-        private static PdfObject GetObject(IEnumerable<PdfTrailer> trailers, PdfObjectID objectID, int revision)
+        private static PdfObject GetObject(IEnumerable<PdfTrailer> trailers, PdfObjectID objectID, DateTime revision)
         {
             foreach (PdfTrailer trailer in trailers)
             {
-                if (trailer.RevisionNumber < revision) //return first available object created before the revision
+                if (trailer.Info.ModificationDate < revision) //return first available object created before the revision
                 {
                     continue;
                 }
@@ -355,7 +353,7 @@ namespace PdfSharper.Pdf.Advanced
             //it's not in our revision or any previous revision, get the latest version of it
             foreach (PdfTrailer trailer in trailers)
             {
-                if (trailer.RevisionNumber >= revision)
+                if (trailer.Info.ModificationDate >= revision)
                 {
                     continue;
                 }
