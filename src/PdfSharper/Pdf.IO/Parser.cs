@@ -1029,10 +1029,6 @@ namespace PdfSharper.Pdf.IO
             {
                 _document._irefTable.Add(xRefTable[objectID]);
             }
-            else
-            {
-                _document._irefTable[objectID].Value = obj;
-            }
 
             return obj.Reference;
         }
@@ -1401,22 +1397,22 @@ namespace PdfSharper.Pdf.IO
                 }
             }
 
-            foreach (var referenceElement in xrefStream.Elements.Select(e => e.Value).OfType<PdfReference>())
-            {
-                if (!xrefTable.Contains(referenceElement.ObjectID) && !trailerTable.Contains(referenceElement.ObjectID))
-                {
-                    xrefTable.Add(referenceElement);
-                    trailerTable.Add(referenceElement);
-                }
-                else if (!trailerTable.Contains(referenceElement.ObjectID))
-                {
-                    trailerTable.Add(new PdfReference(referenceElement.ObjectID, referenceElement.Position));
-                }
-                else if (!xrefTable.Contains(referenceElement.ObjectID))
-                { //also how?
-                }
+            //foreach (var referenceElement in xrefStream.Elements.Select(e => e.Value).OfType<PdfReference>())
+            //{
+            //    if (!xrefTable.Contains(referenceElement.ObjectID) && !trailerTable.Contains(referenceElement.ObjectID))
+            //    {
+            //        xrefTable.Add(referenceElement);
+            //        trailerTable.Add(referenceElement);
+            //    }
+            //    else if (!trailerTable.Contains(referenceElement.ObjectID))
+            //    {
+            //        trailerTable.Add(new PdfReference(referenceElement.ObjectID, referenceElement.Position));
+            //    }
+            //    else if (!xrefTable.Contains(referenceElement.ObjectID))
+            //    { //also how?
+            //    }
 
-            }
+            //}
 
             trailerTable.IsUnderConstruction = false;
             return xrefStream;

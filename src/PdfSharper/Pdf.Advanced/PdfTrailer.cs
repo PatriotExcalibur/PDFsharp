@@ -95,7 +95,25 @@ namespace PdfSharper.Pdf.Advanced
 
         public PdfDocumentInformation Info
         {
-            get { return (PdfDocumentInformation)Elements.GetValue(Keys.Info, VCF.CreateIndirect); }
+            get
+            {
+
+                var infoReference = Elements.GetReference(Keys.Info);
+                if (infoReference != null && infoReference.Value == null)
+                {
+                    if (!XRefTable.Contains(infoReference.ObjectID))
+                    { //the document must contain it!
+                        var documentInfoReference = _document._irefTable[infoReference.ObjectID];
+                        Debug.Assert(documentInfoReference.Value != null, "Document contains no info, cannot fixup!");
+
+                        Elements.SetReference(Keys.Info, documentInfoReference);
+                    }
+                    else
+                        Elements.SetReference(Keys.Info, XRefTable[infoReference.ObjectID]);
+                }
+
+                return (PdfDocumentInformation)Elements.GetValue(Keys.Info, VCF.CreateIndirect);
+            }
         }
 
         /// <summary>

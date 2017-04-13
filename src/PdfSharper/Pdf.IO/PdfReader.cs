@@ -358,11 +358,16 @@ namespace PdfSharper.Pdf.IO
                     }
                 }
 
+                foreach (var trailer in document._trailers)
+                {
+                    DecompressObjects(document, parser, trailer.XRefTable);
+                }
+
                 //only case where we want to read most recent first
                 //most recent needs to be what goes in the document_ireftable is why we read this first
                 foreach (var trailer in document._trailers)
                 {
-                    ReadObjects(document, parser, trailer.XRefTable);
+                    ReadObjects(parser, trailer.XRefTable);
                 }
 
                 foreach (var pdfRef in document._irefTable.AllReferences)
@@ -455,7 +460,7 @@ namespace PdfSharper.Pdf.IO
             return null;
         }
 
-        private static void ReadObjects(PdfDocument document, Parser parser, PdfCrossReferenceTable xRefTable)
+        private static void DecompressObjects(PdfDocument document, Parser parser, PdfCrossReferenceTable xRefTable)
         {
             PdfReference[] irefs2 = xRefTable.AllReferences;
 
@@ -512,29 +517,10 @@ namespace PdfSharper.Pdf.IO
                     xRefTable.Remove(iref); //we have parsed the cross reference stream out go away!
                 }
             }
+        }
 
-
-            //3rd: Read object streams
-            for (int idx = 0; idx < count2; idx++)
-            {
-                PdfReference iref = irefs2[idx];
-                PdfObjectStream objStream = iref.Value as PdfObjectStream;
-                if (objStream != null)
-                {
-                    int objectCount = objStream.Elements.GetInteger(PdfObjectStream.Keys.N);
-
-                    for (int i = 0; i < objectCount; i++)
-                    {
-                        PdfReference irefNew = objStream.ReadCompressedObject(i, xRefTable);
-                        Debug.Assert(xRefTable.Contains(irefNew.ObjectID));
-                    }
-
-                    xRefTable.Remove(iref);
-                    document._irefTable.Remove(iref);
-                }
-            }
-
-
+        private static void ReadObjects(Parser parser, PdfCrossReferenceTable xRefTable)
+        {
             PdfReference[] irefs = xRefTable.AllReferences;
             int count = irefs.Length;
 
