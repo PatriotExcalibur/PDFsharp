@@ -370,25 +370,22 @@ namespace PdfSharper.Pdf.IO
                     ReadObjects(parser, trailer.XRefTable);
                 }
 
-                foreach (var pdfRef in document._irefTable.AllReferences)
-                {
-                    if (pdfRef.Value == null)
-                    {
-                        pdfRef.Value = GetLatestRevisionOfObject(document.GetSortedTrailers(), pdfRef.ObjectID);
-                    }
-
-                    document._irefTable._maxObjectNumber = Math.Max(document._irefTable._maxObjectNumber, pdfRef.ObjectNumber);
-                }
-
                 document._irefTable.IsUnderConstruction = false;
 
+                bool foundNonCrossRef = false;
                 foreach (var trailer in document._trailers)
                 {
                     trailer.FixXRefs();
+                    foundNonCrossRef = !(trailer is PdfCrossReferenceStream);
                 }
 
-                ////PdfReference[] irefs2 = document._irefTable.AllReferences;
-                //ReadObjects(document, parser, xrefEncrypt, irefs2);
+                if (foundNonCrossRef)
+                {
+                    foreach (var trailer in document._trailers)
+                    {
+                        trailer.IsReadOnly = true;
+                    }
+                }
 
                 // Encrypt all objects.
                 if (xrefEncrypt != null)
@@ -436,6 +433,8 @@ namespace PdfSharper.Pdf.IO
                     document._irefTable.Renumber();
                     document._irefTable.CheckConsistence();
                 }
+
+                document.UnderConstruction = false;
             }
             catch (Exception ex)
             {
@@ -554,9 +553,6 @@ namespace PdfSharper.Pdf.IO
                     Debug.Assert(xRefTable.Contains(iref.ObjectID));
                     //iref.GetType();
                 }
-                // Set maximum object number.
-                xRefTable._maxObjectNumber = Math.Max(xRefTable._maxObjectNumber,
-                    iref.ObjectNumber);
             }
 
 

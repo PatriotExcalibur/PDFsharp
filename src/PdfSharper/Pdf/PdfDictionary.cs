@@ -40,6 +40,7 @@ using PdfSharper.Pdf.Filters;
 using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Internal;
 using PdfSharper.Pdf.AcroForms;
+using System.Linq;
 
 namespace PdfSharper.Pdf
 {
@@ -129,7 +130,7 @@ namespace PdfSharper.Pdf
                 foreach (PdfName name in names)
                 {
                     PdfObject obj = dict._elements[name] as PdfObject;
-                    if (obj != null)
+                    if (obj != null && deepClone)
                     {
                         obj = obj.Clone();
                         // Recall that obj.Document is now null.
@@ -143,6 +144,24 @@ namespace PdfSharper.Pdf
                 dict._stream.ChangeOwner(dict);
             }
             return dict;
+        }
+
+        private bool deepClone = true;
+
+        public override void FlagAsDirty()
+        {
+            if (IsDirty)
+                return;
+
+            deepClone = false;
+            try
+            {
+                base.FlagAsDirty();
+            }
+            finally
+            {
+                deepClone = true;
+            }
         }
 
         /// <summary>
@@ -273,7 +292,14 @@ namespace PdfSharper.Pdf
         public PdfStream Stream
         {
             get { return _stream; }
-            set { _stream = value; }
+            set
+            {
+                if (!Owner.UnderConstruction)
+                {
+                    FlagAsDirty();
+                }
+                _stream = value;
+            }
         }
         PdfStream _stream;
 
@@ -304,7 +330,7 @@ namespace PdfSharper.Pdf
         /// Represents the interface to the elements of a PDF dictionary.
         /// </summary>
         [DebuggerDisplay("{DebuggerDisplay}")]
-        public sealed class DictionaryElements : IDictionary<string, PdfItem>, ICloneable
+        public sealed class DictionaryElements : PdfDirty, IDictionary<string, PdfItem>, ICloneable
         {
             internal DictionaryElements(PdfDictionary ownerDictionary)
             {
@@ -494,11 +520,44 @@ namespace PdfSharper.Pdf
                 return GetReal(key, false);
             }
 
+
+            /// <summary>
+            /// Tries to get the string. TODO: more TryGet...
+            /// </summary>
+            public bool TryGetReal(string key, out double value)
+            {
+                value = double.MinValue;
+                object obj = this[key];
+                if (obj == null)
+                    return false;
+
+                PdfReference reference = obj as PdfReference;
+                if (reference != null)
+                    obj = reference.Value;
+
+                PdfReal real = obj as PdfReal;
+                if (real != null)
+                {
+                    value = real.Value;
+                    return true;
+                }
+
+                return false;
+            }
+
             /// <summary>
             /// Sets the entry to a direct double value.
             /// </summary>
             public void SetReal(string key, double value)
             {
+                double existingValue = double.MinValue;
+                if (TryGetReal(key, out existingValue))
+                {
+                    if (value == existingValue)
+                    {
+                        return; //prevent setting dirty flag
+                    }
+                }
                 this[key] = new PdfReal(value);
             }
 
@@ -605,6 +664,14 @@ namespace PdfSharper.Pdf
             /// </summary>
             public void SetString(string key, string value)
             {
+                string existingValue = null;
+                if (TryGetString(key, out existingValue))
+                {
+                    if (string.Compare(value, existingValue) == 0)
+                    {
+                        return; //prevent setting dirty flag
+                    }
+                }
                 this[key] = new PdfString(value);
             }
 
@@ -1331,6 +1398,49 @@ namespace PdfSharper.Pdf
                     PdfObject obj = value as PdfObject;
                     if (obj != null && obj.IsIndirect)
                         value = obj.Reference;
+
+
+
+                    //Only flag dirty if the document is under construction
+                    if (!Owner.Owner.UnderConstruction)
+                    {
+                        if (_elements.ContainsKey(key))
+                        {
+                            PdfItem existingItem = _elements[key];
+
+                            if (existingItem is PdfObject)
+                            {
+                                PdfObject existingObject = existingItem as PdfObject;
+                                if (existingObject.IsIndirect && obj != null && obj.IsIndirect)
+                                {
+                                    if (existingObject.ObjectNumber != obj.ObjectNumber)
+                                    {
+                                        Owner.FlagAsDirty();
+                                    }
+                                }
+                                else if (existingObject.IsIndirect && obj == null)//going from indirect to direct
+                                {
+                                    Owner.FlagAsDirty();
+                                }
+                                else if (existingObject.IsIndirect == false && obj != null && obj.IsIndirect)//going from direct to indirect
+                                {
+                                    Owner.FlagAsDirty();
+                                }
+                            }
+                            else
+                            {
+                                if (!ReferenceEquals(existingItem, value))
+                                {
+                                    Owner.FlagAsDirty();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Owner.FlagAsDirty();
+                        }
+                    }
+
                     _elements[key] = value;
                 }
             }
@@ -1359,6 +1469,47 @@ namespace PdfSharper.Pdf
                     PdfObject obj = value as PdfObject;
                     if (obj != null && obj.IsIndirect)
                         value = obj.Reference;
+
+                    //Only flag dirty if the document is under construction
+                    if (Owner.Owner != null && !Owner.Owner.UnderConstruction)
+                    {
+                        if (_elements.ContainsKey(key.Value))
+                        {
+                            PdfItem existingItem = _elements[key.Value];
+
+                            if (existingItem is PdfObject)
+                            {
+                                PdfObject existingObject = existingItem as PdfObject;
+                                if (existingObject.IsIndirect && obj != null && obj.IsIndirect)
+                                {
+                                    if (existingObject.ObjectNumber != obj.ObjectNumber)
+                                    {
+                                        Owner.FlagAsDirty();
+                                    }
+                                }
+                                else if (existingObject.IsIndirect && obj == null)//going from indirect to direct
+                                {
+                                    Owner.FlagAsDirty();
+                                }
+                                else if (existingObject.IsIndirect == false && obj != null && obj.IsIndirect)//going from direct to indirect
+                                {
+                                    Owner.FlagAsDirty();
+                                }
+                            }
+                            else
+                            {
+                                if (!ReferenceEquals(existingItem, value))
+                                {
+                                    Owner.FlagAsDirty();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Owner.FlagAsDirty();
+                        }
+                    }
+
                     _elements[key.Value] = value;
                 }
             }
@@ -1714,6 +1865,10 @@ namespace PdfSharper.Pdf
                 {
                     if (value == null)
                         throw new ArgumentNullException("value");
+                    if (_value.SequenceEqual(value))
+                        return;
+
+                    _ownerDictionary.FlagAsDirty();
                     _value = value;
                     _ownerDictionary.Elements.SetInteger(Keys.Length, value.Length);
                 }

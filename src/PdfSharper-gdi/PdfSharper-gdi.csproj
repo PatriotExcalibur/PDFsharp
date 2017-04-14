@@ -993,6 +993,9 @@
     <Compile Include="..\PdfSharper\Pdf\PdfDictionary.cs">
       <Link>Pdf\PdfDictionary.cs</Link>
     </Compile>
+    <Compile Include="..\PdfSharper\Pdf\PdfDirty.cs">
+      <Link>Pdf\PdfDirty.cs</Link>
+    </Compile>
     <Compile Include="..\PdfSharper\Pdf\PdfDocument.cs">
       <Link>Pdf\PdfDocument.cs</Link>
     </Compile>

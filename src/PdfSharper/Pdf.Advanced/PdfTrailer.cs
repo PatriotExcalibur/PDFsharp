@@ -44,6 +44,8 @@ namespace PdfSharper.Pdf.Advanced
     {
         internal PdfCrossReferenceTable XRefTable { get; set; }
 
+        internal bool IsReadOnly { get; set; }
+
         internal int StartXRef { get; set; } = -1;
 
         /// <summary>
@@ -85,6 +87,12 @@ namespace PdfSharper.Pdf.Advanced
         {
             get { return Elements.GetInteger(Keys.Size); }
             set { Elements.SetInteger(Keys.Size, value); }
+        }
+
+        public override void FlagAsDirty()
+        {
+            //trailers are readonly or not
+            //we do not auto clone them for modifications
         }
 
         // TODO: needed when linearized...

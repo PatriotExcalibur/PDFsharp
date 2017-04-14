@@ -61,6 +61,7 @@ namespace PdfSharper.Pdf
         internal DocumentState _state;
         internal PdfDocumentOpenMode _openMode;
 
+
 #if DEBUG_
         static PdfDocument()
         {
@@ -129,6 +130,7 @@ namespace PdfSharper.Pdf
 
         internal PdfDocument(Lexer lexer)
         {
+            UnderConstruction = true;
             //PdfDocument.Gob.AttatchDocument(Handle);
 
             _creation = DateTime.Now;
@@ -405,6 +407,28 @@ namespace PdfSharper.Pdf
 
                 PrepareForSave();
 
+                PdfTrailer writeableTrailer = _trailers.SingleOrDefault(t => t.IsReadOnly == false);
+                if (writeableTrailer != null)
+                {
+                    writeableTrailer.Info.ModificationDate = DateTime.Now;
+                    PdfTrailer previous = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate < writeableTrailer.Info.ModificationDate);
+                    int maxObjectNumber = writeableTrailer.XRefTable._maxObjectNumber;
+                    if (previous != null)
+                    {
+                        maxObjectNumber = previous.XRefTable._maxObjectNumber;
+                    }
+
+                    if (_irefTable._maxObjectNumber > maxObjectNumber) //new objects were added, put them in the trailer
+                    {
+                        PdfReference[] allIds = _irefTable.AllReferences;
+                        for (int i = maxObjectNumber; i < _irefTable._maxObjectNumber; i++)
+                        {
+                            writeableTrailer.XRefTable.Add(allIds[i]);
+                        }
+                    }
+                }
+
+
                 if (encrypt)
                     _securitySettings.SecurityHandler.PrepareEncryption();
 
@@ -446,6 +470,32 @@ namespace PdfSharper.Pdf
             }
         }
 
+        internal PdfTrailer MakeNewTrailer()
+        {
+            PdfTrailer endingTrailer = new PdfTrailer(this);
+            endingTrailer.XRefTable = new PdfCrossReferenceTable(this);
+
+            PdfDictionary trailerInfo = Info.Clone();
+            trailerInfo.Document = this;
+            PdfReference infoReference = new PdfReference(Info.ObjectID, -1);
+            infoReference.Value = trailerInfo;
+
+            endingTrailer.XRefTable.Add(infoReference);
+
+            endingTrailer.Elements.SetReference(PdfTrailer.Keys.Info, infoReference);
+
+            //TODO: Document trailer root ok?
+            endingTrailer.Elements.SetReference(PdfTrailer.Keys.Root, _trailer.Root);
+
+            string documentID = _trailer.GetDocumentID(1);
+            endingTrailer.SetDocumentID(0, documentID);
+
+
+            _trailers.Insert(0, endingTrailer);
+
+            return endingTrailer;
+        }
+
         private void WriteTrailer(PdfWriter writer, PdfTrailer trailer)
         {
             PdfReference[] irefs = trailer.XRefTable.AllReferences;
@@ -464,7 +514,7 @@ namespace PdfSharper.Pdf
             trailer.XRefTable.WriteObject(writer);
             writer.WriteRaw("trailer\r\n");
             trailer.Elements.SetInteger("/Size", trailer.XRefTable._maxObjectNumber + 1); //0 record isn't in count
-            var previousRevision = GetSortedTrailers().FirstOrDefault(t => t.Info.ModificationDate < trailer.Info.ModificationDate);
+            var previousRevision = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate < trailer.Info.ModificationDate);
             if (previousRevision != null)
             {
                 Debug.Assert(previousRevision.StartXRef != -1, "Previous trailer was not written yet");
@@ -493,17 +543,17 @@ namespace PdfSharper.Pdf
                 info.Creator = pdfSharpProducer;
 
             //TODO: Update info when incremental is fully supported
-            //// Keep original producer if file was imported.
-            //string producer = info.Producer;
-            //if (producer.Length == 0)
-            //    producer = pdfSharpProducer;
-            //else
-            //{
-            //    // Prevent endless concatenation if file is edited with PDFsharp more than once.
-            //    if (!producer.StartsWith(VersionInfo.Title))
-            //        producer = pdfSharpProducer + " (Original: " + producer + ")";
-            //}
-            //info.Elements.SetString(PdfDocumentInformation.Keys.Producer, producer);
+            // Keep original producer if file was imported.
+            string producer = info.Producer;
+            if (producer.Length == 0)
+                producer = pdfSharpProducer;
+            else
+            {
+                // Prevent endless concatenation if file is edited with PDFsharp more than once.
+                if (!producer.StartsWith(VersionInfo.Title))
+                    producer = pdfSharpProducer;
+            }
+            info.Elements.SetString(PdfDocumentInformation.Keys.Producer, producer);
 
             // Prepare used fonts.
             if (_fontTable != null)
@@ -513,7 +563,7 @@ namespace PdfSharper.Pdf
             Catalog.PrepareForSave();
 
 #if true     
-            if (_openMode == PdfDocumentOpenMode.Modify)
+            if (_openMode == PdfDocumentOpenMode.Modify || _trailers.Count == 1)
             {
                 // Remove all unreachable objects (e.g. from deleted pages)
                 int removed = _irefTable.Compact();
@@ -712,7 +762,17 @@ namespace PdfSharper.Pdf
             get
             {
                 if (_pages == null)
-                    _pages = Catalog.Pages;
+                {
+                    UnderConstruction = true;
+                    try
+                    {
+                        _pages = Catalog.Pages;
+                    }
+                    finally
+                    {
+                        UnderConstruction = false;
+                    }
+                }
                 return _pages;
             }
         }
@@ -761,6 +821,8 @@ namespace PdfSharper.Pdf
         {
             get { return Catalog.Outlines; }
         }
+
+        internal bool UnderConstruction { get; set; }
 
         /// <summary>
         /// Get the AcroForm dictionary.
