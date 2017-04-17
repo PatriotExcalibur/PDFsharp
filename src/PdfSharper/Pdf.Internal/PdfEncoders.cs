@@ -310,6 +310,7 @@ namespace PdfSharper.Pdf.Internal
         /// <param name="prefix">Indicates whether to use Unicode prefix.</param>
         /// <param name="hex">Indicates whether to create a hexadecimal string literal.</param>
         /// <param name="securityHandler">Encrypts the bytes if specified.</param>
+        /// <param name="hexFormat">either {0:x2} or {0:X2} depending on capitalization.</param>
         /// <returns>The PDF bytes.</returns>
         public static byte[] FormatStringLiteral(byte[] bytes, bool unicode, bool prefix, bool hex, PdfStandardSecurityHandler securityHandler, string hexFormat = "{0:x2}")
         {
