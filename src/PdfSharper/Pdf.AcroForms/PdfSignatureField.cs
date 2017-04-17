@@ -34,209 +34,206 @@ using System;
 
 namespace PdfSharper.Pdf.AcroForms
 {
-    /// <summary>
-    /// Represents the signature field.
-    /// </summary>
-    public sealed class PdfSignatureField : PdfAcroField
-    {
-        public string Reason
-        {
-            get
-            {
-                return Elements.GetDictionary(Keys.V).Elements.GetString(Keys.Reason);
-            }
-            set
-            {
-                Elements.GetDictionary(Keys.V).Elements[Keys.Reason] = new PdfString(value);
-            }
-        }
+	/// <summary>
+	/// Represents the signature field.
+	/// </summary>
+	public sealed class PdfSignatureField : PdfAcroField
+	{
+		public string Reason
+		{
+			get
+			{
+				return Elements.GetDictionary(Keys.V).Elements.GetString(Keys.Reason);
+			}
+			set
+			{
+				Elements.GetDictionary(Keys.V).Elements[Keys.Reason] = new PdfString(value);
+			}
+		}
 
-        public string Location
-        {
-            get
-            {
-                return Elements.GetDictionary(Keys.V).Elements.GetString(Keys.Location);
-            }
-            set
-            {
-                Elements.GetDictionary(Keys.V).Elements[Keys.Location] = new PdfString(value);
-            }
-        }
+		public string Location
+		{
+			get
+			{
+				return Elements.GetDictionary(Keys.V).Elements.GetString(Keys.Location);
+			}
+			set
+			{
+				Elements.GetDictionary(Keys.V).Elements[Keys.Location] = new PdfString(value);
+			}
+		}
 
-        public new PdfItem Contents
-        {
-            get
-            {
-                return Elements.GetDictionary(Keys.V).Elements[Keys.Contents];
-            }
-            set
-            {
-                Elements.GetDictionary(Keys.V).Elements.Add(Keys.Contents, value);
-            }
-        }
-
-
-        public PdfItem ByteRange
-        {
-            get
-            {
-                return Elements.GetDictionary(Keys.V).Elements[Keys.ByteRange];
-            }
-            set
-            {
-                Elements.GetDictionary(Keys.V).Elements.Add(Keys.ByteRange, value);
-            }
-        }
-
-        public ISignatureAppearanceHandler AppearanceHandler { get; internal set; }
-
-        /// <summary>
-        /// Initializes a new instance of PdfSignatureField.
-        /// </summary>
-        public PdfSignatureField(PdfDocument document)
-            : base(document)
-        {
-            Elements.Add(Keys.FT, new PdfName("/Sig"));
-            Elements.Add(Keys.T, new PdfString("Signature1"));
-            Elements.Add(Keys.Ff, new PdfInteger(132));
-            Elements.Add(Keys.DR, new PdfDictionary());
-            Elements.Add(Keys.Type, new PdfName("/Annot"));
-            Elements.Add(Keys.Subtype, new PdfName("/Widget"));
-            Elements.Add(Keys.Page, document.Pages[0]);
+		public new PdfItem Contents
+		{
+			get
+			{
+				return Elements.GetDictionary(Keys.V).Elements[Keys.Contents];
+			}
+			set
+			{
+				Elements.GetDictionary(Keys.V).Elements.Add(Keys.Contents, value);
+			}
+		}
 
 
-            PdfDictionary sign = new PdfDictionary(document);
-            sign.Elements.Add(Keys.Type, new PdfName("/Sig"));
-            sign.Elements.Add(Keys.Filter, new PdfName("/Adobe.PPKLite"));
-            sign.Elements.Add(Keys.SubFilter, new PdfName("/adbe.pkcs7.detached"));
-            sign.Elements.Add(Keys.M, new PdfDate(DateTime.Now));
+		public PdfItem ByteRange
+		{
+			get
+			{
+				return Elements.GetDictionary(Keys.V).Elements[Keys.ByteRange];
+			}
+			set
+			{
+				Elements.GetDictionary(Keys.V).Elements.Add(Keys.ByteRange, value);
+			}
+		}
 
-            document._irefTable.Add(sign);
-            document._irefTable.Add(this);
+		public ISignatureAppearanceHandler AppearanceHandler { get; internal set; }
 
-            Elements.Add(Keys.V, sign);
+		/// <summary>
+		/// Initializes a new instance of PdfSignatureField.
+		/// </summary>
+		public PdfSignatureField(PdfDocument document)
+			: base(document)
+		{
+			Elements.Add(Keys.FT, new PdfName("/Sig"));
+			Elements.Add(Keys.T, new PdfString("Signature1"));
+			Elements.Add(Keys.Ff, new PdfInteger(132));
+			Elements.Add(Keys.DR, new PdfDictionary());
+			Elements.Add(Keys.Page, document.Pages[0]);
 
-        }
 
-        public PdfSignatureField(PdfDictionary dict)
-            : base(dict)
-        { }
+			PdfDictionary sign = new PdfDictionary(document);
+			sign.Elements.Add(Keys.Type, new PdfName("/Sig"));
+			sign.Elements.Add(Keys.Filter, new PdfName("/Adobe.PPKLite"));
+			sign.Elements.Add(Keys.SubFilter, new PdfName("/adbe.pkcs7.detached"));
+			sign.Elements.Add(Keys.M, new PdfDate(DateTime.Now));
+
+			document._irefTable.Add(sign);
+
+			Elements.Add(Keys.V, sign);
+
+		}
+
+		public PdfSignatureField(PdfDictionary dict)
+			: base(dict)
+		{ }
 
 
-        internal override void PrepareForSave()
-        {
-            if (Rectangle.X1 + Rectangle.X2 + Rectangle.Y1 + Rectangle.Y2 == 0)
-                return;
+		internal override void PrepareForSave()
+		{
+			if (Rectangle.X1 + Rectangle.X2 + Rectangle.Y1 + Rectangle.Y2 == 0)
+				return;
 
-            if (this.AppearanceHandler == null)
-                return;
+			if (this.AppearanceHandler == null)
+				return;
 
 
 
-            PdfRectangle rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
-            XForm form = new XForm(this._document, rect.Size);
-            XGraphics gfx = XGraphics.FromForm(form);
+			PdfRectangle rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
+			XForm form = new XForm(this._document, rect.Size);
+			XGraphics gfx = XGraphics.FromForm(form);
 
-            this.AppearanceHandler.DrawAppearance(gfx, rect.ToXRect());
+			this.AppearanceHandler.DrawAppearance(gfx, rect.ToXRect());
 
-            form.DrawingFinished();
+			form.DrawingFinished();
 
-            // Get existing or create new appearance dictionary
-            PdfDictionary ap = Elements[PdfAnnotation.Keys.AP] as PdfDictionary;
-            if (ap == null)
-            {
-                ap = new PdfDictionary(this._document);
-                Elements[PdfAnnotation.Keys.AP] = ap;
-            }
+			// Get existing or create new appearance dictionary
+			PdfDictionary ap = Elements[PdfAnnotation.Keys.AP] as PdfDictionary;
+			if (ap == null)
+			{
+				ap = new PdfDictionary(this._document);
+				Elements[PdfAnnotation.Keys.AP] = ap;
+			}
 
-            // Set XRef to normal state
-            ap.Elements["/N"] = form.PdfForm.Reference;
-        }
+			// Set XRef to normal state
+			ap.Elements["/N"] = form.PdfForm.Reference;
+		}
 
-        /// <summary>
-        /// Predefined keys of this dictionary.
-        /// The description comes from PDF 1.4 Reference.
-        /// </summary>
-        public new class Keys : PdfAcroField.Keys
-        {
+		/// <summary>
+		/// Predefined keys of this dictionary.
+		/// The description comes from PDF 1.4 Reference.
+		/// </summary>
+		public new class Keys : PdfAcroField.Keys
+		{
 
-            /// <summary>
-            /// (Required; inheritable) The name of the signature handler to be used for
-            /// authenticating the field�s contents, such as Adobe.PPKLite, Entrust.PPKEF,
-            /// CICI.SignIt, or VeriSign.PPKVS.
-            /// </summary>
-            [KeyInfo(KeyType.Name | KeyType.Required)]
-            public const string Filter = "/Filter";
+			/// <summary>
+			/// (Required; inheritable) The name of the signature handler to be used for
+			/// authenticating the field�s contents, such as Adobe.PPKLite, Entrust.PPKEF,
+			/// CICI.SignIt, or VeriSign.PPKVS.
+			/// </summary>
+			[KeyInfo(KeyType.Name | KeyType.Required)]
+			public const string Filter = "/Filter";
 
-            /// <summary>
-            /// (Optional) The name of a specific submethod of the specified handler.
-            /// </summary>
-            [KeyInfo(KeyType.Name | KeyType.Optional)]
-            public const string SubFilter = "/SubFilter";
+			/// <summary>
+			/// (Optional) The name of a specific submethod of the specified handler.
+			/// </summary>
+			[KeyInfo(KeyType.Name | KeyType.Optional)]
+			public const string SubFilter = "/SubFilter";
 
-            /// <summary>
-            /// (Required) An array of pairs of integers (starting byte offset, length in bytes)
-            /// describing the exact byte range for the digest calculation. Multiple discontinuous
-            /// byte ranges may be used to describe a digest that does not include the
-            /// signature token itself.
-            /// </summary>
-            [KeyInfo(KeyType.Array | KeyType.Required)]
-            public const string ByteRange = "/ByteRange";
+			/// <summary>
+			/// (Required) An array of pairs of integers (starting byte offset, length in bytes)
+			/// describing the exact byte range for the digest calculation. Multiple discontinuous
+			/// byte ranges may be used to describe a digest that does not include the
+			/// signature token itself.
+			/// </summary>
+			[KeyInfo(KeyType.Array | KeyType.Required)]
+			public const string ByteRange = "/ByteRange";
 
-            /// <summary>
-            /// (Required) The encrypted signature token.
-            /// </summary>
-            [KeyInfo(KeyType.String | KeyType.Required)]
-            public new const string Contents = "/Contents";
+			/// <summary>
+			/// (Required) The encrypted signature token.
+			/// </summary>
+			[KeyInfo(KeyType.String | KeyType.Required)]
+			public new const string Contents = "/Contents";
 
-            /// <summary>
-            /// (Optional) The name of the person or authority signing the document.
-            /// </summary>
-            [KeyInfo(KeyType.TextString | KeyType.Optional)]
-            public const string Name = "/Name";
+			/// <summary>
+			/// (Optional) The name of the person or authority signing the document.
+			/// </summary>
+			[KeyInfo(KeyType.TextString | KeyType.Optional)]
+			public const string Name = "/Name";
 
-            /// <summary>
-            /// (Optional) The time of signing. Depending on the signature handler, this
-            /// may be a normal unverified computer time or a time generated in a verifiable
-            /// way from a secure time server.
-            /// </summary>
-            [KeyInfo(KeyType.Date | KeyType.Optional)]
-            public new const string M = "/M";
+			/// <summary>
+			/// (Optional) The time of signing. Depending on the signature handler, this
+			/// may be a normal unverified computer time or a time generated in a verifiable
+			/// way from a secure time server.
+			/// </summary>
+			[KeyInfo(KeyType.Date | KeyType.Optional)]
+			public new const string M = "/M";
 
-            /// <summary>
-            /// (Optional) The CPU host name or physical location of the signing.
-            /// </summary>
-            [KeyInfo(KeyType.TextString | KeyType.Optional)]
-            public const string Location = "/Location";
+			/// <summary>
+			/// (Optional) The CPU host name or physical location of the signing.
+			/// </summary>
+			[KeyInfo(KeyType.TextString | KeyType.Optional)]
+			public const string Location = "/Location";
 
-            /// <summary>
-            /// (Optional) The reason for the signing, such as (I agree�).
-            /// </summary>
-            [KeyInfo(KeyType.TextString | KeyType.Optional)]
-            public const string Reason = "/Reason";
+			/// <summary>
+			/// (Optional) The reason for the signing, such as (I agree�).
+			/// </summary>
+			[KeyInfo(KeyType.TextString | KeyType.Optional)]
+			public const string Reason = "/Reason";
 
-            /// <summary>
-            /// (Optional)
-            /// </summary>
-            [KeyInfo(KeyType.TextString | KeyType.Optional)]
-            public const string ContactInfo = "/ContactInfo";
+			/// <summary>
+			/// (Optional)
+			/// </summary>
+			[KeyInfo(KeyType.TextString | KeyType.Optional)]
+			public const string ContactInfo = "/ContactInfo";
 
-            /// <summary>
-            /// Gets the KeysMeta for these keys.
-            /// </summary>
-            internal static new DictionaryMeta Meta
-            {
-                get { return _meta ?? (_meta = CreateMeta(typeof(Keys))); }
-            }
-            static DictionaryMeta _meta;
-        }
+			/// <summary>
+			/// Gets the KeysMeta for these keys.
+			/// </summary>
+			internal static new DictionaryMeta Meta
+			{
+				get { return _meta ?? (_meta = CreateMeta(typeof(Keys))); }
+			}
+			static DictionaryMeta _meta;
+		}
 
-        /// <summary>
-        /// Gets the KeysMeta of this dictionary type.
-        /// </summary>
-        internal override DictionaryMeta Meta
-        {
-            get { return Keys.Meta; }
-        }
-    }
+		/// <summary>
+		/// Gets the KeysMeta of this dictionary type.
+		/// </summary>
+		internal override DictionaryMeta Meta
+		{
+			get { return Keys.Meta; }
+		}
+	}
 }
