@@ -62,7 +62,6 @@ namespace PdfSharper.Pdf.AcroForms
         public PdfTextField(PdfDictionary dict)
             : base(dict)
         {
-            DetermineAppearance();
         }
 
         /// <summary>
