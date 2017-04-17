@@ -388,6 +388,7 @@ namespace PdfSharper.Pdf.AcroForms
             if (ap == null)
             {
                 ap = new PdfDictionary(_document);
+                ap.IsCompact = IsCompact;
                 Elements[PdfAnnotation.Keys.AP] = ap;
             }
 
@@ -401,6 +402,7 @@ namespace PdfSharper.Pdf.AcroForms
 
                 var normalStateDict = ap.Elements.GetDictionary("/N");
                 var resourceDict = new PdfDictionary(Owner);
+                resourceDict.IsCompact = IsCompact;
                 resourceDict.Elements[PdfResources.Keys.ProcSet] = new PdfArray(Owner, new PdfName("/PDF"), new PdfName("/Text"));
 
                 var defaultFormResources = Owner.AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
@@ -408,6 +410,7 @@ namespace PdfSharper.Pdf.AcroForms
                 {
                     var fontResourceItem = XForm.GetFontResourceItem(Font.FamilyName, defaultFormResources);
                     PdfDictionary fontDict = new PdfDictionary(Owner);
+                    fontDict.IsCompact = IsCompact;
                     resourceDict.Elements[PdfResources.Keys.Font] = fontDict;
                     fontDict.Elements[fontResourceItem.Key] = fontResourceItem.Value;
                 }

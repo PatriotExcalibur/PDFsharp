@@ -1022,14 +1022,27 @@ namespace PdfSharper.Pdf.IO
 #endif
             // Generation is always 0 for compressed objects.
             PdfObjectID objectID = new PdfObjectID(objectNumber);
-            _lexer.Position = offset;
-            PdfObject obj = ReadObject(null, objectID, false, true, false, xRefTable);
 
-            xRefTable[objectID].Value = obj;
+            PdfObject obj = null;
 
-            if (!_document._irefTable.Contains(objectID))
+            //TODO: try get value
+            if (_document._irefTable.Contains(objectID) && _document._irefTable[objectID].Value != null)
             {
-                _document._irefTable.Add(xRefTable[objectID]);
+                xRefTable.Remove(xRefTable[objectID]);
+                xRefTable.Add(_document._irefTable[objectID]);
+                obj = _document._irefTable[objectID].Value;
+            }
+            else
+            {
+                _lexer.Position = offset;
+                obj = ReadObject(null, objectID, false, true, false, xRefTable);
+
+                xRefTable[objectID].Value = obj;
+
+                if (!_document._irefTable.Contains(objectID))
+                {
+                    _document._irefTable.Add(xRefTable[objectID]);
+                }
             }
 
             return obj.Reference;

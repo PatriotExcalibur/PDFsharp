@@ -401,7 +401,7 @@ namespace PdfSharper.Pdf
                 if (writeableTrailer != null)
                 {
                     writeableTrailer.Info.ModificationDate = DateTime.Now;
-                    PdfTrailer previous = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate < writeableTrailer.Info.ModificationDate);
+                    PdfTrailer previous = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < writeableTrailer.Info.ModificationDate.ToUniversalTime());
                     int maxObjectNumber = writeableTrailer.XRefTable._maxObjectNumber;
                     if (previous != null)
                     {
@@ -498,7 +498,7 @@ namespace PdfSharper.Pdf
             trailer.XRefTable.WriteObject(writer);
             writer.WriteRaw("trailer\r\n");
             trailer.Elements.SetInteger("/Size", trailer.XRefTable._maxObjectNumber + 1); //0 record isn't in count
-            var previousRevision = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate < trailer.Info.ModificationDate);
+            var previousRevision = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < trailer.Info.ModificationDate.ToUniversalTime());
             if (previousRevision != null)
             {
                 Debug.Assert(previousRevision.StartXRef != -1, "Previous trailer was not written yet");
@@ -526,18 +526,20 @@ namespace PdfSharper.Pdf
             if (info.Elements[PdfDocumentInformation.Keys.Creator] == null)
                 info.Creator = pdfSharpProducer;
 
-            //TODO: Update info when incremental is fully supported
             // Keep original producer if file was imported.
-            string producer = info.Producer;
-            if (producer.Length == 0)
-                producer = pdfSharpProducer;
-            else
+            if (_openMode == PdfDocumentOpenMode.Modify)
             {
-                // Prevent endless concatenation if file is edited with PDFsharp more than once.
-                if (!producer.StartsWith(VersionInfo.Title))
+                string producer = info.Producer;
+                if (producer.Length == 0)
                     producer = pdfSharpProducer;
+                else
+                {
+                    // Prevent endless concatenation if file is edited with PDFsharp more than once.
+                    if (!producer.StartsWith(VersionInfo.Title))
+                        producer = pdfSharpProducer;
+                }
+                info.Elements.SetString(PdfDocumentInformation.Keys.Producer, producer);
             }
-            info.Elements.SetString(PdfDocumentInformation.Keys.Producer, producer);
 
             // Prepare used fonts.
             if (_fontTable != null)
@@ -967,7 +969,7 @@ namespace PdfSharper.Pdf
         {
             if (_trailersAsc == null || _trailersAsc.Count != _trailers.Count)
             {
-                _trailersAsc = _trailers.OrderBy(t => t.Info.ModificationDate).ToList().AsReadOnly();
+                _trailersAsc = _trailers.OrderBy(t => t.Info.ModificationDate.ToUniversalTime()).ToList().AsReadOnly();
             }
 
             return _trailersAsc;

@@ -367,7 +367,7 @@ namespace PdfSharper.Pdf.IO
                 //most recent needs to be what goes in the document_ireftable is why we read this first
                 foreach (var trailer in document._trailers)
                 {
-                    ReadObjects(parser, trailer.XRefTable);
+                    ReadObjects(document, parser, trailer.XRefTable, trailer is PdfCrossReferenceStream);
                 }
 
                 document._irefTable.IsUnderConstruction = false;
@@ -378,6 +378,9 @@ namespace PdfSharper.Pdf.IO
                     trailer.FixXRefs();
                     foundNonCrossRef = !(trailer is PdfCrossReferenceStream);
                 }
+
+                //point to the latest version for everything
+                document._irefTable.FixXRefs(true);
 
                 if (foundNonCrossRef)
                 {
@@ -535,7 +538,7 @@ namespace PdfSharper.Pdf.IO
             }
         }
 
-        private static void ReadObjects(Parser parser, PdfCrossReferenceTable xRefTable)
+        private static void ReadObjects(PdfDocument document, Parser parser, PdfCrossReferenceTable xRefTable, bool isCrossReferenceStream)
         {
             PdfReference[] irefs = xRefTable.AllReferences;
             int count = irefs.Length;
@@ -550,6 +553,12 @@ namespace PdfSharper.Pdf.IO
                         if (iref.ObjectNumber == 1074)
                             iref.GetType();
 #endif
+                    if (isCrossReferenceStream && document._irefTable.Contains(iref.ObjectID) && document._irefTable[iref.ObjectID].Value != null)
+                    {
+                        xRefTable.Remove(iref);
+                        xRefTable.Add(document._irefTable[iref.ObjectID]);
+                        continue;
+                    }
                     try
                     {
                         Debug.Assert(xRefTable.Contains(iref.ObjectID));

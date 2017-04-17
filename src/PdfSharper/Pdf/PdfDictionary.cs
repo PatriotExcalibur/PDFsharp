@@ -73,7 +73,7 @@ namespace PdfSharper.Pdf
     [DebuggerDisplay("{DebuggerDisplay}")]
     public class PdfDictionary : PdfObject, IEnumerable<KeyValuePair<string, PdfItem>>
     {
-        internal bool IsCompact { get; set; }
+        public bool IsCompact { get; set; }
 
         // Reference: 3.2.6  Dictionary Objects / Page 59
 

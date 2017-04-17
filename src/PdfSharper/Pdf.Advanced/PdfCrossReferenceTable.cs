@@ -573,34 +573,142 @@ namespace PdfSharper.Pdf.Advanced
             }
         }
         PdfDictionary _deadObject;
+
+        internal void FixXRefs(bool forceDocument = false)
+        {
+            foreach (var item in AllReferences)
+            {
+                if (item.Value != null)
+                {
+                    FixUpObject(item.Value, forceDocument);
+                }
+                else
+                {//what?!
+                }
+            }
+        }
+
+
+        internal void FixUpObject(PdfObject value, bool forceDocument)
+        {
+
+            PdfDictionary dict;
+            PdfArray array;
+            if ((dict = value as PdfDictionary) != null)
+            {
+                // Search for indirect references in all dictionary elements.
+                PdfName[] names = dict.Elements.KeyNames;
+                foreach (PdfName name in names)
+                {
+                    PdfItem item = dict.Elements[name];
+                    Debug.Assert(item != null, "A dictionary element cannot be null.");
+
+                    // Is item an iref?
+                    PdfReference iref = item as PdfReference;
+                    if (iref != null)
+                    {
+                        if (iref.Value == null || (forceDocument && ReferenceEquals(iref.Value, _document._irefTable[iref.ObjectID].Value) == false))
+                        {
+                            PdfObject irefValue = GetObject(iref.ObjectID, forceDocument);
+                            if (irefValue.Reference == null)
+                            {
+                                iref.Value = irefValue;
+                            }
+                            else
+                            {
+                                dict.Elements[name] = irefValue.Reference;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Case: The item is not a reference.
+                        // If item is an object recursively fix its inner items.
+                        PdfObject pdfObject = item as PdfObject;
+                        if (pdfObject != null)
+                        {
+                            // Fix up inner objects, i.e. recursively walk down the object tree.
+                            FixUpObject(pdfObject, forceDocument);
+                        }
+                    }
+                }
+            }
+            else if ((array = value as PdfArray) != null)
+            {
+                // Search for indirect references in all array elements.
+                int count = array.Elements.Count;
+                for (int idx = 0; idx < count; idx++)
+                {
+                    PdfItem item = array.Elements[idx];
+                    Debug.Assert(item != null, "An array element cannot be null.");
+
+                    // Is item an iref?
+                    PdfReference iref = item as PdfReference;
+                    if (iref != null)
+                    {
+                        if (iref.Value == null || (forceDocument && ReferenceEquals(iref.Value, _document._irefTable[iref.ObjectID].Value) == false))
+                        {
+                            PdfObject irefValue = GetObject(iref.ObjectID, forceDocument);
+                            if (irefValue.Reference == null)
+                            {
+                                iref.Value = irefValue;
+                            }
+                            else
+                            {
+                                array.Elements[idx] = irefValue.Reference;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Case: The item is not a reference.
+                        // If item is an object recursively fix its inner items.
+                        PdfObject pdfObject = item as PdfObject;
+                        if (pdfObject != null)
+                        {
+                            // Fix up inner objects, i.e. recursively walk down the object tree.
+                            FixUpObject(pdfObject, forceDocument);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Case: The item is some other indirect object.
+                // Indirect integers, booleans, etc. are allowed, but PDFsharp do not create them.
+                // If such objects occur in imported PDF files from other producers, nothing more is to do.
+                // The owner was already set, which is double checked by the assertions below.
+                if (value is PdfNameObject || value is PdfStringObject || value is PdfBooleanObject || value is PdfIntegerObject || value is PdfNumberObject)
+                {
+                    Debug.Assert(value.IsIndirect);
+                }
+                else
+                    Debug.Assert(false, "Should not come here. Object is neither a dictionary nor an array.");
+            }
+        }
+
+
+        private PdfObject GetObject(PdfObjectID objectID, bool forceDocument)
+        {
+            PdfReference objRef = null;
+
+            if (forceDocument == false)
+            {
+                objRef = this[objectID];
+
+                if (objRef != null)
+                {
+                    return objRef.Value;
+                }
+            }
+
+            objRef = _document._irefTable[objectID];
+            if (objRef != null)
+            {
+                return objRef.Value;
+            }
+
+            return null;
+        }
     }
-
-    ///// <summary>
-    ///// Represents the cross-reference table of a PDF document. 
-    ///// It contains all indirect objects of a document.
-    ///// </summary>
-    //internal sealed class PdfCrossReferenceStreamTable  // Must not be derive from PdfObject.
-    //{
-    //    public PdfCrossReferenceStreamTable(PdfDocument document)
-    //    {
-    //        _document = document;
-    //    }
-    //    readonly PdfDocument _document;
-
-    //    public class Item
-    //    {
-    //        public PdfReference Reference;
-
-    //        public readonly List<CrossReferenceStreamEntry> Entries = new List<CrossReferenceStreamEntry>();
-    //    }
-    //}
-
-    //struct CrossReferenceStreamEntry
-    //{
-    //    public int Type;
-
-    //    public int Field2;
-
-    //    public int Field3;
-    //}
 }

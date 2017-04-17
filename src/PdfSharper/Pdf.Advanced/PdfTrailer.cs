@@ -249,7 +249,7 @@ namespace PdfSharper.Pdf.Advanced
             _document._irefTable.IsUnderConstruction = false;
         }
 
-        internal void FixXRefs()
+        internal void FixXRefs(bool forceDocument = false)
         {
             IEnumerable<string> keys = Elements.Keys;
 
@@ -259,7 +259,7 @@ namespace PdfSharper.Pdf.Advanced
                 PdfReference iref = element as PdfReference;
                 if (iref != null && iref.Value == null)
                 {
-                    if (!XRefTable.Contains(iref.ObjectID))
+                    if (forceDocument || !XRefTable.Contains(iref.ObjectID))
                     { //the document must contain it!
                         var docIref = _document._irefTable[iref.ObjectID];
                         Debug.Assert(docIref.Value != null, "Document contains no info, cannot fixup!");
@@ -269,149 +269,10 @@ namespace PdfSharper.Pdf.Advanced
                         Elements.SetReference(key, XRefTable[iref.ObjectID]);
                 }
             }
-            foreach (var item in XRefTable.AllReferences)
-            {
-                if (item.Value != null)
-                {
-                    FixUpObject(item.Value);
-                }
-                else
-                {//what?!
-                }
-            }
-        }
-        internal void FixUpObject(PdfObject value)
-        {
 
-            PdfDictionary dict;
-            PdfArray array;
-            if ((dict = value as PdfDictionary) != null)
-            {
-                // Search for indirect references in all dictionary elements.
-                PdfName[] names = dict.Elements.KeyNames;
-                foreach (PdfName name in names)
-                {
-                    PdfItem item = dict.Elements[name];
-                    Debug.Assert(item != null, "A dictionary element cannot be null.");
-
-                    // Is item an iref?
-                    PdfReference iref = item as PdfReference;
-                    if (iref != null)
-                    {
-                        if (iref.Value == null)
-                        {
-                            PdfObject irefValue = GetObject(_document.GetSortedTrailers(), iref.ObjectID, Info.ModificationDate);
-                            if (irefValue.Reference == null)
-                            {
-                                iref.Value = irefValue;
-                            }
-                            else
-                            {
-                                dict.Elements[name] = irefValue.Reference;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Case: The item is not a reference.
-                        // If item is an object recursively fix its inner items.
-                        PdfObject pdfObject = item as PdfObject;
-                        if (pdfObject != null)
-                        {
-                            // Fix up inner objects, i.e. recursively walk down the object tree.
-                            FixUpObject(pdfObject);
-                        }
-                    }
-                }
-            }
-            else if ((array = value as PdfArray) != null)
-            {
-                // Search for indirect references in all array elements.
-                int count = array.Elements.Count;
-                for (int idx = 0; idx < count; idx++)
-                {
-                    PdfItem item = array.Elements[idx];
-                    Debug.Assert(item != null, "An array element cannot be null.");
-
-                    // Is item an iref?
-                    PdfReference iref = item as PdfReference;
-                    if (iref != null)
-                    {
-                        if (iref.Value == null)
-                        {
-                            PdfObject irefValue = GetObject(_document.GetSortedTrailers(), iref.ObjectID, Info.ModificationDate);
-                            if (irefValue.Reference == null)
-                            {
-                                iref.Value = irefValue;
-                            }
-                            else
-                            {
-                                array.Elements[idx] = irefValue.Reference;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Case: The item is not a reference.
-                        // If item is an object recursively fix its inner items.
-                        PdfObject pdfObject = item as PdfObject;
-                        if (pdfObject != null)
-                        {
-                            // Fix up inner objects, i.e. recursively walk down the object tree.
-                            FixUpObject(pdfObject);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // Case: The item is some other indirect object.
-                // Indirect integers, booleans, etc. are allowed, but PDFsharp do not create them.
-                // If such objects occur in imported PDF files from other producers, nothing more is to do.
-                // The owner was already set, which is double checked by the assertions below.
-                if (value is PdfNameObject || value is PdfStringObject || value is PdfBooleanObject || value is PdfIntegerObject || value is PdfNumberObject)
-                {
-                    Debug.Assert(value.IsIndirect);
-                }
-                else
-                    Debug.Assert(false, "Should not come here. Object is neither a dictionary nor an array.");
-            }
+            XRefTable.FixXRefs(forceDocument);
         }
 
-        private static PdfObject GetObject(IEnumerable<PdfTrailer> trailers, PdfObjectID objectID, DateTime revision)
-        {
-            foreach (PdfTrailer trailer in trailers)
-            {
-                if (trailer.Info.ModificationDate < revision) //return first available object created before the revision
-                {
-                    continue;
-                }
-
-                PdfReference objRef = trailer.XRefTable[objectID];
-
-                if (objRef != null)
-                {
-                    return objRef.Value;
-                }
-            }
-            //it's not in our revision or any previous revision, get the latest version of it
-            foreach (PdfTrailer trailer in trailers)
-            {
-                if (trailer.Info.ModificationDate >= revision)
-                {
-                    continue;
-                }
-
-                PdfReference objRef = trailer.XRefTable[objectID];
-
-                if (objRef != null)
-                {
-                    return objRef.Value;
-                }
-            }
-
-            return null;
-        }
 
 
 
