@@ -593,7 +593,7 @@ namespace PdfSharper.Pdf
             if (TransparencyUsed && !Elements.ContainsKey(Keys.Group) &&
                 _document.Options.ColorMode != PdfColorMode.Undefined)
             {
-                PdfDictionary group = new PdfDictionary();
+                PdfDictionary group = new PdfDictionary(Owner);
                 _elements["/Group"] = group;
                 if (_document.Options.ColorMode != PdfColorMode.Cmyk)
                     group.Elements.SetName("/CS", "/DeviceRGB");

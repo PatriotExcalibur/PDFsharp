@@ -251,6 +251,24 @@ namespace PdfSharper.Pdf.Advanced
 
         internal void FixXRefs()
         {
+            IEnumerable<string> keys = Elements.Keys;
+
+            foreach (string key in keys)
+            {
+                PdfItem element = Elements[key];
+                PdfReference iref = element as PdfReference;
+                if (iref != null && iref.Value == null)
+                {
+                    if (!XRefTable.Contains(iref.ObjectID))
+                    { //the document must contain it!
+                        var docIref = _document._irefTable[iref.ObjectID];
+                        Debug.Assert(docIref.Value != null, "Document contains no info, cannot fixup!");
+                        Elements.SetReference(key, docIref);
+                    }
+                    else
+                        Elements.SetReference(key, XRefTable[iref.ObjectID]);
+                }
+            }
             foreach (var item in XRefTable.AllReferences)
             {
                 if (item.Value != null)

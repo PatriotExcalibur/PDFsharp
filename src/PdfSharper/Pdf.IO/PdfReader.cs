@@ -386,6 +386,23 @@ namespace PdfSharper.Pdf.IO
                         trailer.IsReadOnly = true;
                     }
                 }
+                else if (document._trailers.All(t => t is PdfCrossReferenceStream)) //we don't support writing CrossRef streams, flatten them
+                {
+                    document._trailers.Clear();
+                    document._irefTable.Compact();
+
+                    document._trailer = new PdfTrailer((PdfCrossReferenceStream)document._trailer);
+                    document._trailer.XRefTable = document._irefTable;
+
+                    PdfPages pages = document.Pages;
+                    Debug.Assert(pages != null);
+
+                    document._irefTable.CheckConsistence();
+                    document._irefTable.Renumber();
+                    document._irefTable.CheckConsistence();
+
+                    document._trailers.Add(document._trailer);
+                }
 
                 // Encrypt all objects.
                 if (xrefEncrypt != null)

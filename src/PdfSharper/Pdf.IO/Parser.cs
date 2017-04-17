@@ -113,6 +113,8 @@ namespace PdfSharper.Pdf.IO
         /// <param name="includeReferences">If true, specifies that all indirect objects
         /// are included recursively.</param>
         /// <param name="fromObjecStream">If true, the objects is parsed from an object stream.</param>
+        /// <param name="setObjectID">Automatically add to the document reference table</param>
+        /// <param name="xRefTable">The object table to use when looking for objects by ID.</param>
         public PdfObject ReadObject(PdfObject pdfObject, PdfObjectID objectID, bool includeReferences, bool fromObjecStream, bool setObjectID = true, PdfCrossReferenceTable xRefTable = null)
         {
 #if DEBUG_

@@ -382,16 +382,6 @@ namespace PdfSharper.Pdf
 
             try
             {
-
-                bool wasPdfCrossRef = false;
-                // HACK: Remove XRefTrailer
-                if (_trailer is PdfCrossReferenceStream)
-                {
-                    _trailer = new PdfTrailer((PdfCrossReferenceStream)_trailer);
-                    _trailer.XRefTable = _irefTable;
-                    wasPdfCrossRef = true;
-                }
-
                 bool encrypt = _securitySettings.DocumentSecurityLevel != PdfDocumentSecurityLevel.None;
                 if (encrypt)
                 {
@@ -434,14 +424,8 @@ namespace PdfSharper.Pdf
 
                 writer.WriteFileHeader(this);
 
-                if (wasPdfCrossRef) //todo: support cross ref writing!
+                if (_trailers.Count == 1) //todo: support cross ref writing!
                 {
-                    _trailers.Clear();
-                    _irefTable.Compact();
-                    _irefTable.CheckConsistence();
-                    _irefTable.Renumber();
-                    _irefTable.CheckConsistence();
-
                     WriteTrailer(writer, _trailer); //HACK! this will lose incremental updates 
                 }
                 else
