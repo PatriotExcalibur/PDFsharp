@@ -464,21 +464,6 @@ namespace PdfSharper.Pdf.IO
             return document;
         }
 
-        private static PdfObject GetLatestRevisionOfObject(IEnumerable<PdfTrailer> trailers, PdfObjectID objectID)
-        {
-            foreach (PdfTrailer trailer in trailers)
-            {
-                PdfReference objRef = trailer.XRefTable[objectID];
-
-                if (objRef != null)
-                {
-                    return objRef.Value;
-                }
-            }
-
-            return null;
-        }
-
         private static void DecompressObjects(PdfDocument document, Parser parser, PdfCrossReferenceTable xRefTable)
         {
             PdfReference[] irefs2 = xRefTable.AllReferences;
