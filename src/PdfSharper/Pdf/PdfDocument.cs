@@ -153,8 +153,11 @@ namespace PdfSharper.Pdf
             _fontTable = new PdfFontTable(this);
             _imageTable = new PdfImageTable(this);
             _trailer = new PdfTrailer(this);
+
             _irefTable = new PdfCrossReferenceTable(this);
+            _trailer.XRefTable = _irefTable;
             _trailer.CreateNewDocumentIDs();
+            _trailers.Add(_trailer);
         }
 
         //~PdfDocument()
