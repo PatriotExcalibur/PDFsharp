@@ -549,7 +549,6 @@ namespace PdfSharper.Pdf.IO
                         Debug.Assert(xRefTable.Contains(iref.ObjectID));
                         PdfObject pdfObject = parser.ReadObject(null, iref.ObjectID, false, false, false, xRefTable);
 
-                        pdfObject.Reference = iref;
                         iref.Value = pdfObject;
                     }
                     catch (Exception ex)
