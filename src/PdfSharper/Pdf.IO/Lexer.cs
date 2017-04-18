@@ -199,7 +199,6 @@ namespace PdfSharper.Pdf.IO
             {
                 Array.Resize(ref bytes, read);
             }
-            int endStreamPosition = (int)_pdfSteam.Position;
             // Synchronize idxChar etc.
             Position = (int)_pdfSteam.Position;
 
