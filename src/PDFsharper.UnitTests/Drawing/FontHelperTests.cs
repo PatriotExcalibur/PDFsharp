@@ -1,12 +1,6 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PdfSharper.Pdf.AcroForms;
-using PdfSharper.Pdf;
-using System.IO;
-using PdfSharper.Pdf.Annotations;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PdfSharper.Drawing;
-using System.Drawing;
-using System.Collections.Generic;
+using System;
 
 namespace PDFsharper.UnitTests.Drawing
 {
