@@ -16,7 +16,7 @@ namespace PDFsharper.UnitTests.Drawing
         [TestMethod]
         public void MeasureString_Courier()
         {
-            XFont font = new XFont("Courier", 10.0);
+            XFont font = new XFont("Courier", 9.0);
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");

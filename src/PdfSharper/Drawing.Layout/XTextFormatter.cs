@@ -152,8 +152,6 @@ namespace PdfSharper.Drawing.Layout
             double dx = layoutRectangle.Location.X;
             double dy = layoutRectangle.Location.Y + _cyAscent;
 
-
-
             /* Alterado por Ângelo Cossa */
             List<double> Larr_lineWidth = new List<double>();
             List<double> Larr_lineStart = new List<double>();
@@ -202,12 +200,10 @@ namespace PdfSharper.Drawing.Layout
             //Adjust the linestart
             if (format.Alignment != XStringAlignment.Near)
             {
-
                 for (int n = 0; n < Larr_lineWidth.Count; n++)
                 {
-                    //gets the diference between the width of the retangle and the width of the line
+                    //gets the difference between the width of the retangle and the width of the line
                     double rest = layoutRectangle.Width - Larr_lineWidth[n];
-
 
                     if (format.Alignment == XStringAlignment.Center)
                     {
@@ -219,13 +215,10 @@ namespace PdfSharper.Drawing.Layout
                         Larr_lineStart[n] = rest;
                     }
                 }
-
             }
-
 
             if (format.LineAlignment != XLineAlignment.Near && !ends_before_end)
             {
-
                 Block last_block = (Block)_blocks[_blocks.Count - 1];
 
                 //gets the height of the text
@@ -234,7 +227,6 @@ namespace PdfSharper.Drawing.Layout
                 //the diference between the size of the block and the size fo the text
                 double rest = layoutRectangle.Height - text_height;
 
-
                 if (format.LineAlignment == XLineAlignment.BaseLine)
                 {
                     //if the text is in the botton, the rest is in the top
@@ -242,15 +234,10 @@ namespace PdfSharper.Drawing.Layout
                 }
                 else if (format.LineAlignment == XLineAlignment.Center)
                 {
-                    //If the text is in the middle half the rest in the top
+                    //If the text is in the middle half the rest is in the top
                     dy += (rest / 2D);
                 }
-
-
             }
-
-
-
 
             int count = _blocks.Count;
             int lineCount = 0;
@@ -273,11 +260,65 @@ namespace PdfSharper.Drawing.Layout
 
         void CreateBlocks()
         {
-            //TODO: make seperate blocks again when we are reading adobe afm files
             _blocks.Clear();
-            string token = _text;
-            _blocks.Add(new Block(token, BlockType.Text,
-            _gfx.MeasureString(token, _font).Width, _gfx.MeasureString(token, _font).Height));
+            int length = _text.Length;
+            bool inNonWhiteSpace = false;
+            int startIndex = 0, blockLength = 0;
+            for (int idx = 0; idx < length; idx++)
+            {
+                char ch = _text[idx];
+
+                // Treat CR and CRLF as LF
+                if (ch == Chars.CR)
+                {
+                    if (idx < length - 1 && _text[idx + 1] == Chars.LF)
+                        idx++;
+                    ch = Chars.LF;
+                }
+
+                if (ch == Chars.LF)
+                {
+                    if (blockLength != 0)
+                    {
+                        string token = _text.Substring(startIndex, blockLength);
+                        XSize tokenSize = _gfx.MeasureString(token, _font);
+                        Block block = new Block(token, BlockType.Text, tokenSize.Width, tokenSize.Height);
+                        _blocks.Add(block);
+                    }
+                    startIndex = idx + 1;
+                    blockLength = 0;
+                    _blocks.Add(new Block(BlockType.LineBreak));
+                }
+                else if (char.IsWhiteSpace(ch))
+                {
+                    if (inNonWhiteSpace)
+                    {
+                        string token = _text.Substring(startIndex, blockLength);
+                        XSize tokenSize = _gfx.MeasureString(token, _font);
+                        Block block = new Block(token, BlockType.Text, tokenSize.Width, tokenSize.Height);
+                        _blocks.Add(block);
+                        startIndex = idx + 1;
+                        blockLength = 0;
+                    }
+                    else
+                    {
+                        blockLength++;
+                    }
+                }
+                else
+                {
+                    inNonWhiteSpace = true;
+                    blockLength++;
+                }
+            }
+
+            if (blockLength != 0)
+            {
+                string token = _text.Substring(startIndex, blockLength);
+                XSize tokenSize = _gfx.MeasureString(token, _font);
+                Block block = new Block(token, BlockType.Text, tokenSize.Width, tokenSize.Height);
+                _blocks.Add(block);
+            }
         }
 
         void CreateLayout()
