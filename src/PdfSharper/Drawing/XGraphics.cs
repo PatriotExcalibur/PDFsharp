@@ -3659,7 +3659,7 @@ namespace PdfSharper.Drawing  // #??? aufr�umen
             return size1;
 #else
             // Same as above, but without code needed for Debug.Assert.
-            XSize size1 = FontHelper.MeasureString(text, font, null);
+            XSize size1 = FontHelper.MeasureString(text, font);
             return size1;
 #endif
 #else
