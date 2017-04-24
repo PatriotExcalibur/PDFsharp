@@ -1530,6 +1530,10 @@ namespace PdfSharper.Pdf
             /// </summary>
             public bool Remove(string key)
             {
+                if (_elements.ContainsKey(key))
+                {
+                    Owner.FlagAsDirty();
+                }
                 return _elements.Remove(key);
             }
 
@@ -1538,7 +1542,7 @@ namespace PdfSharper.Pdf
             /// </summary>
             public bool Remove(KeyValuePair<string, PdfItem> item)
             {
-                throw new NotImplementedException();
+                return Remove(item.Key);
             }
 
             ///// <summary>
@@ -1571,6 +1575,11 @@ namespace PdfSharper.Pdf
             /// </summary>
             public void Clear()
             {
+                if (_ownerDictionary != null && _ownerDictionary.Owner != null && !_ownerDictionary.Owner.UnderConstruction)
+                {
+                    Owner.FlagAsDirty();
+                }
+
                 _elements.Clear();
             }
 
@@ -1589,6 +1598,11 @@ namespace PdfSharper.Pdf
                 PdfObject obj = value as PdfObject;
                 if (obj != null && obj.IsIndirect)
                     value = obj.Reference;
+
+                if (_ownerDictionary != null && _ownerDictionary.Owner != null && !_ownerDictionary.Owner.UnderConstruction)
+                {
+                    Owner.FlagAsDirty();
+                }
 
                 _elements.Add(key, value);
             }
