@@ -1532,7 +1532,10 @@ namespace PdfSharper.Pdf
             {
                 if (_elements.ContainsKey(key))
                 {
-                    Owner.FlagAsDirty();
+                    if (_ownerDictionary != null && _ownerDictionary.Owner != null && !_ownerDictionary.Owner.UnderConstruction)
+                    {
+                        Owner.FlagAsDirty();
+                    }
                 }
                 return _elements.Remove(key);
             }
