@@ -4,21 +4,21 @@ namespace PdfSharper.Fonts.AFM
 {
     public class AFMSource
     {
-        private static readonly string COURIERBOLD = "Fonts\\AFM\\Files\\Courier-Bold.afm";
-        private static readonly string COURIEROBLIQUE = "Fonts\\AFM\\Files\\Courier-Oblique.afm";
-        private static readonly string COURIER = "Fonts\\AFM\\Files\\Courier.afm";
-        private static readonly string COURIERBOLDOBLIQUE = "Fonts\\AFM\\Files\\Courier_BoldOblique.afm";
-        private static readonly string HELVETICABOLD = "Fonts\\AFM\\Files\\Helvetica-Bold.afm";
-        private static readonly string HELVETICABOLDOBLIQUE = "Fonts\\AFM\\Files\\Helvetica-BoldOblique.afm";
-        private static readonly string HELVETICAOBLIQUE = "Fonts\\AFM\\Files\\Helvetica-Oblique.afm";
-        private static readonly string HELVETICA = "Fonts\\AFM\\Files\\Helvetica.afm";
-        private static readonly string SYMBOL = "Fonts\\AFM\\Files\\Symbol.afm";
-        private static readonly string TIMESBOLD = "Fonts\\AFM\\Files\\Times-Bold.afm";
-        private static readonly string TIMESBOLDITALIC = "Fonts\\AFM\\Files\\Times-BoldItalic.afm";
-        private static readonly string TIMESITALIC = "Fonts\\AFM\\Files\\Times-Italic.afm";
-        private static readonly string TIMESNEWROMAN = "Fonts\\AFM\\Files\\Times-New-Roman.afm";
-        private static readonly string TIMESROMAN = "Fonts\\AFM\\Files\\Times-Roman.afm";
-        private static readonly string ZAPFDINGBATS = "Fonts\\AFM\\Files\\ZapfDingbats.afm";
+        private static readonly string COURIERBOLD = "PdfSharper.Fonts.AFM.Files.Courier-Bold.afm";
+        private static readonly string COURIEROBLIQUE = "PdfSharper.Fonts.AFM.Files.Courier-Oblique.afm";
+        private static readonly string COURIER = "PdfSharper.Fonts.AFM.Files.Courier.afm";
+        private static readonly string COURIERBOLDOBLIQUE = "PdfSharper.Fonts.AFM.Files.Courier_BoldOblique.afm";
+        private static readonly string HELVETICABOLD = "PdfSharper.Fonts.AFM.Files.Helvetica-Bold.afm";
+        private static readonly string HELVETICABOLDOBLIQUE = "PdfSharper.Fonts.AFM.Files.Helvetica-BoldOblique.afm";
+        private static readonly string HELVETICAOBLIQUE = "PdfSharper.Fonts.AFM.Files.Helvetica-Oblique.afm";
+        private static readonly string HELVETICA = "PdfSharper.Fonts.AFM.Files.Helvetica.afm";
+        private static readonly string SYMBOL = "PdfSharper.Fonts.AFM.Files.Symbol.afm";
+        private static readonly string TIMESBOLD = "PdfSharper.Fonts.AFM.Files.Times-Bold.afm";
+        private static readonly string TIMESBOLDITALIC = "PdfSharper.Fonts.AFM.Files.Times-BoldItalic.afm";
+        private static readonly string TIMESITALIC = "PdfSharper.Fonts.AFM.Files.Times-Italic.afm";
+        private static readonly string TIMESNEWROMAN = "PdfSharper.Fonts.AFM.Files.Times-New-Roman.afm";
+        private static readonly string TIMESROMAN = "PdfSharper.Fonts.AFM.Files.Times-Roman.afm";
+        private static readonly string ZAPFDINGBATS = "PdfSharper.Fonts.AFM.Files.ZapfDingbats.afm";
 
         public static IEnumerable<string> GetAll()
         {

@@ -161,7 +161,7 @@ namespace PdfSharper.Drawing
                 {
                     char ch = text[idx];
 
-                    if (ch >= 32 || ch <= 251)
+                    if ((ch >= 32 || ch <= 251) && afmDetials.CharacterWidths.ContainsKey(ch))
                     {
                         width += afmDetials.CharacterWidths[ch];
                     }

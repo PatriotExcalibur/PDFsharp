@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace PdfSharper.Fonts.AFM
 {
@@ -106,9 +107,12 @@ namespace PdfSharper.Fonts.AFM
 
             AFMDetails fontMetric = null;
 
-            using (StreamReader stream = new StreamReader(afm))
+            Assembly assembly = Assembly.GetExecutingAssembly();
+
+            using (Stream stream = assembly.GetManifestResourceStream(afm))
+            using (StreamReader streamReader = new StreamReader(stream))
             {
-                string line = stream.ReadLine();
+                string line = streamReader.ReadLine();
                 if (!string.IsNullOrWhiteSpace(line) && line.Contains(startFontMetricsLabel))
                 {
                     bool continueReading = true;
@@ -159,7 +163,7 @@ namespace PdfSharper.Fonts.AFM
                             Int32.TryParse(line.Substring(capHeightLabel.Length), out capHeight);
                         }
 
-                        if(line.StartsWith(fontBBoxLabel))
+                        if (line.StartsWith(fontBBoxLabel))
                         {
                             string[] bboxValues = line.Substring(fontBBoxLabel.Length).Split(' ');
                             Int32.TryParse(bboxValues[0], out bboxLLX);
@@ -175,7 +179,7 @@ namespace PdfSharper.Fonts.AFM
 
                         if (continueReading)
                         {
-                            line = stream.ReadLine();
+                            line = streamReader.ReadLine();
                         }
                     }
 

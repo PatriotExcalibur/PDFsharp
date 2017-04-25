@@ -406,51 +406,21 @@
     <EmbeddedResource Include="Resources\Messages.restext" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Fonts\AFM\Files\Courier-Bold.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Courier-Oblique.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Courier.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Courier_BoldOblique.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Helvetica-Bold.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Helvetica-BoldOblique.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Helvetica-Oblique.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Helvetica.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Symbol.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Times-Bold.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Times-BoldItalic.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Times-Italic.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Times-New-Roman.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\Times-Roman.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Fonts\AFM\Files\ZapfDingbats.afm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="Fonts\AFM\Files\Courier-Bold.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Courier-Oblique.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Courier.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Courier_BoldOblique.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Helvetica-Bold.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Helvetica-BoldOblique.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Helvetica-Oblique.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Helvetica.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Symbol.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Times-Bold.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Times-BoldItalic.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Times-Italic.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Times-New-Roman.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\Times-Roman.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\ZapfDingbats.afm" />
     <None Include="SharpZipLib\ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -459,9 +429,7 @@
     <Folder Include="SharpZipLib\SharpZip\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Fonts\AFM\Files\mustRead.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="Fonts\AFM\Files\mustRead.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
