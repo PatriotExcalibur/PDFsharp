@@ -41,8 +41,8 @@ namespace PdfSharper.Drawing.Layout
     public class XTextFormatter
     {
         private readonly XGraphics _gfx;
-        private string _text;
-        private bool _wrapText;
+        private string _text = string.Empty;
+        private bool _wrapText = false;
         private XFont _font;
         private double _lineSpace;
         private double _cyAscent;
@@ -156,25 +156,25 @@ namespace PdfSharper.Drawing.Layout
         /// <summary>
         /// Draws the text.
         /// </summary>
-        /// <param name="text"></param>
-        /// <param name="font"></param>
-        /// <param name="brush"></param>
-        /// <param name="layoutRectangle"></param>
+        /// <param name="text">The text to be drawn.</param>
+        /// <param name="font">The font.</param>
+        /// <param name="brush">The text brush.</param>
+        /// <param name="layoutRectangle">The layout rectangle.</param>
         /// <param name="format"></param>
         public void DrawString(string text, XFont font, XBrush brush, XRect layoutRectangle, XStringFormat format)
         {
             this.DrawString(text, false, font, brush, layoutRectangle, XStringFormats.TopLeft);
         }
-        
+
         /// <summary>
         /// Draws the text.
         /// </summary>
-        /// <param name="text"></param>
-        /// <param name="wrapText"></param>
-        /// <param name="font"></param>
-        /// <param name="brush"></param>
-        /// <param name="layoutRectangle"></param>
-        /// <param name="format"></param>
+        /// <param name="text">The text to be drawn.</param>
+        /// <param name="wrapText">Should the text be wrapped.</param>
+        /// <param name="font">The font.</param>
+        /// <param name="brush">The text brush.</param>
+        /// <param name="layoutRectangle">The layout rectangle.</param>
+        /// <param name="format">The format.</param>
         public void DrawString(string text, bool wrapText, XFont font, XBrush brush, XRect layoutRectangle, XStringFormat format)
         {
             if (text == null)

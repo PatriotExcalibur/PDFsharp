@@ -74,7 +74,7 @@ namespace PdfSharper.Drawing
                 throw new ArgumentNullException("text");
             if (font == null)
                 throw new ArgumentNullException("font");
-
+            
             XSize size = new XSize();
             if (!string.IsNullOrEmpty(text))
             {
@@ -147,24 +147,21 @@ namespace PdfSharper.Drawing
             return new XSize();
         }
 
-        private static XSize GetSizeByAFM(string text, XFont font, AFMDetails afmDetials)
+        private static XSize GetSizeByAFM(string text, XFont font, AFMDetails afmDetails)
         {
             XSize size = new XSize();
 
-            if (!string.IsNullOrEmpty(text) && afmDetials != null)
+            if (!string.IsNullOrEmpty(text) && afmDetails != null)
             {
                 // Height is the sum of ascender and descender.
                 int width = 0;
-                int height = afmDetials.Ascender + afmDetials.Descender;
+                int height = afmDetails.Ascender + afmDetails.Descender;
                 
                 for (int idx = 0; idx < text.Length; idx++)
                 {
-                    char ch = text[idx];
-
-                    if ((ch >= 32 || ch <= 251) && afmDetials.CharacterWidths.ContainsKey(ch))
-                    {
-                        width += afmDetials.CharacterWidths[ch];
-                    }
+                    int characterWidth = 0;
+                    afmDetails.CharacterWidths.TryGetValue(text[idx], out characterWidth);
+                    width += characterWidth;
                 }
                 
                 if (width > 0)
@@ -178,7 +175,7 @@ namespace PdfSharper.Drawing
 
                 if(height > 0)
                 {
-                    size.Height = (afmDetials.BBoxURY - afmDetials.BBoxLLY) * font.Size * .001f;
+                    size.Height = (afmDetails.BBoxURY - afmDetails.BBoxLLY) * font.Size * .001f;
                 }
                 else
                 {

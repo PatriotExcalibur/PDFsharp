@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace PdfSharper.Fonts.AFM
 {
     public class AFMCache
     {
+        private static readonly object syncRoot = new object();
+
         private Dictionary<string, AFMDetails> FontMetrics { get; set; }
 
         private static AFMCache _instance;
@@ -23,7 +26,13 @@ namespace PdfSharper.Fonts.AFM
             {
                 if (_instance == null)
                 {
-                    _instance = new AFMCache();
+                    lock (syncRoot)
+                    {
+                        if (_instance == null)
+                        {
+                            _instance = new AFMCache();
+                        }
+                    }
                 }
 
                 return _instance;
@@ -37,7 +46,7 @@ namespace PdfSharper.Fonts.AFM
             string fontMetricSource = AFMSource.GetSourceByName(fontName);
             if (!string.IsNullOrWhiteSpace(fontMetricSource))
             {
-                fontMetric = this.GetFontMetrics(fontName, fontMetricSource);
+                fontMetric = this.GetFontMetrics(fontMetricSource);
             }
 
             return fontMetric;
@@ -50,38 +59,38 @@ namespace PdfSharper.Fonts.AFM
             string fontMetricSource = AFMSource.GetSourceByNameAndAttributes(fontName, isBold, isItalic);
             if (!string.IsNullOrWhiteSpace(fontMetricSource))
             {
-                fontMetric = this.GetFontMetrics(fontName, fontMetricSource);
+                fontMetric = this.GetFontMetrics(fontMetricSource);
             }
 
             return fontMetric;
         }
 
-        private AFMDetails GetFontMetrics(string fontName, string fontMetricSource)
+        private AFMDetails GetFontMetrics(string fontMetricSource)
         {
             AFMDetails fontMetric = null;
 
-            if (!string.IsNullOrWhiteSpace(fontName))
+            if (!string.IsNullOrWhiteSpace(fontMetricSource))
             {
-                if (this.FontMetrics.ContainsKey(fontName))
+                if (this.FontMetrics.ContainsKey(fontMetricSource))
                 {
-                    fontMetric = this.FontMetrics[fontName];
+                    fontMetric = this.FontMetrics[fontMetricSource];
                 }
                 else if (!string.IsNullOrWhiteSpace(fontMetricSource))
                 {
-                    fontMetric = this.LoadFontMetric(fontName, fontMetricSource);
+                    fontMetric = this.LoadFontMetric(fontMetricSource);
                 }
             }
 
             return fontMetric;
         }
 
-        private AFMDetails LoadFontMetric(string fontName, string fontMetricSource)
+        private AFMDetails LoadFontMetric(string fontMetricSource)
         {
             AFMDetails fontMetric = BuildFontMetrics(fontMetricSource);
 
-            if (!this.FontMetrics.ContainsKey(fontName) && fontMetric != null && !string.IsNullOrWhiteSpace(fontMetric.FontName) && fontMetric.CharacterWidths != null && fontMetric.CharacterWidths.Any())
+            if (!this.FontMetrics.ContainsKey(fontMetricSource) && fontMetric != null && !string.IsNullOrWhiteSpace(fontMetric.FontName) && fontMetric.CharacterWidths != null && fontMetric.CharacterWidths.Any())
             {
-                this.FontMetrics.Add(fontName, fontMetric);
+                this.FontMetrics.Add(fontMetricSource, fontMetric);
             }
             else
             {

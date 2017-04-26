@@ -10,12 +10,12 @@ namespace PDFsharper.UnitTests.Drawing
         [TestMethod]
         public void MeasureString_Courier()
         {
-            XFont font = new XFont("Courier", 9.0);
+            XFont font = new XFont("Courier", 10.0);
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+            Assert.IsTrue(Math.Round(size.Width, 3) == 24, "size.Width is not correct.  Expected 24 but Got {0}", Math.Round(size.Width, 3));
+            Assert.IsTrue(Math.Round(size.Height, 3) == 10.55, "size.Height is not correct.  Expected 10.55 but Got {0}", Math.Round(size.Height, 3));
         }
 
         [TestMethod]
@@ -25,8 +25,8 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+            Assert.IsTrue(Math.Round(size.Width, 3) == 24, "size.Width is not correct.  Expected 24.000f but Got {0}", Math.Round(size.Width, 3));
+            Assert.IsTrue(Math.Round(size.Height, 3) == 10.51, "size.Height is not correct.  Expected 10.51 but Got {0}", Math.Round(size.Height, 3));
         }
 
         [TestMethod]
@@ -36,8 +36,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 24, "size.Width is not correct.  Expected 24.000f but Got {0}", width);
+            Assert.IsTrue(height == 10.51, "size.Height is not correct.  Expected 10.51 but Got {0}", height);
         }
 
         [TestMethod]
@@ -47,8 +50,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 24, "size.Width is not correct.  Expected 24.000f but Got {0}", width);
+            Assert.IsTrue(height == 10.55, "size.Height is not correct.  Expected 10.55 but Got {0}", height);
         }
 
         [TestMethod]
@@ -58,8 +64,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 16.12, "size.Width is not correct.  Expected 16.12 but Got {0}", width);
+            Assert.IsTrue(height == 11.56, "size.Height is not correct.  Expected 11.56 but Got {0}", height);
         }
 
         [TestMethod]
@@ -69,8 +78,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 17.78, "size.Width is not correct.  Expected 17.78 but Got {0}", width);
+            Assert.IsTrue(height == 11.9, "size.Height is not correct.  Expected 11.9 but Got {0}", height);
         }
 
         [TestMethod]
@@ -80,8 +92,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 17.78, "size.Width is not correct.  Expected 17.78 but Got {0}", width);
+            Assert.IsTrue(height == 11.9, "size.Height is not correct.  Expected 11.9 but Got {0}", height);
         }
 
         [TestMethod]
@@ -91,8 +106,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 16.12, "size.Width is not correct.  Expected 16.12 but Got {0}", width);
+            Assert.IsTrue(height == 11.56, "size.Height is not correct.  Expected 11.56 but Got {0}", height);
         }
 
         [TestMethod]
@@ -102,8 +120,8 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+            Assert.IsTrue(Math.Round(size.Width, 3) == 19.2, "size.Width is not correct.  Expected 19.2 but Got {0}", Math.Round(size.Width, 3));
+            Assert.IsTrue(Math.Round(size.Height, 3) == 12, "size.Height is not correct.  Expected 12 but Got {0}", Math.Round(size.Height, 3));
         }
 
         [TestMethod]
@@ -113,8 +131,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 14.99, "size.Width is not correct.  Expected 14.99 but Got {0}", width);
+            Assert.IsTrue(height == 11.53, "size.Height is not correct.  Expected 11.53 but Got {0}", height);
         }
 
         [TestMethod]
@@ -124,8 +145,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 13.89, "size.Width is not correct.  Expected 13.89 but Got {0}", width);
+            Assert.IsTrue(height == 11.39, "size.Height is not correct.  Expected 11.39 but Got {0}", height);
         }
 
         [TestMethod]
@@ -135,8 +159,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 13.89, "size.Width is not correct.  Expected 13.89 but Got {0}", width);
+            Assert.IsTrue(height == 11, "size.Height is not correct.  Expected 11 but Got {0}", height);
         }
 
         [TestMethod]
@@ -146,8 +173,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 33.72, "size.Width is not correct.  Expected 33.72 but Got {0}", width);
+            Assert.IsTrue(height == 12, "size.Height is not correct.  Expected 12 but Got {0}", height);
         }
 
         [TestMethod]
@@ -157,8 +187,11 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 13.89, "size.Width is not correct.  Expected 13.89 but Got {0}", width);
+            Assert.IsTrue(height == 11.16, "size.Height is not correct.  Expected 11.16 but Got {0}", height);
         }
 
         [TestMethod]
@@ -168,49 +201,76 @@ namespace PDFsharper.UnitTests.Drawing
             XSize size = FontHelper.MeasureString("test", font);
 
             Assert.IsNotNull(size, "size should not be null");
-            Assert.IsTrue(size.Width > 0, "size.Width should be greater than zero");
-            Assert.IsTrue(size.Height > 0, "size.Height should be greater than zero");
+
+            double width = Math.Round(size.Width, 3);
+            double height = Math.Round(size.Height, 3);
+            Assert.IsTrue(width == 33.72, "size.Width is not correct.  Expected 33.72 but Got {0}", width);
+            Assert.IsTrue(height == 12, "size.Height is not correct.  Expected 12 but Got {0}", height);
         }
 
         [TestMethod]
-        public void MeasureString()
+        public void MeasureString_CombinationsOfLettersAndSpaces()
         {
+            double width = 0;
+            double height = 0;
+
             XFont font = new XFont("Helvetica", 10.0);
 
             XSize size1 = FontHelper.MeasureString("test", font);
             Assert.IsNotNull(size1, "size1 should not be null");
-            Assert.IsTrue(size1.Width > 0, "size1.Width should be greater than zero");
-            Assert.IsTrue(size1.Height > 0, "size1.Height should be greater than zero");
+
+            width = Math.Round(size1.Width, 3);
+            height = Math.Round(size1.Height, 3);
+            Assert.IsTrue(width == 16.12, "size1 - Width is not correct.  Expected 16.12 but Got {0}", width);
+            Assert.IsTrue(height == 11.56, "size1 - Height is not correct.  Expected 11.56 but Got {0}", height);
 
             XSize size2 = FontHelper.MeasureString("T ", font);
             Assert.IsNotNull(size2, "size2 should not be null");
-            Assert.IsTrue(size2.Width > 0, "size2.Width should be greater than zero");
-            Assert.IsTrue(size2.Height > 0, "size2.Height should be greater than zero");
+
+            width = Math.Round(size2.Width, 3);
+            height = Math.Round(size2.Height, 3);
+            Assert.IsTrue(width == 8.89, "size2 - Width is not correct.  Expected 8.89 but Got {0}", width);
+            Assert.IsTrue(height == 11.56, "size2 - Height is not correct.  Expected 11.56 but Got {0}", height);
 
             XSize size3 = FontHelper.MeasureString("e ", font);
             Assert.IsNotNull(size3, "size3 should not be null");
-            Assert.IsTrue(size3.Width > 0, "size3.Width should be greater than zero");
-            Assert.IsTrue(size3.Height > 0, "size3.Height should be greater than zero");
+
+            width = Math.Round(size3.Width, 3);
+            height = Math.Round(size3.Height, 3);
+            Assert.IsTrue(width == 8.34, "size3 - Width is not correct.  Expected 8.34 but Got {0}", width);
+            Assert.IsTrue(height == 11.56, "size3 - Height is not correct.  Expected 11.56 but Got {0}", height);
 
             XSize size4 = FontHelper.MeasureString("s ", font);
             Assert.IsNotNull(size4, "size4 should not be null");
-            Assert.IsTrue(size4.Width > 0, "size4.Width should be greater than zero");
-            Assert.IsTrue(size4.Height > 0, "size4.Height should be greater than zero");
+
+            width = Math.Round(size4.Width, 3);
+            height = Math.Round(size4.Height, 3);
+            Assert.IsTrue(width == 7.78, "size4 - Width is not correct.  Expected 7.78 but Got {0}", width);
+            Assert.IsTrue(height == 11.56, "size4 - Height is not correct.  Expected 11.56 but Got {0}", height);
 
             XSize size5 = FontHelper.MeasureString("t ", font);
             Assert.IsNotNull(size5, "size5 should not be null");
-            Assert.IsTrue(size5.Width > 0, "size5.Width should be greater than zero");
-            Assert.IsTrue(size5.Height > 0, "size5.Height should be greater than zero");
+
+            width = Math.Round(size5.Width, 3);
+            height = Math.Round(size5.Height, 3);
+            Assert.IsTrue(width == 5.56, "size5 - Width is not correct.  Expected 5.56 but Got {0}", width);
+            Assert.IsTrue(height == 11.56, "size5 - Height is not correct.  Expected 11.56 but Got {0}", height);
 
             XSize sizeSpace = FontHelper.MeasureString(" ", font);
             Assert.IsNotNull(sizeSpace, "sizeSpace should not be null");
-            Assert.IsTrue(sizeSpace.Width > 0, "sizeSpace.Width should be greater than zero");
-            Assert.IsTrue(sizeSpace.Height > 0, "sizeSpace.Height should be greater than zero");
+
+            width = Math.Round(sizeSpace.Width, 3);
+            height = Math.Round(sizeSpace.Height, 3);
+            Assert.IsTrue(width == 2.78, "sizeSpace - Width is not correct.  Expected 2.78 but Got {0}", width);
+            Assert.IsTrue(height == 11.56, "sizeSpace - Height is not correct.  Expected 11.56 but Got {0}", height);
 
             XSize sizeEmpty = FontHelper.MeasureString("", font);
             Assert.IsNotNull(sizeEmpty, "sizeEmpty should not be null");
-            Assert.IsTrue(sizeEmpty.Width == 0, "sizeEmpty.Width should be zero");
-            Assert.IsTrue(sizeEmpty.Height == 0, "sizeEmpty.Height should be zero");
+
+            width = Math.Round(sizeEmpty.Width, 3);
+            height = Math.Round(sizeEmpty.Height, 3);
+            Assert.IsTrue(width == 0, "sizeEmpty - Width is not correct.  Expected 0 but Got {0}", width);
+            Assert.IsTrue(height == 0, "sizeEmpty - Height is not correct.  Expected 0 but Got {0}", height);
         }
 
         [TestMethod]

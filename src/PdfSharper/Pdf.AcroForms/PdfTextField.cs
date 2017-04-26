@@ -345,7 +345,7 @@ namespace PdfSharper.Pdf.AcroForms
             if (!BorderColor.IsEmpty)
                 gfx.DrawRectangle(new XPen(BorderColor), rect.ToXRect() - rect.Location);
             
-            if (this.Text.Length > 0)
+            if (Text.Length > 0)
             {
                 xrect.Y = xrect.Y + TopMargin;
                 xrect.X = xrect.X + LeftMargin;
@@ -361,14 +361,14 @@ namespace PdfSharper.Pdf.AcroForms
                     gfx.Save();
                     gfx.IntersectClip(xrect);
 
-                    if (this.MultiLine)
+                    if (MultiLine)
                     {
                         XTextFormatter formatter = new XTextFormatter(gfx);
-                        formatter.DrawString(this.Text, this.MultiLine, this.Font, new XSolidBrush(this.ForeColor), xrect, this.Alignment);
+                        formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
                     }
                     else
                     {
-                        gfx.DrawString(this.Text, this.Font, new XSolidBrush(this.ForeColor), xrect + new XPoint(0, 1.5), format);
+                        gfx.DrawString(Text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
                     }
 
                     gfx.Restore();
@@ -376,7 +376,7 @@ namespace PdfSharper.Pdf.AcroForms
                 else
                 {
                     XTextFormatter formatter = new XTextFormatter(gfx);
-                    formatter.DrawString(this.Text, this.MultiLine, this.Font, new XSolidBrush(this.ForeColor), rect.ToXRect() - rect.Location, this.Alignment);
+                    formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), rect.ToXRect() - rect.Location, Alignment);
                 }
             }
 
