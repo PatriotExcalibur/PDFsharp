@@ -51,8 +51,6 @@ namespace PdfSharper.Drawing.Layout
         private XRect _layoutRectangle;
         private XParagraphAlignment _alignment = XParagraphAlignment.Left;
         private readonly List<Block> _blocks = new List<Block>();
-        private int _marginX = 2;
-        private int _marginY = 4;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="XTextFormatter"/> class.
@@ -122,25 +120,7 @@ namespace PdfSharper.Drawing.Layout
             get { return _alignment; }
             set { _alignment = value; }
         }
-
-        /// <summary>
-        /// Gets or Sets Margin-X
-        /// </summary>
-        public int MarginX
-        {
-            get { return _marginX; }
-            set { _marginX = value; }
-        }
-
-        /// <summary>
-        /// Gets or Sets Margin-Y
-        /// </summary>
-        public int MarginY
-        {
-            get { return _marginY; }
-            set { _marginY = value; }
-        }
-
+        
         /// <summary>
         /// Draws the text.
         /// </summary>
@@ -303,8 +283,8 @@ namespace PdfSharper.Drawing.Layout
                 }
 
                 //Now that the text is correctly aligned vertically align it horizontally
-                double positionX = dx + Larr_lineStart[lineCount] + block.Location.X + this.MarginX;
-                double positionY = dy + block.Location.Y + this.MarginY;
+                double positionX = dx + Larr_lineStart[lineCount] + block.Location.X;
+                double positionY = dy + block.Location.Y;
 
                 _gfx.DrawString(block.Text, font, brush, positionX, positionY);
             }
@@ -370,7 +350,7 @@ namespace PdfSharper.Drawing.Layout
                         string token = _text.Substring(startIndex, blockLength + 1);
                         XSize tokenSize = _gfx.MeasureString(token, _font);
                         
-                        double availableWidth = _layoutRectangle.Width - (this.MarginX * 2);
+                        double availableWidth = _layoutRectangle.Width;
                         if (tokenSize.Width > availableWidth)   //Estimate the width of the rectangle including margins
                         {
                             Block block = this.BuildBlock(_text, startIndex, blockLength);

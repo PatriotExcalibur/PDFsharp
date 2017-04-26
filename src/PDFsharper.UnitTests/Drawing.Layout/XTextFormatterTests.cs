@@ -15,9 +15,7 @@ namespace PDFsharper.UnitTests.Drawing.Layout
             PdfPage page = document.AddPage();
             XGraphics gfx = XGraphics.FromPdfPage(page);
             XTextFormatter formatter = new XTextFormatter(gfx);
-
-            Assert.IsTrue(formatter.MarginX == 2, "Default value of MarginX should be 2");
-            Assert.IsTrue(formatter.MarginY == 4, "Default value of MarginY should be 4");
+            
             Assert.IsTrue(formatter.Text == string.Empty, "Default value of Text should be empty string");
             Assert.IsTrue(formatter.WrapText == false, "Default value of WrapText should be false");
         }

@@ -57,11 +57,13 @@ namespace PdfSharper.Pdf.AcroForms
             Elements.SetName(PdfAnnotation.Keys.Subtype, "/Widget");
             Elements.SetName(PdfAnnotation.Keys.Type, "/Annot");
 
+            SetDefaultMargins();
         }
 
         public PdfTextField(PdfDictionary dict)
             : base(dict)
         {
+            SetDefaultMargins();
         }
 
         /// <summary>
@@ -227,6 +229,26 @@ namespace PdfSharper.Pdf.AcroForms
                     SetFlags &= ~PdfAcroFieldFlags.Comb;
             }
         }
+        
+        /// <summary>
+        /// Sets the default margins for the PdfTextField
+        /// </summary>
+        public void SetDefaultMargins()
+        {
+            if (MultiLine == true)
+            {
+                TopMargin = 4;
+                BottomMargin = 4;
+            }
+            else
+            {
+                TopMargin = 2;
+                BottomMargin = 2;
+            }
+
+            LeftMargin = 2;
+            RightMargin = 2;
+        }
 
         /// <summary>
         /// Creates the normal appearance form X object for the annotation that represents
@@ -349,8 +371,8 @@ namespace PdfSharper.Pdf.AcroForms
             {
                 xrect.Y = xrect.Y + TopMargin;
                 xrect.X = xrect.X + LeftMargin;
-                xrect.Width = xrect.Width + RightMargin;
-                xrect.Height = xrect.Height + BottomMargin;
+                xrect.Width = xrect.Width - (RightMargin + LeftMargin);
+                xrect.Height = xrect.Height - (BottomMargin + TopMargin);
 
                 if ((FieldFlags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
                 {
@@ -376,7 +398,7 @@ namespace PdfSharper.Pdf.AcroForms
                 else
                 {
                     XTextFormatter formatter = new XTextFormatter(gfx);
-                    formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), rect.ToXRect() - rect.Location, Alignment);
+                    formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
                 }
             }
 
