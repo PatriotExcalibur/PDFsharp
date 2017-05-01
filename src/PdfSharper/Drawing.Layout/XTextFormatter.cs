@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using PdfSharper.Pdf.IO;
 
 namespace PdfSharper.Drawing.Layout
@@ -44,10 +45,6 @@ namespace PdfSharper.Drawing.Layout
         private string _text = string.Empty;
         private bool _wrapText = false;
         private XFont _font;
-        private double _lineSpace;
-        private double _cyAscent;
-        private double _cyDescent;
-        private double _spaceWidth;
         private XRect _layoutRectangle;
         private XParagraphAlignment _alignment = XParagraphAlignment.Left;
         private readonly List<Block> _blocks = new List<Block>();
@@ -92,14 +89,6 @@ namespace PdfSharper.Drawing.Layout
                 if (value == null)
                     throw new ArgumentNullException("Font");
                 _font = value;
-
-                _lineSpace = _font.GetHeight();
-                _cyAscent = _lineSpace * _font.CellAscent / _font.CellSpace;
-                _cyDescent = _lineSpace * _font.CellDescent / _font.CellSpace;
-
-                // HACK in XTextFormatter
-                _spaceWidth = _gfx.MeasureString("x x", value).Width;
-                _spaceWidth -= _gfx.MeasureString("xx", value).Width;
             }
         }
 
@@ -168,132 +157,38 @@ namespace PdfSharper.Drawing.Layout
             if (format == null)
                 throw new ArgumentNullException("format");
 
-            this.Text = text;
-            this.Font = font;
-            this.LayoutRectangle = layoutRectangle;
-            this.WrapText = wrapText;
+            Text = text;
+            Font = font;
+            LayoutRectangle = layoutRectangle;
+            WrapText = wrapText;
 
             if (text.Length == 0)
                 return;
 
-            this.CreateBlocks();
-            this.CreateLayout();
-
-            double dx = layoutRectangle.Location.X;
-            double dy = layoutRectangle.Location.Y + _cyAscent;
-
-            /* Alterado por Ângelo Cossa */
-            List<double> Larr_lineWidth = new List<double>();
-            List<double> Larr_lineStart = new List<double>();
-
-            //If the text fills all the retangle, there is no sense in alignment
-            bool ends_before_end = false;
-
-            //See if the last block comes before the end,
+            CreateBlocks(format);
+            CreateLayout(format);
+            
+            int lineCount = 0;
             for (int idx = 0; idx < _blocks.Count; idx++)
             {
                 Block block = (Block)_blocks[idx];
-
-                if (block.Type == BlockType.LineBreak)
-                {
-                    Larr_lineStart.Add(0);
-
-                    if ((idx - 1) < 0)
-                    {
-                        Larr_lineWidth.Add(0);
-                    }
-                    else
-                    {
-                        Larr_lineWidth.Add(_blocks[idx - 1].Location.X + _blocks[idx - 1].Width);
-                    }
-                }
-
-                if (block.Stop)
-                {
-                    ends_before_end = true;
-                    break;
-                }
-            }
-
-            //Add the last line
-            Larr_lineStart.Add(0);
-
-            if ((_blocks.Count - 1) < 0)
-            {
-                Larr_lineWidth.Add(0);
-            }
-            else
-            {
-                Larr_lineWidth.Add(_blocks[_blocks.Count - 1].Location.X + _blocks[_blocks.Count - 1].Width);
-            }
-
-            //Adjust the linestart
-            if (format.Alignment != XStringAlignment.Near)
-            {
-                for (int n = 0; n < Larr_lineWidth.Count; n++)
-                {
-                    //gets the difference between the width of the retangle and the width of the line
-                    double rest = layoutRectangle.Width - Larr_lineWidth[n];
-
-                    if (format.Alignment == XStringAlignment.Center)
-                    {
-                        Larr_lineStart[n] = rest / 2D;
-                    }
-                    else if (format.Alignment == XStringAlignment.Far)
-                    {
-                        Larr_lineStart[n] = rest;
-                    }
-                }
-            }
-
-            if (format.LineAlignment != XLineAlignment.Near && !ends_before_end)
-            {
-                Block last_block = (Block)_blocks[_blocks.Count - 1];
-
-                //gets the height of the text
-                double text_height = (last_block.Location.Y + last_block.Height);
-
-                //the difference between the size of the block and the size fo the text
-                double rest = layoutRectangle.Height - text_height;
-
-                if (format.LineAlignment == XLineAlignment.BaseLine)
-                {
-                    //if the text is in the botton, the rest is in the top
-                    dy += rest;
-                }
-                else if (format.LineAlignment == XLineAlignment.Center)
-                {
-                    //If the text is in the middle half the rest is in the top
-                    dy += (rest / 2D);
-                }
-            }
-
-            int count = _blocks.Count;
-            int lineCount = 0;
-
-            for (int idx = 0; idx < count; idx++)
-            {
-                Block block = (Block)_blocks[idx];
                 if (block.Stop)
                     break;
+
                 if (block.Type == BlockType.LineBreak)
                 {
                     lineCount++;
                     continue;
                 }
-
-                //Now that the text is correctly aligned vertically align it horizontally
-                double positionX = dx + Larr_lineStart[lineCount] + block.Location.X;
-                double positionY = dy + block.Location.Y;
-
-                _gfx.DrawString(block.Text, font, brush, positionX, positionY);
+                
+                _gfx.DrawString(block.Text, font, brush, block.Location.X, block.Location.Y);
             }
         }
-
+        
         /// <summary>
         /// Creates the Blocks to be Drawn
         /// </summary>
-        private void CreateBlocks()
+        private void CreateBlocks(XStringFormat format)
         {
             _blocks.Clear();
             int length = _text.Length;
@@ -315,7 +210,7 @@ namespace PdfSharper.Drawing.Layout
                 {
                     if (blockLength != 0)
                     {
-                        Block block = this.BuildBlock(_text, startIndex, blockLength);
+                        Block block = this.BuildBlock(_text, startIndex, blockLength, format);
                         _blocks.Add(block);
                     }
 
@@ -328,7 +223,7 @@ namespace PdfSharper.Drawing.Layout
                     if (inNonWhiteSpace)
                     {
                         blockLength = (length - (startIndex + blockLength)) > 0 ? blockLength + 1 : blockLength;
-                        Block block = this.BuildBlock(_text, startIndex, blockLength);
+                        Block block = this.BuildBlock(_text, startIndex, blockLength, format);
                         _blocks.Add(block);
 
                         startIndex = idx + 1;
@@ -353,7 +248,7 @@ namespace PdfSharper.Drawing.Layout
                         double availableWidth = _layoutRectangle.Width;
                         if (tokenSize.Width > availableWidth)   //Estimate the width of the rectangle including margins
                         {
-                            Block block = this.BuildBlock(_text, startIndex, blockLength);
+                            Block block = this.BuildBlock(_text, startIndex, blockLength, format);
                             _blocks.Add(block);
 
                             startIndex = idx + 1;
@@ -365,7 +260,7 @@ namespace PdfSharper.Drawing.Layout
 
             if (blockLength != 0)
             {
-                Block block = this.BuildBlock(_text, startIndex, blockLength);
+                Block block = this.BuildBlock(_text, startIndex, blockLength, format);
                 _blocks.Add(block);
             }
         }
@@ -377,11 +272,27 @@ namespace PdfSharper.Drawing.Layout
         /// <param name="startIndex"></param>
         /// <param name="blockLength"></param>
         /// <returns></returns>
-        private Block BuildBlock(string text, int startIndex, int blockLength)
+        private Block BuildBlock(string text, int startIndex, int blockLength, XStringFormat format)
         {
             string token = _text.Substring(startIndex, blockLength);
             XSize tokenSize = _gfx.MeasureString(token, _font);
             Block block = new Block(token, BlockType.Text, tokenSize.Width, tokenSize.Height);
+
+            switch (format.Alignment)
+            {
+                case XStringAlignment.Near:
+                    block.Alignment = XParagraphAlignment.Left;
+                    break;
+                case XStringAlignment.Center:
+                    block.Alignment = XParagraphAlignment.Center;
+                    break;
+                case XStringAlignment.Far:
+                    block.Alignment = XParagraphAlignment.Right;
+                    break;
+                default:
+                    block.Alignment = XParagraphAlignment.Default;
+                    break;
+            }
 
             return block;
         }
@@ -389,10 +300,14 @@ namespace PdfSharper.Drawing.Layout
         /// <summary>
         /// Creates the Layout
         /// </summary>
-        private void CreateLayout()
+        private void CreateLayout(XStringFormat format)
         {
-            double rectWidth = _layoutRectangle.Width;
-            double rectHeight = _layoutRectangle.Height - _cyAscent - _cyDescent;
+            double lineSpace = _blocks.Any(b => b.Height > 0) ? _blocks.Where(b => b.Height > 0).FirstOrDefault().Height : _font.GetHeight();
+            double cyAscent = lineSpace * _font.CellAscent / _font.CellSpace;
+            double cyDescent = lineSpace * _font.CellDescent / _font.CellSpace;
+
+            double rectWidth = LayoutRectangle.Width;
+            double rectHeight = LayoutRectangle.Height - cyAscent - cyDescent;
             int firstIndex = 0;
             double x = 0, y = 0;
             int count = _blocks.Count;
@@ -402,11 +317,14 @@ namespace PdfSharper.Drawing.Layout
                 if (block.Type == BlockType.LineBreak)
                 {
                     if (Alignment == XParagraphAlignment.Justify)
+                    {
                         _blocks[firstIndex].Alignment = XParagraphAlignment.Left;
+                    }
+
                     AlignLine(firstIndex, idx - 1, rectWidth);
                     firstIndex = idx + 1;
                     x = 0;
-                    y += _lineSpace;
+                    y += lineSpace;
                 }
                 else
                 {
@@ -420,7 +338,7 @@ namespace PdfSharper.Drawing.Layout
                     {
                         AlignLine(firstIndex, idx - 1, rectWidth);
                         firstIndex = idx;
-                        y += _lineSpace;
+                        y += lineSpace;
                         if (y > rectHeight)
                         {
                             block.Stop = true;
@@ -431,8 +349,22 @@ namespace PdfSharper.Drawing.Layout
                     }
                 }
             }
+
             if (firstIndex < count && Alignment != XParagraphAlignment.Justify)
+            {
                 AlignLine(firstIndex, count - 1, rectWidth);
+            }
+
+            //This has to be done last because it requires knowing the Total Height of all text.
+            double dy = CalculateFormattedOffsetY(format, cyAscent, _blocks.FindAll(b => b.Stop == true).Count > 0);
+            for (int idx = 0; idx < count; idx++)
+            {
+                Block block = _blocks[idx];
+                if (block != null && block.Location != null)
+                {
+                    block.Location.Y = block.Location.Y + dy;
+                }
+            }
         }
 
         /// <summary>
@@ -441,23 +373,28 @@ namespace PdfSharper.Drawing.Layout
         private void AlignLine(int firstIndex, int lastIndex, double layoutWidth)
         {
             XParagraphAlignment blockAlignment = _blocks[firstIndex].Alignment;
-            if (_alignment == XParagraphAlignment.Left || blockAlignment == XParagraphAlignment.Left)
-                return;
 
             int count = lastIndex - firstIndex + 1;
             if (count == 0)
                 return;
-
-            double totalWidth = -_spaceWidth;
+            
+            double totalWidth = 0;
             for (int idx = firstIndex; idx <= lastIndex; idx++)
-                totalWidth += _blocks[idx].Width + _spaceWidth;
+                totalWidth += _blocks[idx].Width;
 
-            double dx = Math.Max(layoutWidth - totalWidth, 0);
-            //Debug.Assert(dx >= 0);
-            if (_alignment != XParagraphAlignment.Justify)
+            double dx = LayoutRectangle.Location.X;
+            double remaining = Math.Max(layoutWidth - totalWidth, 0);
+            if (blockAlignment != XParagraphAlignment.Justify)
             {
-                if (_alignment == XParagraphAlignment.Center)
-                    dx /= 2;
+                if (blockAlignment == XParagraphAlignment.Center)
+                {
+                    dx = remaining / 2;
+                }
+                else if (blockAlignment == XParagraphAlignment.Right)
+                {
+                    dx = remaining;
+                }
+
                 for (int idx = firstIndex; idx <= lastIndex; idx++)
                 {
                     Block block = _blocks[idx];
@@ -466,7 +403,7 @@ namespace PdfSharper.Drawing.Layout
             }
             else if (count > 1) // case: justify
             {
-                dx /= count - 1;
+                dx = remaining / (count - 1);
                 for (int idx = firstIndex + 1, i = 1; idx <= lastIndex; idx++, i++)
                 {
                     Block block = _blocks[idx];
@@ -475,6 +412,42 @@ namespace PdfSharper.Drawing.Layout
             }
         }
 
+        /// <summary>
+        /// Calculate the offset for the y-axis based on the Rectangle and the Alignment
+        /// </summary>
+        /// <param name="layoutRectangle">The Rectangle</param>
+        /// <param name="format">The Text Format</param>
+        /// <param name="moreTextThanHeight">Is there more text than height</param>
+        /// <returns></returns>
+        private double CalculateFormattedOffsetY(XStringFormat format, double cyAscent, bool moreTextThanHeight)
+        {
+            double dy = LayoutRectangle.Location.Y + cyAscent;
+
+            if (format.LineAlignment != XLineAlignment.Near && !moreTextThanHeight)
+            {
+                Block last_block = (Block)_blocks[_blocks.Count - 1];
+
+                //gets the height of the text
+                double text_height = (last_block.Location.Y + last_block.Height);
+
+                //the difference between the size of the block and the size fo the text
+                double rest = LayoutRectangle.Height - text_height;
+
+                if (format.LineAlignment == XLineAlignment.BaseLine)
+                {
+                    //if the text is in the botton, the rest is in the top
+                    dy += rest;
+                }
+                else if (format.LineAlignment == XLineAlignment.Center)
+                {
+                    //If the text is in the middle half the rest is in the top
+                    dy += (rest / 2D);
+                }
+            }
+
+            return dy;
+        }
+        
         enum BlockType
         {
             Text, Space, Hyphen, LineBreak,
@@ -544,6 +517,24 @@ namespace PdfSharper.Drawing.Layout
             /// A flag indicating that this is the last block that fits in the layout rectangle.
             /// </summary>
             public bool Stop;
+        }
+
+        /// <summary>
+        /// The metrics for a Line - a collection of blocks
+        /// </summary>
+        class Line
+        {
+            /// <summary>
+            /// The width of the line
+            /// </summary>
+            public double Width { get; set; }
+
+            /// <summary>
+            /// The start of the line
+            /// </summary>
+            public double Start { get; set; }
+
+            public IEnumerable<Block> Blocks { get; set; }
         }
 
         // TODO:

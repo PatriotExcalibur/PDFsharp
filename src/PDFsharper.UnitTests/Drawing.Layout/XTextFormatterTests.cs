@@ -1,7 +1,11 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PdfSharper.Drawing;
 using PdfSharper.Drawing.Layout;
+using PdfSharper.Fonts;
 using PdfSharper.Pdf;
+using PdfSharper.Pdf.AcroForms;
+using PdfSharper.Pdf.IO;
+using System;
 
 namespace PDFsharper.UnitTests.Drawing.Layout
 {
@@ -15,7 +19,7 @@ namespace PDFsharper.UnitTests.Drawing.Layout
             PdfPage page = document.AddPage();
             XGraphics gfx = XGraphics.FromPdfPage(page);
             XTextFormatter formatter = new XTextFormatter(gfx);
-            
+
             Assert.IsTrue(formatter.Text == string.Empty, "Default value of Text should be empty string");
             Assert.IsTrue(formatter.WrapText == false, "Default value of WrapText should be false");
         }
@@ -48,5 +52,22 @@ namespace PDFsharper.UnitTests.Drawing.Layout
             Assert.IsTrue(formatter.LayoutRectangle.BottomRight.X == 100, "BottomRight.X was not set correctly");
             Assert.IsTrue(formatter.LayoutRectangle.BottomRight.Y == 100, "BottomRight.Y was not set correctly");
         }
+
+        //[TestMethod]
+        //public void DrawString_AllAlignments()
+        //{
+        //    GlobalFontSettings.DefaultFontEncoding = PdfFontEncoding.WinAnsi;
+        //    PdfDocument doc = PdfReader.Open(@"c:\users\simsr\desktop\alignments.pdf");
+
+        //    (doc.AcroForm.Fields[0]["LeftSingle"] as PdfTextField).Text = "Test";
+        //    (doc.AcroForm.Fields[0]["CenterSingle"] as PdfTextField).Text = "Test";
+        //    (doc.AcroForm.Fields[0]["RightSingle"] as PdfTextField).Text = "Test";
+        //    (doc.AcroForm.Fields[0]["LeftMulti"] as PdfTextField).Text = "Test Test test test test test tests tese" + Environment.NewLine + "Line 2";
+        //    (doc.AcroForm.Fields[0]["CenterMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
+        //    (doc.AcroForm.Fields[0]["RightMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
+
+        //    doc.Save(@"c:\users\simsr\desktop\alignments_rendered.pdf");
+
+        //}
     }
 }
