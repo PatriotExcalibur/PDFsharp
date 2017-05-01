@@ -236,9 +236,9 @@ namespace PdfSharper.Pdf
 
         public virtual void FlagAsDirty()
         {
-            if (IsDirty)
+            if (IsDirty || _document._trailers.Count == 1)
             {
-                return; //we have already cloned ourselves for modification
+                return; //we have already cloned ourselves for modification  or the document is not incrementally updated
             }
 
             PdfTrailer writableTrailer = _document._trailers.SingleOrDefault(t => t.IsReadOnly == false);
@@ -257,6 +257,7 @@ namespace PdfSharper.Pdf
                 cloneReference.Document = _document;
                 Reference = null;
                 PdfObject previousRevisionObject = Clone();
+                previousRevisionObject.Document = _document;
                 cloneReference.Value = previousRevisionObject;
 
                 foreach (PdfTrailer trailer in _document._trailers)

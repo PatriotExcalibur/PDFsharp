@@ -61,6 +61,7 @@ namespace PdfSharper.Pdf
         internal DocumentState _state;
         internal PdfDocumentOpenMode _openMode;
 
+        internal byte[] fileContents;
 
 #if DEBUG_
         static PdfDocument()
@@ -404,21 +405,24 @@ namespace PdfSharper.Pdf
                 if (writeableTrailer != null)
                 {
                     writeableTrailer.Info.ModificationDate = DateTime.Now;
-                    PdfTrailer previous = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < writeableTrailer.Info.ModificationDate.ToUniversalTime());
-                    int maxObjectNumber = writeableTrailer.XRefTable._maxObjectNumber;
-                    if (previous != null)
+                    if (_trailers.Any(t => t.IsReadOnly && !(t is PdfCrossReferenceStream)))
                     {
-                        maxObjectNumber = previous.XRefTable._maxObjectNumber;
-                    }
-
-                    if (_irefTable._maxObjectNumber > maxObjectNumber) //new objects were added, put them in the trailer
-                    {
-                        PdfReference[] allIds = _irefTable.AllReferences;
-                        for (int i = maxObjectNumber; i < _irefTable._maxObjectNumber; i++)
+                        PdfTrailer previous = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < writeableTrailer.Info.ModificationDate.ToUniversalTime());
+                        int maxObjectNumber = writeableTrailer.XRefTable._maxObjectNumber;
+                        if (previous != null)
                         {
-                            if (!writeableTrailer.XRefTable.Contains(allIds[i].ObjectID))
+                            maxObjectNumber = previous.XRefTable._maxObjectNumber;
+                        }
+
+                        if (_irefTable._maxObjectNumber > maxObjectNumber) //new objects were added, put them in the trailer
+                        {
+                            PdfReference[] allIds = _irefTable.AllReferences;
+                            for (int i = maxObjectNumber; i < _irefTable._maxObjectNumber; i++)
                             {
-                                writeableTrailer.XRefTable.Add(allIds[i]);
+                                if (!writeableTrailer.XRefTable.Contains(allIds[i].ObjectID))
+                                {
+                                    writeableTrailer.XRefTable.Add(allIds[i]);
+                                }
                             }
                         }
                     }
@@ -428,7 +432,10 @@ namespace PdfSharper.Pdf
                 if (encrypt)
                     _securitySettings.SecurityHandler.PrepareEncryption();
 
-                writer.WriteFileHeader(this);
+                if (fileContents == null)
+                {
+                    writer.WriteFileHeader(this);
+                }
 
                 if (_trailers.Count == 1) //todo: support cross ref writing!
                 {
@@ -436,9 +443,21 @@ namespace PdfSharper.Pdf
                 }
                 else
                 {
-                    foreach (var trailer in GetSortedTrailers())
+                    if (fileContents != null)
                     {
-                        WriteTrailer(writer, trailer);
+                        writer.Stream.Write(fileContents, 0, fileContents.Length);
+
+                        if (writeableTrailer != null)
+                        {
+                            WriteTrailer(writer, writeableTrailer);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var trailer in GetSortedTrailers())
+                        {
+                            WriteTrailer(writer, trailer);
+                        }
                     }
                 }
 
@@ -477,7 +496,7 @@ namespace PdfSharper.Pdf
             //TODO: Document trailer root ok?
             endingTrailer.Elements.SetReference(PdfTrailer.Keys.Root, _trailer.Root);
 
-            string documentID = _trailer.GetDocumentID(1);
+            string documentID = _trailer.GetDocumentID(0);
             endingTrailer.SetDocumentID(0, documentID);
 
 
@@ -488,6 +507,24 @@ namespace PdfSharper.Pdf
 
         private void WriteTrailer(PdfWriter writer, PdfTrailer trailer)
         {
+            var previousRevision = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < trailer.Info.ModificationDate.ToUniversalTime());
+            int startXref = -1;
+            if (previousRevision != null)
+            {
+                if (previousRevision.StartXRef == -1 && fileContents != null)
+                {
+                    //input stream may already have been disposed
+                    using (MemoryStream ms = new MemoryStream(fileContents, fileContents.Length - 1031, 1031))
+                    {
+                        Parser parser = new Parser(this, ms);
+
+                        startXref = parser.GetPositionOfLastTrailer();
+                    }
+                }
+                else
+                    startXref = previousRevision.StartXRef;
+            }
+
             PdfReference[] irefs = trailer.XRefTable.AllReferences;
             int count = irefs.Length;
             for (int idx = 0; idx < count; idx++)
@@ -503,17 +540,20 @@ namespace PdfSharper.Pdf
             trailer.StartXRef = writer.Position;
             trailer.XRefTable.WriteObject(writer);
             writer.WriteRaw("trailer\r\n");
-            trailer.Elements.SetInteger("/Size", trailer.XRefTable._maxObjectNumber + 1); //0 record isn't in count
-            var previousRevision = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < trailer.Info.ModificationDate.ToUniversalTime());
+
+            if (trailer.IsReadOnly == false)
+            {
+                trailer.Elements.SetInteger("/Size", trailer.XRefTable._maxObjectNumber + 1); //0 record isn't in count
+            }
+
             if (previousRevision != null)
             {
-                Debug.Assert(previousRevision.StartXRef != -1, "Previous trailer was not written yet");
-                trailer.Elements.SetInteger("/Prev", previousRevision.StartXRef);
+                Debug.Assert(startXref != -1, "Previous trailer was not written yet");
+                trailer.Elements.SetInteger("/Prev", startXref);
             }
+
             trailer.Write(writer);
             writer.WriteEof(this, trailer.StartXRef);
-
-
         }
 
         /// <summary>
@@ -554,7 +594,7 @@ namespace PdfSharper.Pdf
             // Let catalog do the rest.
             Catalog.PrepareForSave();
 
-#if true     
+#if true
             if ((_openMode == PdfDocumentOpenMode.Modify || _trailers.Count == 1) && !_trailers.Any(t => t.IsReadOnly))
             {
                 // Remove all unreachable objects (e.g. from deleted pages)
@@ -961,6 +1001,7 @@ namespace PdfSharper.Pdf
 
         internal List<PdfTrailer> _trailers = new List<PdfTrailer>();
         private IReadOnlyCollection<PdfTrailer> _trailersAsc;
+        private IReadOnlyCollection<PdfTrailer> _trailersDesc;
 
         internal PdfTrailer _trailer; //always the last one
         internal PdfCrossReferenceTable _irefTable;
@@ -971,14 +1012,24 @@ namespace PdfSharper.Pdf
 
         internal DateTime _creation;
 
-        internal IReadOnlyCollection<PdfTrailer> GetSortedTrailers()
+        internal IReadOnlyCollection<PdfTrailer> GetSortedTrailers(bool ascending = true)
         {
-            if (_trailersAsc == null || _trailersAsc.Count != _trailers.Count)
+            if (ascending)
             {
-                _trailersAsc = _trailers.OrderBy(t => t.Info.ModificationDate.ToUniversalTime()).ToList().AsReadOnly();
+                if (_trailersAsc == null || _trailersAsc.Count != _trailers.Count)
+                {
+                    _trailersAsc = _trailers.OrderBy(t => t.Info.ModificationDate.ToUniversalTime()).ToList().AsReadOnly();
+                }
+
+                return _trailersAsc;
             }
 
-            return _trailersAsc;
+            if (_trailersDesc == null || _trailersDesc.Count != _trailers.Count)
+            {
+                _trailersDesc = _trailers.OrderByDescending(t => t.Info.ModificationDate.ToUniversalTime()).ToList().AsReadOnly();
+            }
+
+            return _trailersDesc;
         }
 
         /// <summary>

@@ -57,11 +57,13 @@ namespace PdfSharper.Pdf.AcroForms
             Elements.SetName(PdfAnnotation.Keys.Subtype, "/Widget");
             Elements.SetName(PdfAnnotation.Keys.Type, "/Annot");
 
+            SetDefaultMargins();
         }
 
         public PdfTextField(PdfDictionary dict)
             : base(dict)
         {
+            SetDefaultMargins();
         }
 
         /// <summary>
@@ -72,8 +74,12 @@ namespace PdfSharper.Pdf.AcroForms
             get { return Elements.GetString(Keys.V); }
             set
             {
+                bool wasDirty = IsDirty;
                 Elements.SetString(Keys.V, value);
-                _needsAppearances = true;
+                if (wasDirty != IsDirty || _document._trailers.Count == 1)
+                {
+                    _needsAppearances = true;
+                }
             }
         }
 
@@ -223,6 +229,26 @@ namespace PdfSharper.Pdf.AcroForms
                     SetFlags &= ~PdfAcroFieldFlags.Comb;
             }
         }
+        
+        /// <summary>
+        /// Sets the default margins for the PdfTextField
+        /// </summary>
+        public void SetDefaultMargins()
+        {
+            if (MultiLine == true)
+            {
+                TopMargin = 4;
+                BottomMargin = 4;
+            }
+            else
+            {
+                TopMargin = 2;
+                BottomMargin = 2;
+            }
+
+            LeftMargin = 2;
+            RightMargin = 2;
+        }
 
         /// <summary>
         /// Creates the normal appearance form X object for the annotation that represents
@@ -340,15 +366,13 @@ namespace PdfSharper.Pdf.AcroForms
             // Draw Border
             if (!BorderColor.IsEmpty)
                 gfx.DrawRectangle(new XPen(BorderColor), rect.ToXRect() - rect.Location);
-
-            string text = Text;
-
-            if (text.Length > 0)
+            
+            if (Text.Length > 0)
             {
                 xrect.Y = xrect.Y + TopMargin;
                 xrect.X = xrect.X + LeftMargin;
-                xrect.Width = xrect.Width + RightMargin;
-                xrect.Height = xrect.Height + BottomMargin;
+                xrect.Width = xrect.Width - (RightMargin + LeftMargin);
+                xrect.Height = xrect.Height - (BottomMargin + TopMargin);
 
                 if ((FieldFlags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
                 {
@@ -358,25 +382,23 @@ namespace PdfSharper.Pdf.AcroForms
                     format.CombWidth = combWidth;
                     gfx.Save();
                     gfx.IntersectClip(xrect);
-                    if (this.MultiLine)
+
+                    if (MultiLine)
                     {
                         XTextFormatter formatter = new XTextFormatter(gfx);
-                        formatter.Text = text;
-
-                        formatter.DrawString(Text, Font, new XSolidBrush(ForeColor), xrect, Alignment);
+                        formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
                     }
                     else
                     {
-                        gfx.DrawString(text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
+                        gfx.DrawString(Text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
                     }
+
                     gfx.Restore();
                 }
                 else
                 {
                     XTextFormatter formatter = new XTextFormatter(gfx);
-                    formatter.Text = text;
-
-                    formatter.DrawString(text, Font, new XSolidBrush(ForeColor), rect.ToXRect() - rect.Location, Alignment);
+                    formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
                 }
             }
 
@@ -393,11 +415,10 @@ namespace PdfSharper.Pdf.AcroForms
             }
 
             PdfReference normalStateAppearanceReference = ap.Elements.GetReference("/N");
-            if (normalStateAppearanceReference == null || normalStateAppearanceReference.ObjectNumber == form.PdfForm.ObjectNumber)
+            if (normalStateAppearanceReference == null || _document._trailers.Count > 1) //incremental update mode, must create a new stream
             {
-                //TODO: is this copying too much?
                 // Set XRef to normal state
-                ap.Elements["/N"] = PdfObject.DeepCopyClosure(Owner, form.PdfForm);
+                ap.Elements["/N"] = form.PdfForm;
 
 
                 var normalStateDict = ap.Elements.GetDictionary("/N");
@@ -423,10 +444,14 @@ namespace PdfSharper.Pdf.AcroForms
                 xobj.CreateStream(new byte[] { });
 
             string s = xobj.Stream.ToString();
-            // Thank you Adobe: Without putting the content in 'EMC brackets'
-            // the text is not rendered by PDF Reader 9 or higher.
-            s = "/Tx BMC\n" + s + "\nEMC";
-            ap.Elements.GetDictionary("/N").Stream.Value = new RawEncoding().GetBytes(s);
+            if (!string.IsNullOrEmpty(s))
+            {
+                ap.Elements.GetDictionary("/N").Stream.Value = new RawEncoding().GetBytes(s);
+            }
+            else
+            {
+                Elements.Remove(PdfAnnotation.Keys.AP);
+            }
 #endif
         }
 

@@ -385,6 +385,7 @@ namespace PdfSharper.Pdf.IO
 
         public PdfArray ReadArray(PdfArray array, bool includeReferences, PdfCrossReferenceTable xRefTable)
         {
+            _lexer.HasReadSpace = false;
             Debug.Assert(Symbol == Symbol.BeginArray);
             int arrayStart = _lexer.Position;
             _lexer.MoveToNonSpace();
@@ -413,6 +414,7 @@ namespace PdfSharper.Pdf.IO
                 array.Elements.Add(val);
             }
 
+            array.IsCompact = !_lexer.HasReadSpace;
             return array;
         }
 
@@ -510,7 +512,14 @@ namespace PdfSharper.Pdf.IO
 
                     case Symbol.String:
                         //stack.Shift(new PdfString(lexer.Token, PdfStringFlags.PDFDocEncoding));
-                        _stack.Shift(new PdfString(_lexer.Token, PdfStringFlags.RawEncoding));
+                        if (_lexer.Token.StartsWith("D:"))
+                        {
+                            _stack.Shift(new PdfDate(_lexer.Token));
+                        }
+                        else
+                        {
+                            _stack.Shift(new PdfString(_lexer.Token, PdfStringFlags.RawEncoding));
+                        }
                         break;
 
                     case Symbol.UnicodeString:
@@ -1087,6 +1096,32 @@ namespace PdfSharper.Pdf.IO
         /// </summary>
         internal PdfTrailer ReadTrailer()
         {
+            _lexer.Position = GetPositionOfLastTrailer();
+
+            // Read all trailers.            
+            while (true)
+            {
+                PdfTrailer trailer = ReadXRefTableAndTrailer(_document._irefTable);
+
+                // 1st trailer seems to be the best.
+                if (_document._trailer == null)
+                    _document._trailer = trailer;
+
+                _document._trailers.Add(trailer);
+
+                int prev = trailer.Elements.GetInteger(PdfTrailer.Keys.Prev);
+                if (prev == 0)
+                    break;
+                //if (prev > lexer.PdfLength)
+                //  break;
+                _lexer.Position = prev;
+            }
+
+            return _document._trailer;
+        }
+
+        internal int GetPositionOfLastTrailer()
+        {
             int length = _lexer.PdfLength;
 
             // Implementation note 18 Appendix  H:
@@ -1119,28 +1154,7 @@ namespace PdfSharper.Pdf.IO
                 throw new Exception("The StartXRef table could not be found, the file cannot be opened.");
 
             ReadSymbol(Symbol.StartXRef);
-            _lexer.Position = ReadInteger();
-
-            // Read all trailers.            
-            while (true)
-            {
-                PdfTrailer trailer = ReadXRefTableAndTrailer(_document._irefTable);
-
-                // 1st trailer seems to be the best.
-                if (_document._trailer == null)
-                    _document._trailer = trailer;
-
-                _document._trailers.Add(trailer);
-
-                int prev = trailer.Elements.GetInteger(PdfTrailer.Keys.Prev);
-                if (prev == 0)
-                    break;
-                //if (prev > lexer.PdfLength)
-                //  break;
-                _lexer.Position = prev;
-            }
-
-            return _document._trailer;
+            return ReadInteger();
         }
 
         /// <summary>
