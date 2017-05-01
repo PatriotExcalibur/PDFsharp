@@ -173,7 +173,10 @@ namespace PdfSharper.Drawing.Layout
                 Block block = (Block)_blocks[idx];
                 if (block.Stop)
                     break;
-                
+
+                if (block.Type == BlockType.LineBreak)
+                    continue;
+
                 _gfx.DrawString(block.Text, font, brush, block.Location.X, block.Location.Y);
             }
         }
