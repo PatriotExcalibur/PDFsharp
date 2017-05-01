@@ -168,26 +168,20 @@ namespace PdfSharper.Drawing.Layout
             CreateBlocks(format);
             CreateLayout(format);
             
-            int lineCount = 0;
             for (int idx = 0; idx < _blocks.Count; idx++)
             {
                 Block block = (Block)_blocks[idx];
                 if (block.Stop)
                     break;
-
-                if (block.Type == BlockType.LineBreak)
-                {
-                    lineCount++;
-                    continue;
-                }
                 
                 _gfx.DrawString(block.Text, font, brush, block.Location.X, block.Location.Y);
             }
         }
-        
+
         /// <summary>
         /// Creates the Blocks to be Drawn
         /// </summary>
+        /// <param name="format">The format</param>
         private void CreateBlocks(XStringFormat format)
         {
             _blocks.Clear();
@@ -268,9 +262,10 @@ namespace PdfSharper.Drawing.Layout
         /// <summary>
         /// Builds Blocks for Text to be Drawn
         /// </summary>
-        /// <param name="text"></param>
-        /// <param name="startIndex"></param>
-        /// <param name="blockLength"></param>
+        /// <param name="text">The Text</param>
+        /// <param name="startIndex">The start index</param>
+        /// <param name="blockLength">The block length</param>
+        /// <param name="format">The format</param>
         /// <returns></returns>
         private Block BuildBlock(string text, int startIndex, int blockLength, XStringFormat format)
         {
@@ -300,6 +295,7 @@ namespace PdfSharper.Drawing.Layout
         /// <summary>
         /// Creates the Layout
         /// </summary>
+        /// <param name="format">The format</param>
         private void CreateLayout(XStringFormat format)
         {
             double lineSpace = _blocks.Any(b => b.Height > 0) ? _blocks.Where(b => b.Height > 0).FirstOrDefault().Height : _font.GetHeight();
@@ -370,6 +366,9 @@ namespace PdfSharper.Drawing.Layout
         /// <summary>
         /// Align center, right, or justify.
         /// </summary>
+        /// <param name="firstIndex">First Index</param>
+        /// <param name="lastIndex">The Last Index</param>
+        /// <param name="layoutWidth">The Width of the Layout</param>
         private void AlignLine(int firstIndex, int lastIndex, double layoutWidth)
         {
             XParagraphAlignment blockAlignment = _blocks[firstIndex].Alignment;
@@ -415,8 +414,8 @@ namespace PdfSharper.Drawing.Layout
         /// <summary>
         /// Calculate the offset for the y-axis based on the Rectangle and the Alignment
         /// </summary>
-        /// <param name="layoutRectangle">The Rectangle</param>
         /// <param name="format">The Text Format</param>
+        /// <param name="cyAscent"></param>
         /// <param name="moreTextThanHeight">Is there more text than height</param>
         /// <returns></returns>
         private double CalculateFormattedOffsetY(XStringFormat format, double cyAscent, bool moreTextThanHeight)
