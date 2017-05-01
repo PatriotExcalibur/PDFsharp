@@ -507,27 +507,33 @@ namespace PdfSharper.Pdf.AcroForms
             {
                 using (var gfx = XGraphics.FromPdfPage(elementPage))
                 {
-                    // Note: Page origin [0,0] is bottom left !
-                    var text = Text;
-                    if (text.Length > 0)
+                    if (Text.Length > 0)
                     {
-                        var xRect = new XRect(rect.X1, elementPage.Height.Point - rect.Y2, rect.Width, rect.Height);
+                        var xrect = new XRect(rect.X1, elementPage.Height.Point - rect.Y2, rect.Width, rect.Height);
                         if ((FieldFlags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
                         {
-                            var combWidth = xRect.Width / MaxLength;
+                            var combWidth = xrect.Width / MaxLength;
                             format.Comb = true;
                             format.CombWidth = combWidth;
                             gfx.Save();
-                            gfx.IntersectClip(xRect);
-                            gfx.DrawString(text, font, new XSolidBrush(ForeColor), xRect + new XPoint(0, 1.5), format);
+                            gfx.IntersectClip(xrect);
+
+                            if (MultiLine)
+                            {
+                                XTextFormatter formatter = new XTextFormatter(gfx);
+                                formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
+                            }
+                            else
+                            {
+                                gfx.DrawString(Text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
+                            }
+
                             gfx.Restore();
                         }
                         else
                         {
-                            gfx.Save();
-                            gfx.IntersectClip(xRect);
-                            gfx.DrawString(text, font, new XSolidBrush(ForeColor), xRect + new XPoint(2, 2), format);
-                            gfx.Restore();
+                            XTextFormatter formatter = new XTextFormatter(gfx);
+                            formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
                         }
                     }
                 }
