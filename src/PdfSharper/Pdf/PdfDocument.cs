@@ -405,30 +405,9 @@ namespace PdfSharper.Pdf
                 if (writeableTrailer != null)
                 {
                     writeableTrailer.Info.ModificationDate = DateTime.Now;
-                    //if (_trailers.Any(t => t.IsReadOnly && !(t is PdfCrossReferenceStream)))
-                    //{
-                    //    PdfTrailer previous = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < writeableTrailer.Info.ModificationDate.ToUniversalTime());
-                    //    int maxObjectNumber = writeableTrailer.XRefTable._maxObjectNumber;
-                    //    if (previous != null)
-                    //    {
-                    //        maxObjectNumber = previous.XRefTable._maxObjectNumber;
-                    //    }
 
-                    //    if (_irefTable._maxObjectNumber > maxObjectNumber) //new objects were added, put them in the trailer
-                    //    {
-                    //        PdfReference[] allIds = _irefTable.AllReferences;
-                    //        for (int i = maxObjectNumber; i < _irefTable._maxObjectNumber; i++)
-                    //        {
-                    //            if (!writeableTrailer.XRefTable.Contains(allIds[i].ObjectID))
-                    //            {
-                    //                writeableTrailer.XRefTable.Add(allIds[i]);
-                    //            }
-                    //        }
-                    //    }
-                    //}
                 }
 
-                Debug.Assert(!_trailers.Any(t => _trailers.Any(ot => ot.Info.ModificationDate == t.Info.ModificationDate)), "Duplicate modification date found! ARG!");
 
 
                 if (encrypt)
