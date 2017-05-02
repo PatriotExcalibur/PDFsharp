@@ -1097,11 +1097,13 @@ namespace PdfSharper.Pdf.IO
         internal PdfTrailer ReadTrailer()
         {
             _lexer.Position = GetPositionOfLastTrailer();
-
+            int startXref = -1;
             // Read all trailers.            
             while (true)
             {
+                startXref = _lexer.Position;
                 PdfTrailer trailer = ReadXRefTableAndTrailer(_document._irefTable);
+                trailer.StartXRef = startXref;
 
                 // 1st trailer seems to be the best.
                 if (_document._trailer == null)

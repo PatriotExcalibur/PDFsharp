@@ -507,24 +507,6 @@ namespace PdfSharper.Pdf
 
         private void WriteTrailer(PdfWriter writer, PdfTrailer trailer)
         {
-            var previousRevision = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < trailer.Info.ModificationDate.ToUniversalTime());
-            int startXref = -1;
-            if (previousRevision != null)
-            {
-                if (previousRevision.StartXRef == -1 && fileContents != null)
-                {
-                    //input stream may already have been disposed
-                    using (MemoryStream ms = new MemoryStream(fileContents, fileContents.Length - 1031, 1031))
-                    {
-                        Parser parser = new Parser(this, ms);
-
-                        startXref = parser.GetPositionOfLastTrailer();
-                    }
-                }
-                else
-                    startXref = previousRevision.StartXRef;
-            }
-
             PdfReference[] irefs = trailer.XRefTable.AllReferences;
             int count = irefs.Length;
             for (int idx = 0; idx < count; idx++)
@@ -546,10 +528,11 @@ namespace PdfSharper.Pdf
                 trailer.Elements.SetInteger("/Size", trailer.XRefTable._maxObjectNumber + 1); //0 record isn't in count
             }
 
+            var previousRevision = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < trailer.Info.ModificationDate.ToUniversalTime());
             if (previousRevision != null)
             {
-                Debug.Assert(startXref != -1, "Previous trailer was not written yet");
-                trailer.Elements.SetInteger("/Prev", startXref);
+                Debug.Assert(previousRevision.StartXRef != -1, "Previous trailer was not written yet");
+                trailer.Elements.SetInteger("/Prev", previousRevision.StartXRef);
             }
 
             trailer.Write(writer);
