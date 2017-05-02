@@ -389,19 +389,23 @@ namespace PdfSharper.Pdf.IO
                 bool signaturePresent = document.Internals.GetAllObjects().OfType<PdfDictionary>().Any(pd => pd.Elements.GetString(PdfSignatureField.Keys.Type) == "/Sig");
 
 
-                if (foundNonCrossRef)
+                if (foundNonCrossRef && signaturePresent)
                 {
                     foreach (var trailer in document._trailers)
                     {
                         trailer.IsReadOnly = true;
                     }
                 }
-                else if (document._trailers.All(t => t is PdfCrossReferenceStream) && !signaturePresent) //we don't support writing CrossRef streams, flatten them
+                else if (!signaturePresent) //we don't support writing CrossRef streams, flatten them
                 {
                     document._trailers.Clear();
                     document._irefTable.Compact();
 
-                    document._trailer = new PdfTrailer((PdfCrossReferenceStream)document._trailer);
+                    if (document._trailer is PdfCrossReferenceStream)
+                    {
+                        document._trailer = new PdfTrailer((PdfCrossReferenceStream)document._trailer);
+                    }
+
                     document._trailer.XRefTable = document._irefTable;
 
                     PdfPages pages = document.Pages;
@@ -412,6 +416,8 @@ namespace PdfSharper.Pdf.IO
                     document._irefTable.CheckConsistence();
 
                     document._trailers.Add(document._trailer);
+                    document._trailer.Prev = null;
+                    document._trailer.Next = null;
                 }
                 else if (document._trailers.All(t => t is PdfCrossReferenceStream) && signaturePresent) //cannot flatten, leave it
                 {

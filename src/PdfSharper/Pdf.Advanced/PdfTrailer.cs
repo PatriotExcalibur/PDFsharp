@@ -48,6 +48,10 @@ namespace PdfSharper.Pdf.Advanced
 
         internal int StartXRef { get; set; } = -1;
 
+        internal PdfTrailer Prev { get; set; }
+
+        internal PdfTrailer Next { get; set; }
+
         /// <summary>
         /// Initializes a new instance of PdfTrailer.
         /// </summary>

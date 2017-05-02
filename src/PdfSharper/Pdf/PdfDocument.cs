@@ -405,28 +405,30 @@ namespace PdfSharper.Pdf
                 if (writeableTrailer != null)
                 {
                     writeableTrailer.Info.ModificationDate = DateTime.Now;
-                    if (_trailers.Any(t => t.IsReadOnly && !(t is PdfCrossReferenceStream)))
-                    {
-                        PdfTrailer previous = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < writeableTrailer.Info.ModificationDate.ToUniversalTime());
-                        int maxObjectNumber = writeableTrailer.XRefTable._maxObjectNumber;
-                        if (previous != null)
-                        {
-                            maxObjectNumber = previous.XRefTable._maxObjectNumber;
-                        }
+                    //if (_trailers.Any(t => t.IsReadOnly && !(t is PdfCrossReferenceStream)))
+                    //{
+                    //    PdfTrailer previous = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < writeableTrailer.Info.ModificationDate.ToUniversalTime());
+                    //    int maxObjectNumber = writeableTrailer.XRefTable._maxObjectNumber;
+                    //    if (previous != null)
+                    //    {
+                    //        maxObjectNumber = previous.XRefTable._maxObjectNumber;
+                    //    }
 
-                        if (_irefTable._maxObjectNumber > maxObjectNumber) //new objects were added, put them in the trailer
-                        {
-                            PdfReference[] allIds = _irefTable.AllReferences;
-                            for (int i = maxObjectNumber; i < _irefTable._maxObjectNumber; i++)
-                            {
-                                if (!writeableTrailer.XRefTable.Contains(allIds[i].ObjectID))
-                                {
-                                    writeableTrailer.XRefTable.Add(allIds[i]);
-                                }
-                            }
-                        }
-                    }
+                    //    if (_irefTable._maxObjectNumber > maxObjectNumber) //new objects were added, put them in the trailer
+                    //    {
+                    //        PdfReference[] allIds = _irefTable.AllReferences;
+                    //        for (int i = maxObjectNumber; i < _irefTable._maxObjectNumber; i++)
+                    //        {
+                    //            if (!writeableTrailer.XRefTable.Contains(allIds[i].ObjectID))
+                    //            {
+                    //                writeableTrailer.XRefTable.Add(allIds[i]);
+                    //            }
+                    //        }
+                    //    }
+                    //}
                 }
+
+                Debug.Assert(!_trailers.Any(t => _trailers.Any(ot => ot.Info.ModificationDate == t.Info.ModificationDate)), "Duplicate modification date found! ARG!");
 
 
                 if (encrypt)
@@ -437,29 +439,25 @@ namespace PdfSharper.Pdf
                     writer.WriteFileHeader(this);
                 }
 
-                if (_trailers.Count == 1) //todo: support cross ref writing!
+                if (fileContents != null)
                 {
-                    WriteTrailer(writer, _trailer); //HACK! this will lose incremental updates 
+                    writer.Stream.Write(fileContents, 0, fileContents.Length);
+
+                    if (writeableTrailer != null)
+                    {
+                        WriteTrailer(writer, writeableTrailer);
+                    }
                 }
                 else
                 {
-                    if (fileContents != null)
+                    var trailer = _trailers.SingleOrDefault(t => t.Prev == null);
+                    while (trailer != null)
                     {
-                        writer.Stream.Write(fileContents, 0, fileContents.Length);
-
-                        if (writeableTrailer != null)
-                        {
-                            WriteTrailer(writer, writeableTrailer);
-                        }
-                    }
-                    else
-                    {
-                        foreach (var trailer in GetSortedTrailers())
-                        {
-                            WriteTrailer(writer, trailer);
-                        }
+                        WriteTrailer(writer, trailer);
+                        trailer = trailer.Next;
                     }
                 }
+
 
                 //if (encrypt)
                 //{
@@ -499,6 +497,9 @@ namespace PdfSharper.Pdf
             string documentID = _trailer.GetDocumentID(0);
             endingTrailer.SetDocumentID(0, documentID);
 
+            var mostRecent = _trailers.SingleOrDefault(t => t.Next == null);
+            endingTrailer.Prev = mostRecent;
+            mostRecent.Next = endingTrailer;
 
             _trailers.Insert(0, endingTrailer);
 
@@ -528,11 +529,10 @@ namespace PdfSharper.Pdf
                 trailer.Elements.SetInteger("/Size", trailer.XRefTable._maxObjectNumber + 1); //0 record isn't in count
             }
 
-            var previousRevision = GetSortedTrailers().LastOrDefault(t => t.Info.ModificationDate.ToUniversalTime() < trailer.Info.ModificationDate.ToUniversalTime());
-            if (previousRevision != null)
+            if (trailer.Prev != null)
             {
-                Debug.Assert(previousRevision.StartXRef != -1, "Previous trailer was not written yet");
-                trailer.Elements.SetInteger("/Prev", previousRevision.StartXRef);
+                Debug.Assert(trailer.Prev.StartXRef != -1, "Previous trailer was not written yet");
+                trailer.Elements.SetInteger("/Prev", trailer.Prev.StartXRef);
             }
 
             trailer.Write(writer);
@@ -983,8 +983,6 @@ namespace PdfSharper.Pdf
         }
 
         internal List<PdfTrailer> _trailers = new List<PdfTrailer>();
-        private IReadOnlyCollection<PdfTrailer> _trailersAsc;
-        private IReadOnlyCollection<PdfTrailer> _trailersDesc;
 
         internal PdfTrailer _trailer; //always the last one
         internal PdfCrossReferenceTable _irefTable;
@@ -994,26 +992,6 @@ namespace PdfSharper.Pdf
         internal Lexer _lexer;
 
         internal DateTime _creation;
-
-        internal IReadOnlyCollection<PdfTrailer> GetSortedTrailers(bool ascending = true)
-        {
-            if (ascending)
-            {
-                if (_trailersAsc == null || _trailersAsc.Count != _trailers.Count)
-                {
-                    _trailersAsc = _trailers.OrderBy(t => t.Info.ModificationDate.ToUniversalTime()).ToList().AsReadOnly();
-                }
-
-                return _trailersAsc;
-            }
-
-            if (_trailersDesc == null || _trailersDesc.Count != _trailers.Count)
-            {
-                _trailersDesc = _trailers.OrderByDescending(t => t.Info.ModificationDate.ToUniversalTime()).ToList().AsReadOnly();
-            }
-
-            return _trailersDesc;
-        }
 
         /// <summary>
         /// Occurs when the specified document is not used anymore for importing content.

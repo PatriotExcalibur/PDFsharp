@@ -59,6 +59,15 @@ namespace PDFsharper.UnitTests
             Assert.IsFalse(tf.Elements.ContainsKey(PdfAnnotation.Keys.AP), "Empty Text Field should not have an appearance stream");
         }
 
+
+        [TestMethod]
+        public void Prev()
+        {
+            PdfDocument testDoc = PdfReader.Open(@"d:\4327a_signed.pdf");
+            var bbb = testDoc.PageCount;
+            testDoc.Save(@"D:\af4327a_passthrough.pdf");
+        }
+
         private static void SetupAcroFormForDocument(PdfDocument testDoc)
         {
             testDoc.Catalog.AcroForm = new PdfAcroForm(testDoc);

@@ -38,6 +38,7 @@ using PdfSharper.Pdf.Content;
 using System.IO;
 using PdfSharper.Pdf.Internal;
 using PdfSharper.Pdf.AcroForms.enums;
+using System.Linq;
 
 namespace PdfSharper.Pdf.AcroForms
 {
@@ -967,14 +968,17 @@ namespace PdfSharper.Pdf.AcroForms
                             _document._irefTable.Remove(field.Reference);
                             _document._irefTable.Add(field);
 
-                            foreach (var t in _document.GetSortedTrailers(false))
+                            var trailer = _document._trailers.SingleOrDefault(t => t.Next == null);
+                            while (trailer != null)
                             {
-                                if (t.XRefTable.Contains(field.ObjectID))
+                                if (trailer.XRefTable.Contains(field.ObjectID))
                                 {
-                                    t.XRefTable.Remove(field.Reference);
-                                    t.XRefTable.Add(field);
+                                    trailer.XRefTable.Remove(field.Reference);
+                                    trailer.XRefTable.Add(field);
                                     break;
                                 }
+
+                                trailer = trailer.Prev;
                             }
                         }
                         Elements[index] = field.Reference;

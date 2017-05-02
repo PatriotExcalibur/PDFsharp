@@ -1109,6 +1109,13 @@ namespace PdfSharper.Pdf.IO
                 if (_document._trailer == null)
                     _document._trailer = trailer;
 
+                var mostRecentlyModifiedTrailer = _document._trailers.LastOrDefault();
+                trailer.Next = mostRecentlyModifiedTrailer;
+
+                if (mostRecentlyModifiedTrailer != null)
+                {
+                    mostRecentlyModifiedTrailer.Prev = trailer;
+                }
                 _document._trailers.Add(trailer);
 
                 int prev = trailer.Elements.GetInteger(PdfTrailer.Keys.Prev);
