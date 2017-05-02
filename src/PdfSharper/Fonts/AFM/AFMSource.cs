@@ -132,19 +132,19 @@ namespace PdfSharper.Fonts.AFM
             {
                 source = COURIERBOLDOBLIQUE;
             }
-            else if (name == "Helvetica" && !isBold && !isItalic)
+            else if ((name == "Helvetica" || name == "Helv") && !isBold && !isItalic)
             {
                 source = HELVETICA;
             }
-            else if (name == "Helvetica" && isBold && !isItalic)
+            else if ((name == "Helvetica" || name == "Helv") && isBold && !isItalic)
             {
                 source = HELVETICABOLD;
             }
-            else if (name == "Helvetica" && !isBold && isItalic)
+            else if ((name == "Helvetica" || name == "Helv") && !isBold && isItalic)
             {
                 source = HELVETICAOBLIQUE;
             }
-            else if (name == "Helvetica" && isBold && isItalic)
+            else if ((name == "Helvetica" || name == "Helv") && isBold && isItalic)
             {
                 source = HELVETICABOLDOBLIQUE;
             }
@@ -166,7 +166,7 @@ namespace PdfSharper.Fonts.AFM
             }
             else if (name == "Times New Roman" || name == "TimesNewRomanPSMT")
             {
-                source = ZAPFDINGBATS;
+                source = TIMESNEWROMAN;
             }
             else if (name == "Symbol")
             {

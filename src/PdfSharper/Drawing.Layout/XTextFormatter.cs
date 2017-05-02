@@ -191,9 +191,25 @@ namespace PdfSharper.Drawing.Layout
             int length = _text.Length;
             bool inNonWhiteSpace = false;
             int startIndex = 0, blockLength = 0;
+
+            double runningWidth = 0;
+
             for (int idx = 0; idx < length; idx++)
             {
                 char ch = _text[idx];
+
+                if(!WrapText)
+                {
+                    runningWidth += _gfx.MeasureString(ch.ToString(), _font).Width;
+
+                    if (runningWidth > LayoutRectangle.Width)
+                    {
+                        Block block = this.BuildBlock(_text, startIndex, blockLength, format);
+                        _blocks.Add(block);
+
+                        blockLength = 0;
+                    }
+                }
 
                 // Treat CR and CRLF as LF
                 if (ch == Chars.CR)

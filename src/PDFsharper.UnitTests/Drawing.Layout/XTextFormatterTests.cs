@@ -59,9 +59,9 @@ namespace PDFsharper.UnitTests.Drawing.Layout
         //    GlobalFontSettings.DefaultFontEncoding = PdfFontEncoding.WinAnsi;
         //    PdfDocument doc = PdfReader.Open(@"c:\users\simsr\desktop\alignments.pdf");
 
-        //    (doc.AcroForm.Fields[0]["LeftSingle"] as PdfTextField).Text = "Test";
-        //    (doc.AcroForm.Fields[0]["CenterSingle"] as PdfTextField).Text = "Test";
-        //    (doc.AcroForm.Fields[0]["RightSingle"] as PdfTextField).Text = "Test";
+        //    (doc.AcroForm.Fields[0]["LeftSingle"] as PdfTextField).Text = "abcdefghijkl mnopqrstuvwxyz";
+        //    (doc.AcroForm.Fields[0]["CenterSingle"] as PdfTextField).Text = "2 abcdefghijkl mnopqrstuvwxyz";
+        //    (doc.AcroForm.Fields[0]["RightSingle"] as PdfTextField).Text = "3 abcdefghijkl mnopqrstuvwxyz";
         //    (doc.AcroForm.Fields[0]["LeftMulti"] as PdfTextField).Text = "Test Test test test test test tests tese" + Environment.NewLine + "Line 2";
         //    (doc.AcroForm.Fields[0]["CenterMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
         //    (doc.AcroForm.Fields[0]["RightMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
