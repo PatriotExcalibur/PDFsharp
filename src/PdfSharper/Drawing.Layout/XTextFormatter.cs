@@ -52,13 +52,13 @@ namespace PdfSharper.Drawing.Layout
         /// <summary>
         /// Initializes a new instance of the <see cref="XTextFormatter"/> class.
         /// </summary>
-        public XTextFormatter(XGraphics gfx) 
+        public XTextFormatter(XGraphics gfx)
         {
             if (gfx == null)
                 throw new ArgumentNullException("gfx");
             _gfx = gfx;
         }
-        
+
         /// <summary>
         /// Gets or sets the text.
         /// </summary>
@@ -109,7 +109,7 @@ namespace PdfSharper.Drawing.Layout
             get { return _alignment; }
             set { _alignment = value; }
         }
-        
+
         /// <summary>
         /// Draws the text.
         /// </summary>
@@ -167,7 +167,7 @@ namespace PdfSharper.Drawing.Layout
 
             CreateBlocks(format);
             CreateLayout(format);
-            
+
             for (int idx = 0; idx < _blocks.Count; idx++)
             {
                 Block block = (Block)_blocks[idx];
@@ -198,7 +198,7 @@ namespace PdfSharper.Drawing.Layout
             {
                 char ch = _text[idx];
 
-                if(!WrapText)
+                if (!WrapText)
                 {
                     runningWidth += _gfx.MeasureString(ch.ToString(), _font).Width;
 
@@ -257,7 +257,7 @@ namespace PdfSharper.Drawing.Layout
                     {
                         string token = _text.Substring(startIndex, blockLength + 1);
                         XSize tokenSize = _gfx.MeasureString(token, _font);
-                        
+
                         double availableWidth = _layoutRectangle.Width;
                         if (tokenSize.Width > availableWidth)   //Estimate the width of the rectangle including margins
                         {
@@ -395,7 +395,7 @@ namespace PdfSharper.Drawing.Layout
             int count = lastIndex - firstIndex + 1;
             if (count == 0)
                 return;
-            
+
             double totalWidth = 0;
             for (int idx = firstIndex; idx <= lastIndex; idx++)
                 totalWidth += _blocks[idx].Width;
@@ -441,7 +441,7 @@ namespace PdfSharper.Drawing.Layout
         {
             double dy = LayoutRectangle.Location.Y + cyAscent;
 
-            if (format.LineAlignment != XLineAlignment.Near && !moreTextThanHeight)
+            if (format.LineAlignment != XLineAlignment.Near && (!WrapText || (WrapText && !moreTextThanHeight)))
             {
                 Block last_block = (Block)_blocks[_blocks.Count - 1];
 
@@ -465,7 +465,7 @@ namespace PdfSharper.Drawing.Layout
 
             return dy;
         }
-        
+
         enum BlockType
         {
             Text, Space, Hyphen, LineBreak,
