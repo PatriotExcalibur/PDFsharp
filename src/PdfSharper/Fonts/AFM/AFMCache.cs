@@ -39,19 +39,6 @@ namespace PdfSharper.Fonts.AFM
             }
         }
 
-        public AFMDetails GetFontMetricsByName(string fontName)
-        {
-            AFMDetails fontMetric = null;
-
-            string fontMetricSource = AFMSource.GetSourceByName(fontName);
-            if (!string.IsNullOrWhiteSpace(fontMetricSource))
-            {
-                fontMetric = this.GetFontMetrics(fontMetricSource);
-            }
-
-            return fontMetric;
-        }
-
         public AFMDetails GetFontMetricsByNameAndAttributes(string fontName, bool isBold, bool isItalic)
         {
             AFMDetails fontMetric = null;

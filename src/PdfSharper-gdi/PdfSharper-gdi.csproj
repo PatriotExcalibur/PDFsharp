@@ -1234,6 +1234,18 @@
     <EmbeddedResource Include="..\PdfSharper\Fonts\AFM\Files\ZapfDingbats.afm">
       <Link>Fonts\AFM\Files\ZapfDingbats.afm</Link>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\PdfSharper\Fonts\AFM\Files\segoeui.afm">
+      <Link>Fonts\AFM\Files\segoeui.afm</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\PdfSharper\Fonts\AFM\Files\segoeuib.afm">
+      <Link>Fonts\AFM\Files\segoeuib.afm</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\PdfSharper\Fonts\AFM\Files\segoeuii.afm">
+      <Link>Fonts\AFM\Files\segoeuii.afm</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\PdfSharper\Fonts\AFM\Files\segoeuiz.afm">
+      <Link>Fonts\AFM\Files\segoeuiz.afm</Link>
+    </EmbeddedResource>
     <None Include="..\PdfSharper\Resources\Messages.de.restext">
       <Link>Resources\Messages.de.restext</Link>
     </None>

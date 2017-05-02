@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace PdfSharper.Fonts.AFM
 {
@@ -19,165 +20,71 @@ namespace PdfSharper.Fonts.AFM
         private static readonly string TIMESNEWROMAN = "PdfSharper.Fonts.AFM.Files.Times-New-Roman.afm";
         private static readonly string TIMESROMAN = "PdfSharper.Fonts.AFM.Files.Times-Roman.afm";
         private static readonly string ZAPFDINGBATS = "PdfSharper.Fonts.AFM.Files.ZapfDingbats.afm";
+        private static readonly string SEGOEUI = "PdfSharper.Fonts.AFM.Files.segoeui.afm";
+        private static readonly string SEGOEUIBOLD = "PdfSharper.Fonts.AFM.Files.segoeuib.afm";
+        private static readonly string SEGOEUIITALIC = "PdfSharper.Fonts.AFM.Files.segoeuii.afm";
+        private static readonly string SEGOEUIBOLDITALIC = "PdfSharper.Fonts.AFM.Files.segoeuiz.afm";
 
-        public static IEnumerable<string> GetAll()
+        private static Dictionary<string, string[]> _fieldFontNameMap = new Dictionary<string, string[]>()
         {
-            List<string> afmList = new List<string>();
-            afmList.Add(COURIERBOLD);
-            afmList.Add(COURIEROBLIQUE);
-            afmList.Add(COURIER);
-            afmList.Add(COURIERBOLDOBLIQUE);
-            afmList.Add(HELVETICABOLD);
-            afmList.Add(HELVETICABOLDOBLIQUE);
-            afmList.Add(HELVETICAOBLIQUE);
-            afmList.Add(HELVETICA);
-            afmList.Add(SYMBOL);
-            afmList.Add(TIMESBOLD);
-            afmList.Add(TIMESBOLDITALIC);
-            afmList.Add(TIMESITALIC);
-            afmList.Add(TIMESNEWROMAN);
-            afmList.Add(TIMESROMAN);
-            afmList.Add(ZAPFDINGBATS);
+            //courier family
+            { "Courier", new string[] { COURIER, COURIERBOLD, COURIEROBLIQUE, COURIERBOLDOBLIQUE } },
+            { "CourierStd", new string[] { COURIER, COURIERBOLD, COURIEROBLIQUE, COURIERBOLDOBLIQUE } },
+            { "Cour", new string[] { COURIER, COURIERBOLD, COURIEROBLIQUE, COURIERBOLDOBLIQUE } },
 
-            return afmList;
-        }
 
-        public static string GetSourceByName(string name)
-        {
-            string source = string.Empty;
+            //Helvetica family
+            { "Helvetica", new string[] { HELVETICA, HELVETICABOLD, HELVETICAOBLIQUE, HELVETICABOLDOBLIQUE} },
+            { "Helv", new string[] { HELVETICA, HELVETICABOLD, HELVETICAOBLIQUE, HELVETICABOLDOBLIQUE} },
+            
 
-            switch (name)
-            {
-                case "Courier-Bold":
-                case "Courier Bold":
-                    source = COURIERBOLD;
-                    break;
-                case "Courier Oblique":
-                case "Courier-Oblique":
-                    source = COURIEROBLIQUE;
-                    break;
-                case "Courier":
-                    source = COURIER;
-                    break;
-                case "Courier-BoldOblique":
-                case "Courier Bold Oblique":
-                    source = COURIERBOLDOBLIQUE;
-                    break;
-                case "Helvetica-Bold":
-                case "Helvetica Bold":
-                    source = HELVETICABOLD;
-                    break;
-                case "Helvetica-BoldOblique":
-                case "Helvetica Bold Oblique":
-                    source = HELVETICABOLDOBLIQUE;
-                    break;
-                case "Helvetica-Oblique":
-                case "Helvetica Oblique":
-                    source = HELVETICAOBLIQUE;
-                    break;
-                case "Helvetica":
-                    source = HELVETICA;
-                    break;
-                case "Symbol":
-                    source = SYMBOL;
-                    break;
-                case "Times-Bold":
-                case "Times Bold":
-                    source = TIMESBOLD;
-                    break;
-                case "Times-BoldItalic":
-                case "Times Bold Italic":
-                    source = TIMESBOLDITALIC;
-                    break;
-                case "Times-Italic":
-                case "Times Italic":
-                    source = TIMESITALIC;
-                    break;
-                case "TimesNewRomanPSMT":
-                case "Times New Roman":
-                    source = TIMESNEWROMAN;
-                    break;
-                case "Times-Roman":
-                case "Times Roman":
-                    source = TIMESROMAN;
-                    break;
-                case "ZapfDingbats":
-                case "ITC Zapf Dingbats":
-                    source = ZAPFDINGBATS;
-                    break;
-                default:
-                    break;
-            }
+            //Times Roman Family
+            { "Times Roman", new string[] { TIMESROMAN, TIMESBOLD, TIMESITALIC, TIMESBOLDITALIC} },
+            { "TimesRoman", new string[] { TIMESROMAN, TIMESBOLD, TIMESITALIC, TIMESBOLDITALIC} },
+            { "Times-Roman", new string[] { TIMESROMAN, TIMESBOLD, TIMESITALIC, TIMESBOLDITALIC} },
+            { "Times", new string[] { TIMESROMAN, TIMESBOLD, TIMESITALIC, TIMESBOLDITALIC} },
+            { "TiRo", new string[] { TIMESROMAN, TIMESBOLD, TIMESITALIC, TIMESBOLDITALIC} },
 
-            return source;
-        }
+
+            //Times New Roman Family
+            { "Times New Roman", new string[] { TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN } },
+            { "TimesNewRoman", new string[] { TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN } },
+            { "TimesNewRomanPSMT", new string[] { TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN } },
+            
+            
+            //Symbol family
+            { "Symbol", new string[] { SYMBOL, SYMBOL, SYMBOL, SYMBOL } },
+            { "Symb", new string[] { SYMBOL, SYMBOL, SYMBOL, SYMBOL } },
+
+
+            //Dingbat family 
+            { "ZapfDingbats", new string[] { ZAPFDINGBATS, ZAPFDINGBATS, ZAPFDINGBATS, ZAPFDINGBATS } },
+            { "ZaDb", new string[] { ZAPFDINGBATS, ZAPFDINGBATS, ZAPFDINGBATS, ZAPFDINGBATS } },
+            { "ITC Zapf Dingbats", new string[] { ZAPFDINGBATS, ZAPFDINGBATS, ZAPFDINGBATS, ZAPFDINGBATS } },
+
+            //Segoeui Family
+            { "Segoe UI", new string[] { SEGOEUI, SEGOEUIBOLD, SEGOEUIITALIC, SEGOEUIBOLDITALIC } }
+        };
 
         public static string GetSourceByNameAndAttributes(string name, bool isBold, bool isItalic)
         {
-            string source = string.Empty;
+            int subIndex = 0;
+            if (isBold)
+                subIndex++;
 
-            if (name == "Courier" && !isBold && !isItalic)
-            {
-                source = COURIER;
-            }
-            else if (name == "Courier" && isBold && !isItalic)
-            {
-                source = COURIERBOLD;
-            }
-            else if (name == "Courier" && !isBold && isItalic)
-            {
-                source = COURIEROBLIQUE;
-            }
-            else if (name == "Courier" && isBold && isItalic)
-            {
-                source = COURIERBOLDOBLIQUE;
-            }
-            else if ((name == "Helvetica" || name == "Helv") && !isBold && !isItalic)
-            {
-                source = HELVETICA;
-            }
-            else if ((name == "Helvetica" || name == "Helv") && isBold && !isItalic)
-            {
-                source = HELVETICABOLD;
-            }
-            else if ((name == "Helvetica" || name == "Helv") && !isBold && isItalic)
-            {
-                source = HELVETICAOBLIQUE;
-            }
-            else if ((name == "Helvetica" || name == "Helv") && isBold && isItalic)
-            {
-                source = HELVETICABOLDOBLIQUE;
-            }
-            else if ((name == "Times Roman" || name == "Times-Roman" || name == "Times") && !isBold && !isItalic)
-            {
-                source = TIMESROMAN;
-            }
-            else if ((name == "Times Roman" || name == "Times-Roman" || name == "Times") && isBold && !isItalic)
-            {
-                source = TIMESBOLD;
-            }
-            else if ((name == "Times Roman" || name == "Times-Roman" || name == "Times") && !isBold && isItalic)
-            {
-                source = TIMESITALIC;
-            }
-            else if ((name == "Times Roman" || name == "Times-Roman" || name == "Times") && isBold && isItalic)
-            {
-                source = TIMESBOLDITALIC;
-            }
-            else if (name == "Times New Roman" || name == "TimesNewRomanPSMT")
-            {
-                source = TIMESNEWROMAN;
-            }
-            else if (name == "Symbol")
-            {
-                source = SYMBOL;
-            }
-            else if (name == "ZapfDingbats" || name == "ITC Zapf Dingbats")
-            {
-                source = ZAPFDINGBATS;
-            }
+            if (isItalic)
+                subIndex += 2;
 
-            return source;
+            string[] source = null;
+
+            if (_fieldFontNameMap.TryGetValue(name, out source))
+            {
+                return source[subIndex];
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
     }
 }

@@ -421,6 +421,10 @@
     <EmbeddedResource Include="Fonts\AFM\Files\Times-New-Roman.afm" />
     <EmbeddedResource Include="Fonts\AFM\Files\Times-Roman.afm" />
     <EmbeddedResource Include="Fonts\AFM\Files\ZapfDingbats.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\segoeui.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\segoeuib.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\segoeuii.afm" />
+    <EmbeddedResource Include="Fonts\AFM\Files\segoeuiz.afm" />
     <None Include="SharpZipLib\ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
