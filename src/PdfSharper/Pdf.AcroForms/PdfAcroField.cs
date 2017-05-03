@@ -888,6 +888,20 @@ namespace PdfSharper.Pdf.AcroForms
             }
         }
 
+        /// <summary>
+        /// Looks at the Flags for this field and returns calculated value for Visibility
+        /// </summary>
+        /// <returns></returns>
+        public bool GetIsVisible()
+        {
+            bool hasInvisible = Flags.HasFlag(PdfAnnotationFlags.Invisible);
+            bool hasHidden = Flags.HasFlag(PdfAnnotationFlags.Hidden);
+            bool hasNoView = Flags.HasFlag(PdfAnnotationFlags.NoView);
+
+            bool isVisible = !hasInvisible && !hasHidden && !hasNoView;
+
+            return isVisible;
+        }
 
         /// <summary>
         /// Holds a collection of interactive fields.

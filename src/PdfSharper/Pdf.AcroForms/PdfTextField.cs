@@ -83,7 +83,6 @@ namespace PdfSharper.Pdf.AcroForms
             }
         }
 
-
         public XStringFormat Alignment
         {
             get
@@ -256,6 +255,7 @@ namespace PdfSharper.Pdf.AcroForms
         /// </summary>
         protected override void RenderAppearance()
         {
+
 #if true_
             PdfFormXObject xobj = new PdfFormXObject(Owner);
             Owner.Internals.AddObject(xobj);
@@ -356,105 +356,126 @@ namespace PdfSharper.Pdf.AcroForms
 
 
 #else
-            PdfRectangle rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
-            XForm form = new XForm(_document, rect.Size);
-            XGraphics gfx = XGraphics.FromForm(form);
-            XRect xrect = (rect.ToXRect() - rect.Location);
-
-            if (BackColor != XColor.Empty)
-                gfx.DrawRectangle(new XSolidBrush(BackColor), rect.ToXRect() - rect.Location);
-            // Draw Border
-            if (!BorderColor.IsEmpty)
-                gfx.DrawRectangle(new XPen(BorderColor), rect.ToXRect() - rect.Location);
-            
-            if (Text.Length > 0)
+            if (GetIsVisible())
             {
-                xrect.Y = xrect.Y + TopMargin;
-                xrect.X = xrect.X + LeftMargin;
-                xrect.Width = xrect.Width - (RightMargin + LeftMargin);
-                xrect.Height = xrect.Height - (BottomMargin + TopMargin);
+                PdfRectangle rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
+                XForm form = new XForm(_document, rect.Size);
+                XGraphics gfx = XGraphics.FromForm(form);
+                XRect xrect = (rect.ToXRect() - rect.Location);
 
-                if ((FieldFlags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
+                if (BackColor != XColor.Empty)
+                    gfx.DrawRectangle(new XSolidBrush(BackColor), rect.ToXRect() - rect.Location);
+                // Draw Border
+                if (!BorderColor.IsEmpty)
+                    gfx.DrawRectangle(new XPen(BorderColor), rect.ToXRect() - rect.Location);
+
+                if (Text.Length > 0)
                 {
-                    var combWidth = xrect.Width / MaxLength;
-                    var format = XStringFormats.TopLeft;
-                    format.Comb = true;
-                    format.CombWidth = combWidth;
-                    gfx.Save();
-                    gfx.IntersectClip(xrect);
+                    xrect = ApplyMarginsToXRectangle(xrect);
 
-                    if (MultiLine)
+                    if ((FieldFlags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
+                    {
+                        var combWidth = xrect.Width / MaxLength;
+                        var format = XStringFormats.TopLeft;
+                        format.Comb = true;
+                        format.CombWidth = combWidth;
+                        gfx.Save();
+                        gfx.IntersectClip(xrect);
+
+                        if (MultiLine)
+                        {
+                            XTextFormatter formatter = new XTextFormatter(gfx);
+                            formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
+                        }
+                        else
+                        {
+                            gfx.DrawString(Text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
+                        }
+
+                        gfx.Restore();
+                    }
+                    else
                     {
                         XTextFormatter formatter = new XTextFormatter(gfx);
                         formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
                     }
-                    else
+                }
+
+                form.DrawingFinished();
+                form.PdfForm.Elements.Add("/FormType", new PdfLiteral("1"));
+
+                // Get existing or create new appearance dictionary.
+                PdfDictionary ap = Elements[PdfAnnotation.Keys.AP] as PdfDictionary;
+                if (ap == null)
+                {
+                    ap = new PdfDictionary(_document);
+                    ap.IsCompact = IsCompact;
+                    Elements[PdfAnnotation.Keys.AP] = ap;
+                }
+
+                PdfReference normalStateAppearanceReference = ap.Elements.GetReference("/N");
+                if (normalStateAppearanceReference == null || _document._trailers.Count > 1) //incremental update mode, must create a new stream
+                {
+                    // Set XRef to normal state
+                    ap.Elements["/N"] = form.PdfForm;
+
+
+                    var normalStateDict = ap.Elements.GetDictionary("/N");
+                    var resourceDict = new PdfDictionary(Owner);
+                    resourceDict.IsCompact = IsCompact;
+                    resourceDict.Elements[PdfResources.Keys.ProcSet] = new PdfArray(Owner, new PdfName("/PDF"), new PdfName("/Text"));
+
+                    var defaultFormResources = Owner.AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
+                    if (defaultFormResources != null && defaultFormResources.Elements.ContainsKey(PdfResources.Keys.Font))
                     {
-                        gfx.DrawString(Text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
+                        var fontResourceItem = XForm.GetFontResourceItem(Font.FamilyName, defaultFormResources);
+                        PdfDictionary fontDict = new PdfDictionary(Owner);
+                        fontDict.IsCompact = IsCompact;
+                        resourceDict.Elements[PdfResources.Keys.Font] = fontDict;
+                        fontDict.Elements[fontResourceItem.Key] = fontResourceItem.Value;
                     }
 
-                    gfx.Restore();
+                    normalStateDict.Elements.SetObject(PdfPage.Keys.Resources, resourceDict);
+                }
+
+                PdfFormXObject xobj = form.PdfForm;
+                if (xobj.Stream == null)
+                    xobj.CreateStream(new byte[] { });
+
+                string s = xobj.Stream.ToString();
+                if (!string.IsNullOrEmpty(s))
+                {
+                    ap.Elements.GetDictionary("/N").Stream.Value = new RawEncoding().GetBytes(s);
                 }
                 else
                 {
-                    XTextFormatter formatter = new XTextFormatter(gfx);
-                    formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
+                    Elements.Remove(PdfAnnotation.Keys.AP);
                 }
-            }
-
-            form.DrawingFinished();
-            form.PdfForm.Elements.Add("/FormType", new PdfLiteral("1"));
-
-            // Get existing or create new appearance dictionary.
-            PdfDictionary ap = Elements[PdfAnnotation.Keys.AP] as PdfDictionary;
-            if (ap == null)
-            {
-                ap = new PdfDictionary(_document);
-                ap.IsCompact = IsCompact;
-                Elements[PdfAnnotation.Keys.AP] = ap;
-            }
-
-            PdfReference normalStateAppearanceReference = ap.Elements.GetReference("/N");
-            if (normalStateAppearanceReference == null || _document._trailers.Count > 1) //incremental update mode, must create a new stream
-            {
-                // Set XRef to normal state
-                ap.Elements["/N"] = form.PdfForm;
-
-
-                var normalStateDict = ap.Elements.GetDictionary("/N");
-                var resourceDict = new PdfDictionary(Owner);
-                resourceDict.IsCompact = IsCompact;
-                resourceDict.Elements[PdfResources.Keys.ProcSet] = new PdfArray(Owner, new PdfName("/PDF"), new PdfName("/Text"));
-
-                var defaultFormResources = Owner.AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
-                if (defaultFormResources != null && defaultFormResources.Elements.ContainsKey(PdfResources.Keys.Font))
-                {
-                    var fontResourceItem = XForm.GetFontResourceItem(Font.FamilyName, defaultFormResources);
-                    PdfDictionary fontDict = new PdfDictionary(Owner);
-                    fontDict.IsCompact = IsCompact;
-                    resourceDict.Elements[PdfResources.Keys.Font] = fontDict;
-                    fontDict.Elements[fontResourceItem.Key] = fontResourceItem.Value;
-                }
-
-                normalStateDict.Elements.SetObject(PdfPage.Keys.Resources, resourceDict);
-            }
-
-            PdfFormXObject xobj = form.PdfForm;
-            if (xobj.Stream == null)
-                xobj.CreateStream(new byte[] { });
-
-            string s = xobj.Stream.ToString();
-            if (!string.IsNullOrEmpty(s))
-            {
-                ap.Elements.GetDictionary("/N").Stream.Value = new RawEncoding().GetBytes(s);
-            }
-            else
-            {
-                Elements.Remove(PdfAnnotation.Keys.AP);
             }
 #endif
         }
 
+        private XRect ApplyMarginsToXRectangle(XRect xrect)
+        {
+            if (xrect != null)
+            {
+                double newHeight = xrect.Height - (BottomMargin + TopMargin);
+                if (newHeight > 0)
+                {
+                    xrect.Y = xrect.Y + TopMargin;
+                    xrect.Height = newHeight;
+                }
+
+                double newWidth = xrect.Width - (RightMargin + LeftMargin);
+                if (newWidth > 0)
+                {
+                    xrect.X = xrect.X + LeftMargin;
+                    xrect.Width = newWidth;
+                }
+            }
+
+            return xrect;
+        }
 
         internal override void Flatten()
         {
