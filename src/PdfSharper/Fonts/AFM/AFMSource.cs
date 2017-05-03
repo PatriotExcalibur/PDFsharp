@@ -36,6 +36,8 @@ namespace PdfSharper.Fonts.AFM
             //Helvetica family
             { "Helvetica", new string[] { HELVETICA, HELVETICABOLD, HELVETICAOBLIQUE, HELVETICABOLDOBLIQUE} },
             { "Helv", new string[] { HELVETICA, HELVETICABOLD, HELVETICAOBLIQUE, HELVETICABOLDOBLIQUE} },
+            { "Arial", new string[] { HELVETICA, HELVETICABOLD, HELVETICAOBLIQUE, HELVETICABOLDOBLIQUE} },
+            { "ArialMT", new string[] { HELVETICA, HELVETICABOLD, HELVETICAOBLIQUE, HELVETICABOLDOBLIQUE} },
             
 
             //Times Roman Family
