@@ -762,17 +762,20 @@ namespace PdfSharper.Pdf.AcroForms
                     }
                 }
 
-                var rect = Rectangle;
+                //var rect = Rectangle;
+                var rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
                 if (!rect.IsEmpty && (!BackColor.IsEmpty || !BorderColor.IsEmpty))
                 {
                     using (var gfx = XGraphics.FromPdfPage(Page))
                     {
+                        var xrect = new XRect(rect.X1, Page.Height.Point - rect.Y2, rect.Width, rect.Height);
+
                         gfx.TranslateTransform(rect.X1, Page.Height.Point - rect.Y2);
                         if (BackColor != XColor.Empty)
-                            gfx.DrawRectangle(new XSolidBrush(BackColor), rect.ToXRect() - rect.Location);
+                            gfx.DrawRectangle(new XSolidBrush(BackColor), xrect);
                         // Draw Border
                         if (!BorderColor.IsEmpty)
-                            gfx.DrawRectangle(new XPen(BorderColor), rect.ToXRect() - rect.Location);
+                            gfx.DrawRectangle(new XPen(BorderColor), xrect);
                     }
                 }
 

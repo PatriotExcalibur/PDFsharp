@@ -499,6 +499,8 @@ namespace PdfSharper.Pdf.AcroForms
                 XStringFormat format = GetAlignment(Elements);
                 DrawToPDF(rect, page, Font, format);
             }
+
+
         }
 
         internal void DrawToPDF(PdfRectangle rect, PdfPage elementPage, XFont font, XStringFormat format)
@@ -507,9 +509,15 @@ namespace PdfSharper.Pdf.AcroForms
             {
                 using (var gfx = XGraphics.FromPdfPage(elementPage))
                 {
+                    var xrect = new XRect(rect.X1, elementPage.Height.Point - rect.Y2, rect.Width, rect.Height);
+
                     if (Text.Length > 0)
                     {
-                        var xrect = new XRect(rect.X1, elementPage.Height.Point - rect.Y2, rect.Width, rect.Height);
+                        xrect.Y = xrect.Y + TopMargin;
+                        xrect.X = xrect.X + LeftMargin;
+                        xrect.Width = xrect.Width - (RightMargin + LeftMargin);
+                        xrect.Height = xrect.Height - (BottomMargin + TopMargin);
+
                         if ((FieldFlags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
                         {
                             var combWidth = xrect.Width / MaxLength;
