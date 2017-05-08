@@ -240,6 +240,14 @@ namespace PdfSharper.Pdf.AcroForms
         }
         XColor borderColor = XColor.Empty;
 
+        public virtual void RemoveJavascript()
+        {
+            if (_document != null && _document.AcroForm != null)
+            {
+                _document.AcroForm.RemoveJavascript();
+            }
+        }
+
         /// <summary>
         /// Gets or sets the value of the field.
         /// </summary>
@@ -362,7 +370,7 @@ namespace PdfSharper.Pdf.AcroForms
         public string[] GetAppearanceNames()
         {
             Dictionary<string, object> names = new Dictionary<string, object>();
-            PdfDictionary dict = Elements["/AP"] as PdfDictionary;
+            PdfDictionary dict = Elements[Keys.AP] as PdfDictionary;
             if (dict != null)
             {
                 AppDict(dict, names);
@@ -738,7 +746,7 @@ namespace PdfSharper.Pdf.AcroForms
             catch { }
         }
 
-        internal virtual void Flatten()
+        public virtual void Flatten()
         {
             // Copy Font-Resources to the Page
             // This is neccessary, because Fonts used by AcroFields may be referenced only by the AcroForm, which is deleted after flattening
@@ -752,52 +760,22 @@ namespace PdfSharper.Pdf.AcroForms
                     var fontRef = fontList.Elements.GetReference(fontKey);
                     if (fontRef != null)
                     {
-                        if (!Page.Resources.Elements.ContainsKey(PdfResources.Keys.Font))
-                        {
-                            Page.Resources.Elements.Add(PdfResources.Keys.Font, new PdfDictionary());
-                        }
-                        var fontDict = Page.Resources.Elements.GetDictionary(PdfResources.Keys.Font);
-                        if (fontDict != null && !fontDict.Elements.ContainsKey(fontKey))
-                            fontDict.Elements.Add(fontKey, fontRef);
+                        var fontDict = (PdfDictionary)Page.Resources.Elements.GetValue(PdfResources.Keys.Font, VCF.Create);
+                        fontDict.Elements.SetReference(fontKey, fontRef);
                     }
                 }
+                
+                Page.Annotations.Remove(this);
 
-                //var rect = Rectangle;
-                var rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
-                if (!rect.IsEmpty && (!BackColor.IsEmpty || !BorderColor.IsEmpty))
-                {
-                    using (var gfx = XGraphics.FromPdfPage(Page))
-                    {
-                        var xrect = new XRect(rect.X1, Page.Height.Point - rect.Y2, rect.Width, rect.Height);
-
-                        gfx.TranslateTransform(rect.X1, Page.Height.Point - rect.Y2);
-                        if (BackColor != XColor.Empty)
-                            gfx.DrawRectangle(new XSolidBrush(BackColor), xrect);
-                        // Draw Border
-                        if (!BorderColor.IsEmpty)
-                            gfx.DrawRectangle(new XPen(BorderColor), xrect);
-                    }
-                }
-
-                // Remove Field-Annotations from page
-                for (var i = 0; i < Page.Annotations.Elements.Count; i++)
-                {
-                    var item = Page.Annotations.Elements[i] as PdfReference;
-                    if (item == Reference)
-                    {
-                        Page.Annotations.Elements.RemoveAt(i);
-                        break;
-                    }
-                }
+                RemoveJavascript();
             }
-            for (var i = 0; i < Fields.Elements.Count; i++)
+
+            foreach(var field in Fields)
             {
-                var field = Fields[i];
                 field.Flatten();
             }
 
-            if (Reference != null)
-                _document._irefTable.Remove(Reference);
+            _document.Internals.RemoveObject(this);            
         }
 
         /// <summary>

@@ -59,8 +59,12 @@
     <Compile Include="ContentReaderTests.cs" />
     <Compile Include="Drawing.Layout\XTextFormatterTests.cs" />
     <Compile Include="Drawing\FontHelperTests.cs" />
+    <Compile Include="Pdf.AcroForms\PdfAcroFieldTestHelpers.cs" />
+    <Compile Include="Pdf.AcroForms\PdfAcroFieldTests.cs" />
+    <Compile Include="Pdf.AcroForms\PdfAcroFormTests.cs" />
+    <Compile Include="Pdf.AcroForms\PdfCheckBoxFieldTests.cs" />
+    <Compile Include="Pdf.AcroForms\PdfTextFieldTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PdfTextFieldTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PdfSharper\PDFsharper.csproj">

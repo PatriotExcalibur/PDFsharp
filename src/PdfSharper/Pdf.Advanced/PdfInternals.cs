@@ -33,6 +33,7 @@ using System.Reflection;
 using System.Text;
 using System.IO;
 using PdfSharper.Pdf.IO;
+using System.Linq;
 
 namespace PdfSharper.Pdf.Advanced
 {
@@ -243,6 +244,8 @@ namespace PdfSharper.Pdf.Advanced
             if (obj.Owner != _document)
                 throw new InvalidOperationException("Object does not belong to this document.");
 
+            var writeableTrailer = _document._trailers.SingleOrDefault(t => t.IsReadOnly == false);
+            writeableTrailer.XRefTable.Remove(obj.Reference);
             _document._irefTable.Remove(obj.Reference);
         }
 

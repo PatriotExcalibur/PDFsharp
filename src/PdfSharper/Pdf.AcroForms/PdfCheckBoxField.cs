@@ -210,14 +210,14 @@ namespace PdfSharper.Pdf.AcroForms
                 if (!HasKids) //R080317
                 {
                     string value = Elements.GetString(Keys.V);
-                    return value.Length != 0 && value != "/Off";
+                    return value.Length != 0 && value != UncheckedName;
                 }
                 else //R080317
                 {
                     if (Fields.Elements.Items.Length == 2)
                     {
                         string value = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[0])).Value)).Elements.GetString(Keys.V);
-                        bool bReturn = value.Length != 0 && value != "/Off" && value != "/Nein"; //R081114 (3Std.!!) auch auf Nein pr�fen; //TODO woher kommt der Wert?
+                        bool bReturn = value.Length != 0 && value != UncheckedName && value != "/Nein"; //R081114 (3Std.!!) auch auf Nein pr�fen; //TODO woher kommt der Wert?
                         return bReturn;
                     }
                     else
@@ -228,7 +228,7 @@ namespace PdfSharper.Pdf.AcroForms
             {
                 if (!HasKids)
                 {
-                    string name = value ? GetNonOffValue() : "/Off";
+                    string name = value ? GetNonOffValue() : UncheckedName;
                     Elements.SetName(Keys.V, name);
                     Elements.SetName(PdfAnnotation.Keys.AS, name);
                 }
@@ -243,8 +243,8 @@ namespace PdfSharper.Pdf.AcroForms
                         if (value)
                         {
                             //Element 0 behandeln -> auf checked setzen
-                            string name1 = "";
-                            PdfDictionary o = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[0])).Value)).Elements["/AP"] as PdfDictionary;
+                            string name1 = "";                            
+                            PdfDictionary o = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[0])).Value)).Elements[Keys.AP] as PdfDictionary;
                             if (o != null)
                             {
                                 PdfDictionary n = o.Elements["/N"] as PdfDictionary;
@@ -252,7 +252,7 @@ namespace PdfSharper.Pdf.AcroForms
                                 {
                                     foreach (string name in n.Elements.Keys)
                                     {
-                                        if (name != "/Off")
+                                        if (name != UncheckedName)
                                         {
                                             name1 = name;
                                             break;
@@ -267,7 +267,7 @@ namespace PdfSharper.Pdf.AcroForms
                             }
 
                             //Element 1 behandeln -> auf unchecked setzen
-                            o = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[1])).Value)).Elements["/AP"] as PdfDictionary;
+                            o = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[1])).Value)).Elements[Keys.AP] as PdfDictionary;
                             if (o != null)
                             {
                                 PdfDictionary n = o.Elements["/N"] as PdfDictionary;
@@ -275,7 +275,7 @@ namespace PdfSharper.Pdf.AcroForms
                                 {
                                     foreach (string name in n.Elements.Keys)
                                     {
-                                        if (name == "/Off")
+                                        if (name == UncheckedName)
                                         {
                                             name1 = name;
                                             break;
@@ -294,7 +294,7 @@ namespace PdfSharper.Pdf.AcroForms
                         {
                             //Element 0 behandeln -> auf unchecked setzen
                             string name1 = "";
-                            PdfDictionary o = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[1])).Value)).Elements["/AP"] as PdfDictionary;
+                            PdfDictionary o = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[1])).Value)).Elements[Keys.AP] as PdfDictionary;
                             if (o != null)
                             {
                                 PdfDictionary n = o.Elements["/N"] as PdfDictionary;
@@ -317,7 +317,7 @@ namespace PdfSharper.Pdf.AcroForms
                             }
 
                             //Element 1 behandeln -> auf checked setzen
-                            o = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[0])).Value)).Elements["/AP"] as PdfDictionary;
+                            o = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[0])).Value)).Elements[Keys.AP] as PdfDictionary;
                             if (o != null)
                             {
                                 PdfDictionary n = o.Elements["/N"] as PdfDictionary;
@@ -325,7 +325,7 @@ namespace PdfSharper.Pdf.AcroForms
                                 {
                                     foreach (string name in n.Elements.Keys)
                                     {
-                                        if (name == "/Off")
+                                        if (name == UncheckedName)
                                         {
                                             name1 = name;
                                             break;
@@ -367,11 +367,11 @@ namespace PdfSharper.Pdf.AcroForms
         }
         string _uncheckedName = "/Off";
 
-        internal override void Flatten()
+        public override void Flatten()
         {
             base.Flatten();
 
-            if (!HasKids && Checked)
+            if (!HasKids)
             {
                 var appearance = Elements.GetDictionary(PdfAnnotation.Keys.AP);
                 if (appearance != null)
@@ -380,16 +380,13 @@ namespace PdfSharper.Pdf.AcroForms
                     var apps = appearance.Elements.GetDictionary("/N");
                     if (apps != null)
                     {
-                        var appSelRef = apps.Elements.GetReference(GetNonOffValue());
-                        if (appSelRef != null)
+                        var appSel = Checked ? apps.Elements.GetDictionary(GetNonOffValue()) : apps.Elements.GetDictionary(UncheckedName);
+                        if (appSel != null)
                         {
-                            var appSel = appSelRef.Value as PdfDictionary;
-                            if (appSel != null)
-                            {
-                                RenderContentStream(appSel.Stream);
-                            }
+                            RenderContentStream(appSel.Stream);
                         }
                     }
+
                 }
             }
         }

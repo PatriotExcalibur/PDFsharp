@@ -81,6 +81,21 @@ namespace PdfSharper.Pdf.AcroForms
             _document.Catalog.AcroForm = null;
         }
 
+        public void RemoveJavascript()
+        {
+            string namesKey = "/Names";
+            string javascriptKey = "/JavaScript";
+
+            if (_document != null && _document.Catalog != null && _document.Catalog.Elements != null && _document.Catalog.Elements.Any(e => e.Key == namesKey))
+            {
+                PdfDictionary names = _document.Catalog.Elements.GetDictionary(namesKey);
+                if (names != null && names.Elements != null && names.Elements.Any(e => e.Key == javascriptKey))
+                {
+                    names.Elements.Remove(javascriptKey);
+                }
+            }
+        }
+
         internal override void PrepareForSave()
         {
             base.PrepareForSave();
@@ -96,19 +111,21 @@ namespace PdfSharper.Pdf.AcroForms
 
         public IEnumerable<PdfAcroField> WalkAllFields(PdfAcroField current)
         {
-            if (!current.HasKids)
+            if (current != null)
             {
-                yield return current;
-                yield break;
-            }
-
-
-            foreach (var child in current.Fields)
-            {
-                var subchildren = WalkAllFields(child);
-                foreach (var subChild in subchildren)
+                if (!current.HasKids)
                 {
-                    yield return subChild;
+                    yield return current;
+                    yield break;
+                }
+                
+                foreach (var child in current.Fields)
+                {
+                    var subchildren = WalkAllFields(child);
+                    foreach (var subChild in subchildren)
+                    {
+                        yield return subChild;
+                    }
                 }
             }
         }

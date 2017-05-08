@@ -171,7 +171,7 @@ namespace PdfSharper.Pdf.AcroForms
             }
         }
 
-        internal override void Flatten()
+        public override void Flatten()
         {
             base.Flatten();
 

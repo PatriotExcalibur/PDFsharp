@@ -47,18 +47,7 @@ namespace PdfSharper.Pdf.AcroForms
         public PdfGenericField(PdfDictionary dict)
             : base(dict)
         { }
-
-        internal override void Flatten()
-        {
-            base.Flatten();
-
-            var appearances = Elements.GetDictionary(PdfAnnotation.Keys.AP);
-            var normalAppearance = appearances != null ? appearances.Elements.GetDictionary("/N") : null;
-            var activeAppearance = Elements.GetString(PdfAnnotation.Keys.AS);
-            if (!String.IsNullOrEmpty(activeAppearance) && normalAppearance != null && normalAppearance.Elements.ContainsKey(activeAppearance))
-                RenderContentStream(normalAppearance.Elements.GetDictionary(activeAppearance).Stream);
-        }
-
+        
         /// <summary>
         /// Predefined keys of this dictionary. 
         /// The description comes from PDF 1.4 Reference.

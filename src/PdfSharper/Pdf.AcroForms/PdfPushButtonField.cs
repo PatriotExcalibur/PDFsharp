@@ -49,7 +49,7 @@ namespace PdfSharper.Pdf.AcroForms
             : base(dict)
         { }
 
-        internal override void Flatten()
+        public override void Flatten()
         {
             base.Flatten();
 

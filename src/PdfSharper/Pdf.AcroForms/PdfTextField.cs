@@ -364,10 +364,10 @@ namespace PdfSharper.Pdf.AcroForms
                 XRect xrect = (rect.ToXRect() - rect.Location);
 
                 if (BackColor != XColor.Empty)
-                    gfx.DrawRectangle(new XSolidBrush(BackColor), rect.ToXRect() - rect.Location);
+                    gfx.DrawRectangle(new XSolidBrush(BackColor), xrect);
                 // Draw Border
                 if (!BorderColor.IsEmpty)
-                    gfx.DrawRectangle(new XPen(BorderColor), rect.ToXRect() - rect.Location);
+                    gfx.DrawRectangle(new XPen(BorderColor), xrect);
 
                 if (Text.Length > 0)
                 {
@@ -477,77 +477,29 @@ namespace PdfSharper.Pdf.AcroForms
             return xrect;
         }
 
-        internal override void Flatten()
+        public override void Flatten()
         {
+            if (_needsAppearances)
+            {
+                RenderAppearance();
+            }
+
             base.Flatten();
 
-            if (HasKids)
+            if (!HasKids)
             {
-                for (int i = 0; i < Fields.Elements.Count; i++)
+                var appearance = Elements.GetDictionary(PdfAnnotation.Keys.AP);
+                if (appearance != null)
                 {
-                    var rect = Fields[i].Rectangle;
-                    var page = Fields[i].Page;
-                    var font = GetFontFromElement(Fields[i]);
-                    XStringFormat format = GetAlignment(Fields[i].Elements);
-                    DrawToPDF(rect, page, font, format);
-                }
-            }
-            else
-            {
-                var rect = Rectangle;
-                var page = Page;
-                XStringFormat format = GetAlignment(Elements);
-                DrawToPDF(rect, page, Font, format);
-            }
-
-
-        }
-
-        internal void DrawToPDF(PdfRectangle rect, PdfPage elementPage, XFont font, XStringFormat format)
-        {
-            if (!rect.IsEmpty)
-            {
-                using (var gfx = XGraphics.FromPdfPage(elementPage))
-                {
-                    var xrect = new XRect(rect.X1, elementPage.Height.Point - rect.Y2, rect.Width, rect.Height);
-
-                    if (Text.Length > 0)
+                    var apps = appearance.Elements.GetDictionary("/N");
+                    if (apps != null)
                     {
-                        xrect.Y = xrect.Y + TopMargin;
-                        xrect.X = xrect.X + LeftMargin;
-                        xrect.Width = xrect.Width - (RightMargin + LeftMargin);
-                        xrect.Height = xrect.Height - (BottomMargin + TopMargin);
-
-                        if ((FieldFlags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
-                        {
-                            var combWidth = xrect.Width / MaxLength;
-                            format.Comb = true;
-                            format.CombWidth = combWidth;
-                            gfx.Save();
-                            gfx.IntersectClip(xrect);
-
-                            if (MultiLine)
-                            {
-                                XTextFormatter formatter = new XTextFormatter(gfx);
-                                formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
-                            }
-                            else
-                            {
-                                gfx.DrawString(Text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
-                            }
-
-                            gfx.Restore();
-                        }
-                        else
-                        {
-                            XTextFormatter formatter = new XTextFormatter(gfx);
-                            formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
-                        }
+                        RenderContentStream(apps.Stream);
                     }
                 }
             }
         }
-
+        
         internal XFont GetFontFromElement(PdfAcroField element)
         {
             string[] name = element.Font.FamilyName.Split(',');

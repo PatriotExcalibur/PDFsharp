@@ -53,30 +53,35 @@ namespace PDFsharper.UnitTests.Drawing.Layout
             Assert.IsTrue(formatter.LayoutRectangle.BottomRight.Y == 100, "BottomRight.Y was not set correctly");
         }
 
-        [TestMethod]
-        public void DrawString_AllAlignments()
-        {
-            GlobalFontSettings.DefaultFontEncoding = PdfFontEncoding.WinAnsi;
-            PdfDocument doc = PdfReader.Open(@"c:\users\simsr\desktop\alignments.pdf");
+        ///
+        /// This is for manual testing.  Requires a document on local system with fields.
+        ///
+        //[TestMethod]
+        //public void DrawString_AllAlignments()
+        //{
+        //    GlobalFontSettings.DefaultFontEncoding = PdfFontEncoding.WinAnsi;
+        //    PdfDocument doc = PdfReader.Open(@"c:\users\simsr\desktop\alignments.pdf");
 
-            (doc.AcroForm.Fields[0]["LeftSingle"] as PdfTextField).Text = "abcdefghijkl mnopqrstuvwxyz";
-            (doc.AcroForm.Fields[0]["CenterSingle"] as PdfTextField).Text = "2 abcdefghijkl mnopqrstuvwxyz";
-            (doc.AcroForm.Fields[0]["RightSingle"] as PdfTextField).Text = "3 abcdefghijkl mnopqrstuvwxyz";
-            (doc.AcroForm.Fields[0]["LeftMulti"] as PdfTextField).Text = "Test Test test test test test tests tese" + Environment.NewLine + "Line 2";
-            (doc.AcroForm.Fields[0]["CenterMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
-            (doc.AcroForm.Fields[0]["RightMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
+        //    (doc.AcroForm.Fields["Page1"]["LeftSingle"] as PdfTextField).Text = "abcdefghijkl mnopqrstuvwxyz";
+        //    (doc.AcroForm.Fields["Page1"]["CenterSingle"] as PdfTextField).Text = "2 abcdefghijkl mnopqrstuvwxyz";
+        //    (doc.AcroForm.Fields["Page1"]["RightSingle"] as PdfTextField).Text = "3 abcdefghijkl mnopqrstuvwxyz";
+        //    (doc.AcroForm.Fields["Page1"]["LeftMulti"] as PdfTextField).Text = "Test Test test test test test tests tese" + Environment.NewLine + "Line 2";
+        //    (doc.AcroForm.Fields["Page1"]["CenterMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
+        //    (doc.AcroForm.Fields["Page1"]["RightMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
+        //    (doc.AcroForm.Fields["Page1"]["LeftSingle2"] as PdfTextField).Text = "1";
+        //    (doc.AcroForm.Fields["Page1"]["CenterSingle2"] as PdfTextField).Text = "2";
+        //    (doc.AcroForm.Fields["Page1"]["RightSingle2"] as PdfTextField).Text = "3";
 
-            //(doc.AcroForm.Fields[0]["LeftSingle"] as PdfTextField).Flatten();
-            //(doc.AcroForm.Fields[0]["CenterSingle"] as PdfTextField).Flatten();
-            //(doc.AcroForm.Fields[0]["RightSingle"] as PdfTextField).Flatten();
-            //(doc.AcroForm.Fields[0]["LeftMulti"] as PdfTextField).Flatten();
-            //(doc.AcroForm.Fields[0]["CenterMulti"] as PdfTextField).Flatten();
-            //(doc.AcroForm.Fields[0]["RightMulti"] as PdfTextField).Flatten();
-
-            doc.AcroForm.Flatten();
-
-            doc.Save(@"c:\users\simsr\desktop\alignments_rendered.pdf");
-
-        }
+        //    (doc.AcroForm.Fields["A"].Fields[1] as PdfCheckBoxField).Checked = true;
+        //    (doc.AcroForm.Fields["B"].Fields[1] as PdfCheckBoxField).Checked = true;
+        //    (doc.AcroForm.Fields["C"].Fields[1] as PdfCheckBoxField).Checked = true;
+        //    (doc.AcroForm.Fields["D"].Fields[1] as PdfCheckBoxField).Checked = true;
+        //    (doc.AcroForm.Fields["E"].Fields[1] as PdfCheckBoxField).Checked = true;
+        //    (doc.AcroForm.Fields["F"].Fields[1] as PdfCheckBoxField).Checked = true;
+            
+        //    doc.AcroForm.Flatten();
+            
+        //    doc.Save(@"c:\users\simsr\desktop\flattened_rendered.pdf");
+        //}
     }
 }

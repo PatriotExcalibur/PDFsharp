@@ -204,10 +204,12 @@ namespace PdfSharper.Drawing.Layout
 
                     if (runningWidth > LayoutRectangle.Width)
                     {
-                        Block block = this.BuildBlock(_text, startIndex, blockLength, format);
-                        _blocks.Add(block);
+                        //Block block = this.BuildBlock(_text, startIndex, blockLength, format);
+                        //_blocks.Add(block);
 
-                        blockLength = 0;
+                        //blockLength = 0;
+
+                        break;
                     }
                 }
 
