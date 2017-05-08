@@ -204,11 +204,6 @@ namespace PdfSharper.Drawing.Layout
 
                     if (runningWidth > LayoutRectangle.Width)
                     {
-                        //Block block = this.BuildBlock(_text, startIndex, blockLength, format);
-                        //_blocks.Add(block);
-
-                        //blockLength = 0;
-
                         break;
                     }
                 }
@@ -373,13 +368,16 @@ namespace PdfSharper.Drawing.Layout
             }
 
             //This has to be done last because it requires knowing the Total Height of all text.
-            double dy = CalculateFormattedOffsetY(format, cyAscent, _blocks.FindAll(b => b.Stop == true).Count > 0);
-            for (int idx = 0; idx < count; idx++)
+            if (_blocks != null && _blocks.Any())
             {
-                Block block = _blocks[idx];
-                if (block != null && block.Location != null)
+                double dy = CalculateFormattedOffsetY(format, cyAscent, _blocks.FindAll(b => b.Stop == true).Count > 0);
+                for (int idx = 0; idx < count; idx++)
                 {
-                    block.Location.Y = block.Location.Y + dy;
+                    Block block = _blocks[idx];
+                    if (block != null && block.Location != null)
+                    {
+                        block.Location.Y = block.Location.Y + dy;
+                    }
                 }
             }
         }
