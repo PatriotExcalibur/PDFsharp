@@ -578,12 +578,6 @@ namespace PdfSharper.Pdf
 
         protected override void WriteObject(PdfWriter writer)
         {
-            // HACK: temporarily flip media box if Landscape
-            PdfRectangle mediaBox = MediaBox;
-            // TODO: Take /Rotate into account
-            if (_orientation == PageOrientation.Landscape)
-                MediaBox = new PdfRectangle(mediaBox.X1, mediaBox.Y1, mediaBox.Y2, mediaBox.X2);
-
 #if true
             // Add transparency group to prevent rendering problems of Adobe viewer.
             // Update (PDFsharp 1.50 beta 3): Add transparency group only of ColorMode is defined.
@@ -612,9 +606,6 @@ namespace PdfSharper.Pdf
                 item.GetType();
 #endif
             base.WriteObject(writer);
-
-            if (_orientation == PageOrientation.Landscape)
-                MediaBox = mediaBox;
         }
 
         /// <summary>
