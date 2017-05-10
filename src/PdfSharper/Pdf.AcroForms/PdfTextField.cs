@@ -238,15 +238,16 @@ namespace PdfSharper.Pdf.AcroForms
             {
                 TopMargin = 4;
                 BottomMargin = 4;
+                RightMargin = 2;
             }
             else
             {
-                TopMargin = 2;
-                BottomMargin = 2;
+                TopMargin = 0;
+                BottomMargin = 0;
+                RightMargin = 0;
             }
 
             LeftMargin = 2;
-            RightMargin = 2;
         }
 
         /// <summary>
