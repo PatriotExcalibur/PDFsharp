@@ -195,6 +195,8 @@ namespace PdfSharper.Pdf.AcroForms
                     SetFlags |= PdfAcroFieldFlags.Multiline;
                 else
                     SetFlags &= ~PdfAcroFieldFlags.Multiline;
+
+                SetDefaultMargins();
             }
         }
 

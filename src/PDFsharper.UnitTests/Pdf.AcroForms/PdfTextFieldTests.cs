@@ -343,14 +343,11 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             Assert.IsTrue(field.RightMargin == 0, "RightMargin should be 0");
 
             field.MultiLine = true;
-
-            field.SetDefaultMargins();
-
+            
             Assert.IsTrue(field.TopMargin == 4, "TopMargin should be 4");
             Assert.IsTrue(field.BottomMargin == 4, "BottomMargin should be 4");
             Assert.IsTrue(field.LeftMargin == 2, "LeftMargin should be 2");
             Assert.IsTrue(field.RightMargin == 2, "RightMargin should be 2");
-
         }
 
         [TestMethod]
@@ -370,14 +367,11 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             Assert.IsTrue(field.RightMargin == 0, "RightMargin should be 0");
 
             field.MultiLine = false;
-
-            field.SetDefaultMargins();
-
+            
             Assert.IsTrue(field.TopMargin == 0, "TopMargin should be 0");
             Assert.IsTrue(field.BottomMargin == 0, "BottomMargin should be 0");
             Assert.IsTrue(field.LeftMargin == 2, "LeftMargin should be 2");
             Assert.IsTrue(field.RightMargin == 0, "RightMargin should be 0");
-
         }
 
         [TestMethod]
