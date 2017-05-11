@@ -388,43 +388,98 @@ namespace PdfSharper.Pdf.AcroForms
 				if (!BorderColor.IsEmpty)
 					gfx.DrawRectangle(new XPen(BorderColor), xrect);
 
-				if (Text.Length > 0)
+
+				xrect = ApplyMarginsToXRectangle(xrect);
+				var drawOpts = new TextDrawingOptions
 				{
-					xrect = ApplyMarginsToXRectangle(xrect);
+					Font = Font,
+					Brush = new XSolidBrush(ForeColor),
+					Format = Alignment,
+					MaxLength = MaxLength,
+					UseComb = (FieldFlags & PdfAcroFieldFlags.Comb) != 0,
+					IsMultiline = MultiLine,
+				};
+				DrawText(gfx, Text, xrect, drawOpts);
 
-					if ((FieldFlags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
-					{
-						var combWidth = xrect.Width / MaxLength;
-						var format = XStringFormats.TopLeft;
-						format.Comb = true;
-						format.CombWidth = combWidth;
-						gfx.Save();
-						gfx.IntersectClip(xrect);
+				//if (Text.Length > 0)
+				//{
+				//	xrect = ApplyMarginsToXRectangle(xrect);
 
-						if (MultiLine)
-						{
-							XTextFormatter formatter = new XTextFormatter(gfx);
-							formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
-						}
-						else
-						{
-							gfx.DrawString(Text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
-						}
+				//	if ((FieldFlags & PdfAcroFieldFlags.Comb) != 0 && MaxLength > 0)
+				//	{
+				//		var combWidth = xrect.Width / MaxLength;
+				//		var format = XStringFormats.TopLeft;
+				//		format.Comb = true;
+				//		format.CombWidth = combWidth;
+				//		gfx.Save();
+				//		gfx.IntersectClip(xrect);
 
-						gfx.Restore();
-					}
-					else
-					{
-						XTextFormatter formatter = new XTextFormatter(gfx);
-						formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
-					}
-				}
+				//		if (MultiLine)
+				//		{
+				//			XTextFormatter formatter = new XTextFormatter(gfx);
+				//			formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
+				//		}
+				//		else
+				//		{
+				//			gfx.DrawString(Text, Font, new XSolidBrush(ForeColor), xrect + new XPoint(0, 1.5), format);
+				//		}
+
+				//		gfx.Restore();
+				//	}
+				//	else
+				//	{
+				//		XTextFormatter formatter = new XTextFormatter(gfx);
+				//		formatter.DrawString(Text, MultiLine, Font, new XSolidBrush(ForeColor), xrect, Alignment);
+				//	}
+				//}
 
 				form.DrawingFinished();
 				AssignAppearanceStream(form);
 
 			}
 #endif
+		}
+
+		public class TextDrawingOptions
+		{
+			public XFont Font;
+			public XBrush Brush;
+			public XStringFormat Format = XStringFormats.TopLeft;
+			public bool IsMultiline;
+			public bool UseComb;
+			public int MaxLength = -1;
+		}
+		public static void DrawText(XGraphics gfx, string text, XRect xrect, TextDrawingOptions textOptions)
+		{
+			if (text.Length == 0) return;
+
+			if (textOptions.UseComb && textOptions.MaxLength > 0)
+			{
+				var combWidth = xrect.Width / textOptions.MaxLength;
+				var altFormat = XStringFormats.TopLeft;
+				altFormat.Comb = true;
+				altFormat.CombWidth = combWidth;
+				gfx.Save();
+				gfx.IntersectClip(xrect);
+
+				if (textOptions.IsMultiline)
+				{
+					XTextFormatter formatter = new XTextFormatter(gfx);
+					formatter.DrawString(text, textOptions.IsMultiline, textOptions.Font, textOptions.Brush, xrect, textOptions.Format);
+				}
+				else
+				{
+					gfx.DrawString(text, textOptions.Font, textOptions.Brush, xrect + new XPoint(0, 1.5), altFormat);
+				}
+
+				gfx.Restore();
+			}
+			else
+			{
+				XTextFormatter formatter = new XTextFormatter(gfx);
+				formatter.DrawString(text, textOptions.IsMultiline, textOptions.Font, textOptions.Brush, xrect, textOptions.Format);
+			}
+
 		}
 
         private PdfArray GetLandscapeAppearanceMatrix(XRect xrect)

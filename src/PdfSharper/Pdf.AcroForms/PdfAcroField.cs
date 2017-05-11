@@ -770,7 +770,7 @@ namespace PdfSharper.Pdf.AcroForms
 				RemoveJavascript();
 			}
 
-			foreach (var field in Fields)
+			foreach(var field in Fields)
 			{
 				field.Flatten();
 			}
