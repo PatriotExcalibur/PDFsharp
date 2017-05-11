@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PdfSharper.Pdf;
 using PdfSharper.Pdf.AcroForms;
+using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Annotations;
 using System.Linq;
 
@@ -112,6 +113,70 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             field.RemoveJavascript();
 
             Assert.IsFalse(document.Catalog.Elements.Any(e => e.Key == "/Names"), "document-catalog should not have a Names item");
+        }
+
+        [TestMethod]
+        public void RenderContentStream_Landscape()
+        {
+            string targetStreamValue = "q\n0.0 1.0 -1.0 0.0 200.0 0.0 cm\n";    //This represents the Matrix transform with rotation
+
+            PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
+            PdfTextField field = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
+
+            field.Page.Rotate = 90;
+            field.Page.Orientation = PdfSharper.PageOrientation.Landscape;
+
+            field.Text = "Test";
+
+            document.AcroForm.Flatten();    //This method triggers RenderContentStream for each Field
+
+            Assert.IsNotNull(document, "document should not be null");
+            Assert.IsNotNull(document.Pages, "document Pages should not be null");
+            Assert.IsTrue(document.Pages.Count == 1, "document Pages count is not correct");
+            Assert.IsNotNull(document.Pages[0].Contents, "document Pages contents should not be null");
+            Assert.IsNotNull(document.Pages[0].Contents.Elements, "Page Elements should not be null");
+            Assert.IsTrue(document.Pages[0].Contents.Elements.Count == 1, "Page Elements count is incorrect");
+            Assert.IsTrue((document.Pages[0].Contents.Elements.Items[0] as PdfReference) != null, "Page Element should be a PdfReference");
+            Assert.IsTrue(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary) != null, "PdfReference Value should be a PdfDictionary");
+            Assert.IsTrue(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary).Stream != null, "PdfDictionary Stream should not be null");
+            Assert.IsNotNull(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary).Stream.Value, "PdfDictionary Stream Value should not be null");
+
+            string stringRepresentationOfStream = System.Text.Encoding.UTF8.GetString(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary).Stream.Value);
+
+            Assert.IsNotNull(stringRepresentationOfStream, "stringRepresentationOfStream should not be null");
+            Assert.IsTrue(stringRepresentationOfStream.StartsWith(targetStreamValue), "Stream value is not correct");
+        }
+
+        [TestMethod]
+        public void RenderContentStream_Portrait()
+        {
+            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n";   //This represnts the Matrix transform for no rotation
+
+            PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
+            PdfTextField field = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
+
+            field.Page.Rotate = 0;
+            field.Page.Orientation = PdfSharper.PageOrientation.Portrait;
+
+            field.Text = "Test";
+
+            document.AcroForm.Flatten();    //This method triggers RenderContentStream for each Field
+
+            Assert.IsNotNull(document, "document should not be null");
+            Assert.IsNotNull(document.Pages, "document Pages should not be null");
+            Assert.IsTrue(document.Pages.Count == 1, "document Pages count is not correct");
+            Assert.IsNotNull(document.Pages[0].Contents, "document Pages contents should not be null");
+            Assert.IsNotNull(document.Pages[0].Contents.Elements, "Page Elements should not be null");
+            Assert.IsTrue(document.Pages[0].Contents.Elements.Count == 1, "Page Elements count is incorrect");
+            Assert.IsTrue((document.Pages[0].Contents.Elements.Items[0] as PdfReference) != null, "Page Element should be a PdfReference");
+            Assert.IsTrue(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary) != null, "PdfReference Value should be a PdfDictionary");
+            Assert.IsTrue(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary).Stream != null, "PdfDictionary Stream should not be null");
+            Assert.IsNotNull(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary).Stream.Value, "PdfDictionary Stream Value should not be null");
+
+            string stringRepresentationOfStream = System.Text.Encoding.UTF8.GetString(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary).Stream.Value);
+
+            Assert.IsNotNull(stringRepresentationOfStream, "stringRepresentationOfStream should not be null");
+            Assert.IsTrue(stringRepresentationOfStream.StartsWith(targetStreamValue), "Stream value is not correct");
         }
     }
 }

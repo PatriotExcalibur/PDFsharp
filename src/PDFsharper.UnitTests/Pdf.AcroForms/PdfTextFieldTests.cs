@@ -48,6 +48,78 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
         }
 
         [TestMethod]
+        public void RenderAppearance_Landscape()
+        {
+            PdfDocument testDoc = PdfAcroFieldTestHelpers.SetupDocumentForTest();
+            PdfTextField field = PdfAcroFieldTestHelpers.CreateTextFieldForTest(testDoc);
+
+            field.Text = "Some Test Text";
+
+            field.Page.Rotate = 90;
+            field.Page.Orientation = PdfSharper.PageOrientation.Landscape;
+
+            Assert.IsFalse(field.Elements.ContainsKey(PdfAnnotation.Keys.AP), "Text Field should have rendered an appearance stream prior to PrepareForSave.");
+
+            field.PrepareForSave();
+
+            Assert.IsTrue(field.Elements.ContainsKey(PdfAnnotation.Keys.AP), "Text Field should have rendered an appearance stream.");
+            
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP"), "AP Dictionary not Found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements, "AP Dictionary missing elements");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N"), "Normal Dictionary not found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements, "Normal Dictionary missing elements");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetArray("/Matrix"), "Matrix Array not found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetArray("/Matrix").Elements.Count == 6, "Incorrect number of elements in the Matrix Array");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetArray("/Matrix").Elements.GetReal(0) == 0, "Matrix Index-0 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetArray("/Matrix").Elements.GetReal(1) == 1, "Matrix Index-1 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetArray("/Matrix").Elements.GetReal(2) == -1, "Matrix Index-2 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetArray("/Matrix").Elements.GetReal(3) == 0, "Matrix Index-3 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetArray("/Matrix").Elements.GetReal(4) == 200, "Matrix Index-4 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetArray("/Matrix").Elements.GetReal(5) == 0, "Matrix Index-5 is not correct");
+
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP"), "AP Dictionary not Found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements, "AP Dictionary missing elements");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N"), "Normal Dictionary not found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements, "Normal Dictionary missing elements");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox"), "BBox Rectangle not found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox").X1 == 0, "BBox Rectangle X1 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox").X2 == 0, "BBox Rectangle X2 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox").Y1 == 200, "BBox Rectangle Y1 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox").Y2 == 20, "BBox Rectangle Y2 is not correct");
+        }
+
+        [TestMethod]
+        public void RenderAppearance_NotLandscape()
+        {
+            PdfDocument testDoc = PdfAcroFieldTestHelpers.SetupDocumentForTest();
+            PdfTextField field = PdfAcroFieldTestHelpers.CreateTextFieldForTest(testDoc);
+
+            field.Text = "Some Test Text";
+            
+            Assert.IsFalse(field.Elements.ContainsKey(PdfAnnotation.Keys.AP), "Text Field should have rendered an appearance stream prior to PrepareForSave.");
+
+            field.PrepareForSave();
+
+            Assert.IsTrue(field.Elements.ContainsKey(PdfAnnotation.Keys.AP), "Text Field should have rendered an appearance stream.");
+            
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP"), "AP Dictionary not Found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements, "AP Dictionary missing elements");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N"), "Normal Dictionary not found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements, "Normal Dictionary missing elements");
+            Assert.IsFalse(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.ContainsKey("/Matrix"), "Matrix Array should not be found");
+
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP"), "AP Dictionary not Found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements, "AP Dictionary missing elements");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N"), "Normal Dictionary not found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements, "Normal Dictionary missing elements");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox"), "BBox Rectangle not found");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox").X1 == 0, "BBox Rectangle X1 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox").X2 == 0, "BBox Rectangle X2 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox").Y1 == 200, "BBox Rectangle Y1 is not correct");
+            Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N").Elements.GetRectangle("/BBox").Y2 == 20, "BBox Rectangle Y2 is not correct");
+        }
+
+        [TestMethod]
         public void Flatten()
         {
             string fieldValue = "Test";
@@ -371,7 +443,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             Assert.IsTrue(field.TopMargin == 0, "TopMargin should be 0");
             Assert.IsTrue(field.BottomMargin == 0, "BottomMargin should be 0");
             Assert.IsTrue(field.LeftMargin == 2, "LeftMargin should be 2");
-            Assert.IsTrue(field.RightMargin == 0, "RightMargin should be 0");
+            Assert.IsTrue(field.RightMargin == 1, "RightMargin should be 1");
         }
 
         [TestMethod]

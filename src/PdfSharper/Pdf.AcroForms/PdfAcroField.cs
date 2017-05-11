@@ -797,8 +797,18 @@ namespace PdfSharper.Pdf.AcroForms
             if (stream == null)
                 return;
             var content = ContentReader.ReadContent(stream.UnfilteredValue);
-            var matrix = new XMatrix();
-            matrix.TranslateAppend(rect.X1, rect.Y1);
+
+            XMatrix matrix;
+            if(Page.Orientation == PageOrientation.Landscape)
+            {
+                matrix = new XMatrix(0, 1, -1, 0, rect.X2, rect.Y1);
+            }
+            else
+            {
+                matrix = new XMatrix();
+                matrix.TranslateAppend(rect.X1, rect.Y1);
+            }
+
             var matElements = matrix.GetElements();
             var matrixOp = OpCodes.OperatorFromName("cm");
             foreach (var el in matElements)
@@ -817,8 +827,7 @@ namespace PdfSharper.Pdf.AcroForms
                 appendedContent.CreateStream(ms.ToArray());
             }
         }
-
-
+        
         /// <summary>Attempts to determine which type of field a PdfDictionary represents</summary>
         /// <param name="dict"></param>
         /// <returns></returns>

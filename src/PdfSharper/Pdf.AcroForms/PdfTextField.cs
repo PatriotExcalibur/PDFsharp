@@ -33,6 +33,7 @@ using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Annotations;
 using PdfSharper.Pdf.Internal;
 using System;
+using System.Collections.Generic;
 
 namespace PdfSharper.Pdf.AcroForms
 {
@@ -230,7 +231,7 @@ namespace PdfSharper.Pdf.AcroForms
                     SetFlags &= ~PdfAcroFieldFlags.Comb;
             }
         }
-        
+
         /// <summary>
         /// Sets the default margins for the PdfTextField
         /// </summary>
@@ -246,7 +247,7 @@ namespace PdfSharper.Pdf.AcroForms
             {
                 TopMargin = 0;
                 BottomMargin = 0;
-                RightMargin = 0;
+                RightMargin = 1;
             }
 
             LeftMargin = 2;
@@ -362,9 +363,9 @@ namespace PdfSharper.Pdf.AcroForms
             if (GetIsVisible())
             {
                 PdfRectangle rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
-                XForm form = new XForm(_document, rect.Size);
+                XRect xrect = GetXRectFromRectangleAndPageRotation(rect);
+                XForm form = new XForm(_document, xrect.Size);
                 XGraphics gfx = XGraphics.FromForm(form);
-                XRect xrect = (rect.ToXRect() - rect.Location);
 
                 if (BackColor != XColor.Empty)
                     gfx.DrawRectangle(new XSolidBrush(BackColor), xrect);
@@ -439,6 +440,15 @@ namespace PdfSharper.Pdf.AcroForms
                     }
 
                     normalStateDict.Elements.SetObject(PdfPage.Keys.Resources, resourceDict);
+
+                    if (Page.Orientation == PageOrientation.Landscape)
+                    {
+                        PdfArray matrixArray = GetLandscapeAppearanceMatrix(xrect);
+                        normalStateDict.Elements.SetObject("/Matrix", matrixArray);
+
+                        PdfRectangle rotatedBox = GetLandscapeAppearanceBBox(xrect);
+                        normalStateDict.Elements.SetRectangle("/BBox", rotatedBox);
+                    }
                 }
 
                 PdfFormXObject xobj = form.PdfForm;
@@ -456,6 +466,46 @@ namespace PdfSharper.Pdf.AcroForms
                 }
             }
 #endif
+        }
+
+        private PdfArray GetLandscapeAppearanceMatrix(XRect xrect)
+        {
+            //This method is necessary so that PDF knows the matrix transformation
+            PdfArray matrixArray = new PdfArray(Owner);
+            matrixArray.Elements.Add(new PdfReal(0));
+            matrixArray.Elements.Add(new PdfReal(1));
+            matrixArray.Elements.Add(new PdfReal(-1));
+            matrixArray.Elements.Add(new PdfReal(0));
+            matrixArray.Elements.Add(new PdfReal(xrect.Height));
+            matrixArray.Elements.Add(new PdfReal(0));
+
+            return matrixArray;
+        }
+
+        private PdfRectangle GetLandscapeAppearanceBBox(XRect xrect)
+        {
+            //This method is necessary for documents that are Rotated so that PDF knows the BoundingBox for the rotated Text.
+            PdfRectangle rotatedBox = new PdfRectangle(0, 0, xrect.Width, xrect.Height);
+
+            return rotatedBox;
+        }
+
+        private XRect GetXRectFromRectangleAndPageRotation(PdfRectangle rect)
+        {
+            XRect xrect;
+
+            if(Page.Orientation == PageOrientation.Landscape)
+            {
+                xrect = new XRect(0, 0, rect.Height, rect.Width);
+            }
+            else
+            {
+                xrect = (rect.ToXRect() - rect.Location);
+            }
+
+            //TODO: Account for rotation other than 90deg
+
+            return xrect;
         }
 
         private XRect ApplyMarginsToXRectangle(XRect xrect)
@@ -502,7 +552,7 @@ namespace PdfSharper.Pdf.AcroForms
                 }
             }
         }
-        
+
         internal XFont GetFontFromElement(PdfAcroField element)
         {
             string[] name = element.Font.FamilyName.Split(',');

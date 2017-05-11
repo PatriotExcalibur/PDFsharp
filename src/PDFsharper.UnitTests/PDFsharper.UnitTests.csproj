@@ -63,6 +63,7 @@
     <Compile Include="Pdf.AcroForms\PdfAcroFieldTests.cs" />
     <Compile Include="Pdf.AcroForms\PdfAcroFormTests.cs" />
     <Compile Include="Pdf.AcroForms\PdfTextFieldTests.cs" />
+    <Compile Include="Pdf\PdfPageTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

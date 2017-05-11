@@ -302,6 +302,12 @@ namespace PdfSharper.Pdf
             {
                 if (value % 90 != 0)
                     throw new ArgumentException("Value must be a multiple of 90.");
+
+                if (value >= 360)
+                {
+                    value = value % 360;
+                }
+                
                 _elements.SetInteger(InheritablePageKeys.Rotate, value);
             }
         }

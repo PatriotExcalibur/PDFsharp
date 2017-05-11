@@ -2087,10 +2087,8 @@ namespace PdfSharper.Drawing.Pdf
         /// </summary>
         void SaveState()
         {
-            if (_content.Length > 0)
+            if (_content.Length > 0 && _streamMode == StreamMode.Graphic)
             {
-                Debug.Assert(_streamMode == StreamMode.Graphic, "Cannot save state in text mode.");
-
                 _gfxStateStack.Push(_gfxState);
                 _gfxState = _gfxState.Clone();
                 _gfxState.Level = _gfxStateStack.Count;

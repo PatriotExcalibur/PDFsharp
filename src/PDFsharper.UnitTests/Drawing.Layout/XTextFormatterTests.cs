@@ -62,9 +62,9 @@ namespace PDFsharper.UnitTests.Drawing.Layout
         //    GlobalFontSettings.DefaultFontEncoding = PdfFontEncoding.WinAnsi;
         //    PdfDocument doc = PdfReader.Open(@"c:\users\simsr\desktop\alignments.pdf");
 
-        //    (doc.AcroForm.Fields["Page1"]["LeftSingle"] as PdfTextField).Text = "abcdefghijkl mnopqrstuvwxyz";
-        //    (doc.AcroForm.Fields["Page1"]["CenterSingle"] as PdfTextField).Text = "2 abcdefghijkl mnopqrstuvwxyz";
-        //    (doc.AcroForm.Fields["Page1"]["RightSingle"] as PdfTextField).Text = "3 abcdefghijkl mnopqrstuvwxyz";
+        //    (doc.AcroForm.Fields["LeftSingle"] as PdfTextField).Text = "abcdefghijkl mnopqrstuvwxyz";
+        //    (doc.AcroForm.Fields["CenterSingle"] as PdfTextField).Text = "2 abcdefghijkl mnopqrstuvwxyz";
+        //    (doc.AcroForm.Fields["RightSingle"] as PdfTextField).Text = "3 abcdefghijkl mnopqrstuvwxyz";
         //    (doc.AcroForm.Fields["Page1"]["LeftMulti"] as PdfTextField).Text = "Test Test test test test test tests tese" + Environment.NewLine + "Line 2";
         //    (doc.AcroForm.Fields["Page1"]["CenterMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
         //    (doc.AcroForm.Fields["Page1"]["RightMulti"] as PdfTextField).Text = "Test" + Environment.NewLine + "Line 2";
@@ -78,10 +78,26 @@ namespace PDFsharper.UnitTests.Drawing.Layout
         //    (doc.AcroForm.Fields["D"].Fields[1] as PdfCheckBoxField).Checked = true;
         //    (doc.AcroForm.Fields["E"].Fields[1] as PdfCheckBoxField).Checked = true;
         //    (doc.AcroForm.Fields["F"].Fields[1] as PdfCheckBoxField).Checked = true;
-            
-        //    doc.AcroForm.Flatten();
-            
-        //    doc.Save(@"c:\users\simsr\desktop\flattened_rendered.pdf");
+
+        //    //doc.AcroForm.Flatten();
+
+        //    doc.Save(@"c:\users\simsr\desktop\flat1.pdf");
+        //}
+
+        //[TestMethod]
+        //public void DrawString_Landscape_AllAlignments()
+        //{
+        //    GlobalFontSettings.DefaultFontEncoding = PdfFontEncoding.WinAnsi;
+        //    PdfDocument doc = PdfReader.Open(@"c:\users\simsr\desktop\LandscapeAF3862.pdf");
+
+        //    (doc.AcroForm.Fields["Page1"]["NAME"] as PdfTextField).Text = "NAME Field";
+        //    (doc.AcroForm.Fields["Page1"]["GRADE"] as PdfTextField).Text = "GRADE Field";
+        //    (doc.AcroForm.Fields["Page1"]["SSN"] as PdfTextField).Text = "SSN Field";
+        //    (doc.AcroForm.Fields["Page1"]["YesRstrn"] as PdfCheckBoxField).Checked = true;
+
+        //    //doc.AcroForm.Flatten();
+
+        //    doc.Save(@"c:\users\simsr\desktop\flat2.pdf");
         //}
     }
 }
