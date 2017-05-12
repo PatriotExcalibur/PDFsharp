@@ -413,6 +413,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Courier", 10.0, XFontStyle.BoldItalic);
             Assert.AreEqual("CoBO", font.ContentFontName);
+
+            XFont font2 = new XFont("Courier-BoldOblique", 10.0);
+            Assert.AreEqual("CoBO", font2.ContentFontName);
         }
 
         [TestMethod]
@@ -420,6 +423,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Courier", 10.0, XFontStyle.Bold);
             Assert.AreEqual("CoBo", font.ContentFontName);
+
+            XFont font2 = new XFont("Courier-Bold", 10.0);
+            Assert.AreEqual("CoBo", font2.ContentFontName);
         }
 
         [TestMethod]
@@ -427,6 +433,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Courier", 10.0, XFontStyle.Italic);
             Assert.AreEqual("CoOb", font.ContentFontName);
+
+            XFont font2 = new XFont("Courier-Oblique", 10.0);
+            Assert.AreEqual("CoOb", font2.ContentFontName);
         }
 
         [TestMethod]
@@ -434,6 +443,13 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("CourierStd", 10.0);
             Assert.AreEqual("CourierStd", font.ContentFontName);
+        }
+
+        [TestMethod]
+        public void MapFamilyNameToSystemFontName_CourierNew()
+        {
+            XFont font = new XFont("Courier New", 10.0);
+            Assert.AreEqual("Cour", font.ContentFontName);
         }
 
         [TestMethod]
@@ -448,6 +464,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Helvetica", 10.0, XFontStyle.Bold);
             Assert.AreEqual("HeBo", font.ContentFontName);
+
+            XFont font2 = new XFont("Helvetica-Bold", 10.0);
+            Assert.AreEqual("HeBo", font2.ContentFontName);
         }
 
         [TestMethod]
@@ -455,6 +474,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Helvetica", 10.0, XFontStyle.BoldItalic);
             Assert.AreEqual("HeBO", font.ContentFontName);
+
+            XFont font2 = new XFont("Helvetica-BoldOblique", 10.0);
+            Assert.AreEqual("HeBO", font2.ContentFontName);
         }
 
         [TestMethod]
@@ -462,6 +484,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Helvetica", 10.0, XFontStyle.Italic);
             Assert.AreEqual("HeOb", font.ContentFontName);
+
+            XFont font2 = new XFont("Helvetica-Oblique", 10.0);
+            Assert.AreEqual("HeOb", font2.ContentFontName);
         }
 
         [TestMethod]
@@ -476,6 +501,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Times-Roman", 10.0, XFontStyle.Bold);
             Assert.AreEqual("TiBo", font.ContentFontName);
+
+            XFont font2 = new XFont("Times-Bold", 10.0);
+            Assert.AreEqual("TiBo", font2.ContentFontName);
         }
 
         [TestMethod]
@@ -483,6 +511,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Times-Roman", 10.0, XFontStyle.BoldItalic);
             Assert.AreEqual("TiBI", font.ContentFontName);
+
+            XFont font2 = new XFont("Times-BoldItalic", 10.0);
+            Assert.AreEqual("TiBI", font2.ContentFontName);
         }
 
         [TestMethod]
@@ -490,6 +521,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Times-Roman", 10.0, XFontStyle.Italic);
             Assert.AreEqual("TiIt", font.ContentFontName);
+
+            XFont font2 = new XFont("Times-Italic", 10.0);
+            Assert.AreEqual("TiIt", font2.ContentFontName);
         }
 
         [TestMethod]
@@ -505,6 +539,9 @@ namespace PDFsharper.UnitTests.Drawing
         {
             XFont font = new XFont("Times-Roman", 10.0);
             Assert.AreEqual("TiRo", font.ContentFontName);
+
+            XFont font2 = new XFont("Times", 10.0);
+            Assert.AreEqual("TiRo", font2.ContentFontName);
         }
 
         [TestMethod]
