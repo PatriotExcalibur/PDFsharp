@@ -119,7 +119,7 @@ namespace PdfSharper.Drawing.Layout
         /// <param name="layoutRectangle">The layout rectangle.</param>
         public void DrawString(string text, XFont font, XBrush brush, XRect layoutRectangle)
         {
-            this.DrawString(text, false, font, brush, layoutRectangle, XStringFormats.TopLeft);
+            this.DrawString(text, false, false, 0, font, brush, layoutRectangle, XStringFormats.TopLeft);
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace PdfSharper.Drawing.Layout
         /// <param name="format"></param>
         public void DrawString(string text, XFont font, XBrush brush, XRect layoutRectangle, XStringFormat format)
         {
-            this.DrawString(text, false, font, brush, layoutRectangle, XStringFormats.TopLeft);
+            this.DrawString(text, false, false, 0, font, brush, layoutRectangle, XStringFormats.TopLeft);
         }
 
         /// <summary>
@@ -144,10 +144,11 @@ namespace PdfSharper.Drawing.Layout
         /// <param name="brush">The text brush.</param>
         /// <param name="layoutRectangle">The layout rectangle.</param>
         /// <param name="format">The format.</param>
-        public void DrawString(string text, bool wrapText, XFont font, XBrush brush, XRect layoutRectangle, XStringFormat format)
+        public void DrawString(string text, bool wrapText, bool useComb, int maxLength, XFont font, XBrush brush, XRect layoutRectangle, XStringFormat format)
         {
-            if (text == null)
-                throw new ArgumentNullException("text");
+            if (string.IsNullOrEmpty(text))
+                return;
+
             if (font == null)
                 throw new ArgumentNullException("font");
             if (brush == null)
@@ -162,8 +163,15 @@ namespace PdfSharper.Drawing.Layout
             LayoutRectangle = layoutRectangle;
             WrapText = wrapText;
 
-            if (text.Length == 0)
-                return;
+            if (useComb && maxLength > 0)
+            {
+                var combWidth = layoutRectangle.Width / maxLength;
+                var altFormat = XStringFormats.TopLeft;
+                altFormat.Comb = true;
+                altFormat.CombWidth = combWidth;
+                _gfx.Save();
+                _gfx.IntersectClip(layoutRectangle);
+            }
 
             CreateBlocks(format);
             CreateLayout(format);
