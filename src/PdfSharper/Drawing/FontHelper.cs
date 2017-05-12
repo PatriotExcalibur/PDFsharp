@@ -481,6 +481,7 @@ namespace PdfSharper.Drawing
                 case "ArialBold":
                     return "Arial-BoldMT";
                 case "Courier":
+                case "Courier New":
                     if (!isBold && !isItalic)
                         return "Cour";
                     else if (isBold && !isItalic)
@@ -513,6 +514,7 @@ namespace PdfSharper.Drawing
                 case "Helvetica-BoldOblique":
                     return "HeBO";
                 case "Times-Roman":
+                case "Times":
                     if (!isBold && !isItalic)
                         return "TiRo";
                     else if (isBold && !isItalic)

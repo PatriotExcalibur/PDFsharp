@@ -132,7 +132,7 @@ namespace PdfSharper.Drawing.Layout
         /// <param name="format"></param>
         public void DrawString(string text, XFont font, XBrush brush, XRect layoutRectangle, XStringFormat format)
         {
-            this.DrawString(text, false, false, 0, font, brush, layoutRectangle, XStringFormats.TopLeft);
+            this.DrawString(text, false, false, 0, font, brush, layoutRectangle, format);
         }
 
         /// <summary>

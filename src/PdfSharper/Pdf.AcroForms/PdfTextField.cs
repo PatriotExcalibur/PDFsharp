@@ -450,7 +450,7 @@ namespace PdfSharper.Pdf.AcroForms
             return xrect;
         }
 
-        private XRect ApplyMarginsToXRectangle(XRect xrect)
+        public XRect ApplyMarginsToXRectangle(XRect xrect)
         {
             if (xrect != null)
             {
