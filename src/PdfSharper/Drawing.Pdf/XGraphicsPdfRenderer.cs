@@ -1393,8 +1393,9 @@ namespace PdfSharper.Drawing.Pdf
                 const byte PathPointTypeLine = 1; // line
                 const byte PathPointTypeBezier = 3; // default Bezier (= cubic Bezier)
                 const byte PathPointTypePathTypeMask = 0x07; // type mask (lowest 3 bits).
-                                                             //const byte PathPointTypeDashMode = 0x10; // currently in dash mode.
-                                                             //const byte PathPointTypePathMarker = 0x20; // a marker for the path.
+
+                //const byte PathPointTypeDashMode = 0x10; // currently in dash mode.
+                //const byte PathPointTypePathMarker = 0x20; // a marker for the path.
                 const byte PathPointTypeCloseSubpath = 0x80; // closed flag
                                                              // ReSharper restore InconsistentNaming
 
