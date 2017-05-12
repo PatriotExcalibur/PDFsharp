@@ -45,38 +45,41 @@ using PdfSharper.Fonts.OpenType;
 
 namespace PdfSharper.Drawing
 {
-    /// <summary>
-    /// Defines a group of typefaces having a similar basic design and certain variations in styles.
-    /// </summary>
-    public sealed class XFontFamily
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XFontFamily"/> class.
-        /// </summary>
-        /// <param name="familyName">The family name of a font.</param>
-        public XFontFamily(string familyName)
-        {
-            FamilyInternal = FontFamilyInternal.GetOrCreateFromName(familyName, true);
-        }
+	/// <summary>
+	/// Defines a group of typefaces having a similar basic design and certain variations in styles.
+	/// </summary>
+	public sealed class XFontFamily
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="XFontFamily"/> class.
+		/// </summary>
+		/// <param name="familyName">The family name of a font.</param>
+		public XFontFamily(string familyName)
+		{
+			FamilyInternal = FontFamilyInternal.GetOrCreateFromName(familyName, true);
+			Name = familyName;
+		}
 
-        internal XFontFamily(string familyName, bool createPlatformObjects)
-        {
-            FamilyInternal = FontFamilyInternal.GetOrCreateFromName(familyName, createPlatformObjects);
-        }
+		internal XFontFamily(string familyName, bool createPlatformObjects)
+		{
+			FamilyInternal = FontFamilyInternal.GetOrCreateFromName(familyName, createPlatformObjects);
+			Name = familyName;
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XFontFamily"/> class from FontFamilyInternal.
-        /// </summary>
-        XFontFamily(FontFamilyInternal fontFamilyInternal)
-        {
-            FamilyInternal = fontFamilyInternal;
-        }
+		/// <summary>
+		/// Initializes a new instance of the <see cref="XFontFamily"/> class from FontFamilyInternal.
+		/// </summary>
+		XFontFamily(FontFamilyInternal fontFamilyInternal)
+		{
+			FamilyInternal = fontFamilyInternal;
+			Name = FamilyInternal.Name;
+		}
 
 #if CORE || GDI
-        //public XFontFamily(GdiFontFamily gdiFontFamily)
-        //{
-        //    FamilyInternal = FontFamilyInternal.GetOrCreateFromGdi(gdiFontFamily);
-        //}
+		//public XFontFamily(GdiFontFamily gdiFontFamily)
+		//{
+		//    FamilyInternal = FontFamilyInternal.GetOrCreateFromGdi(gdiFontFamily);
+		//}
 #endif
 
 #if WPF
@@ -91,57 +94,57 @@ namespace PdfSharper.Drawing
         //}
 #endif
 
-        internal static XFontFamily CreateFromName_not_used(string name, bool createPlatformFamily)
-        {
-            XFontFamily fontFamily = new XFontFamily(name);
-            if (createPlatformFamily)
-            {
+		internal static XFontFamily CreateFromName_not_used(string name, bool createPlatformFamily)
+		{
+			XFontFamily fontFamily = new XFontFamily(name);
+			if (createPlatformFamily)
+			{
 #if GDI
                 //fontFamily._gdiFamily = new System.Drawing.FontFamily(name);
 #endif
 #if WPF
                 //fontFamily._wpfFamily = new System.Windows.Media.FontFamily(name);
 #endif
-            }
-            return fontFamily;
-        }
+			}
+			return fontFamily;
+		}
 
-        /// <summary>
-        /// An XGlyphTypeface for a font souce that comes from a custom font resolver
-        /// creates a solitary font family exclusively for it.
-        /// </summary>
-        internal static XFontFamily CreateSolitary(string name)
-        {
-            // Custom font resolver face names must not clash with platform family names.
-            FontFamilyInternal fontFamilyInternal = FontFamilyCache.GetFamilyByName(name);
-            if (fontFamilyInternal == null)
-            {
-                fontFamilyInternal = FontFamilyInternal.GetOrCreateFromName(name, false);
-                fontFamilyInternal = FontFamilyCache.CacheOrGetFontFamily(fontFamilyInternal);
-            }
+		/// <summary>
+		/// An XGlyphTypeface for a font souce that comes from a custom font resolver
+		/// creates a solitary font family exclusively for it.
+		/// </summary>
+		internal static XFontFamily CreateSolitary(string name)
+		{
+			// Custom font resolver face names must not clash with platform family names.
+			FontFamilyInternal fontFamilyInternal = FontFamilyCache.GetFamilyByName(name);
+			if (fontFamilyInternal == null)
+			{
+				fontFamilyInternal = FontFamilyInternal.GetOrCreateFromName(name, false);
+				fontFamilyInternal = FontFamilyCache.CacheOrGetFontFamily(fontFamilyInternal);
+			}
 
-            // Create font family and save it in cache. Do not try to create platform objects.
-            return new XFontFamily(fontFamilyInternal);
+			// Create font family and save it in cache. Do not try to create platform objects.
+			return new XFontFamily(fontFamilyInternal);
 
-            //// Custom font resolver face names must not clash with platform family names.
-            //if (FontFamilyCache.GetFamilyByName(name) != null)
-            //{
-            //    // User must rename its font face to resolve naming confilict.
-            //    throw new InvalidOperationException(String.Format("Font face name {0} clashs with existing family name.", name));
-            //}
+			//// Custom font resolver face names must not clash with platform family names.
+			//if (FontFamilyCache.GetFamilyByName(name) != null)
+			//{
+			//    // User must rename its font face to resolve naming confilict.
+			//    throw new InvalidOperationException(String.Format("Font face name {0} clashs with existing family name.", name));
+			//}
 
-            //// Create font family and save it in cache. Do not try to create platform objects.
-            //FontFamilyInternal fontFamilyInternal = FontFamilyInternal.GetOrCreateFromName(name, false);
-            //fontFamilyInternal = FontFamilyCache.CacheFontFamily(fontFamilyInternal);
-            //return new XFontFamily(fontFamilyInternal);
-        }
+			//// Create font family and save it in cache. Do not try to create platform objects.
+			//FontFamilyInternal fontFamilyInternal = FontFamilyInternal.GetOrCreateFromName(name, false);
+			//fontFamilyInternal = FontFamilyCache.CacheFontFamily(fontFamilyInternal);
+			//return new XFontFamily(fontFamilyInternal);
+		}
 
 #if CORE || GDI
-        internal static XFontFamily GetOrCreateFromGdi(GdiFont font)
-        {
-            FontFamilyInternal fontFamilyInternal = FontFamilyInternal.GetOrCreateFromGdi(font.FontFamily);
-            return new XFontFamily(fontFamilyInternal);
-        }
+		internal static XFontFamily GetOrCreateFromGdi(GdiFont font)
+		{
+			FontFamilyInternal fontFamilyInternal = FontFamilyInternal.GetOrCreateFromGdi(font.FontFamily);
+			return new XFontFamily(fontFamilyInternal);
+		}
 #endif
 
 #if WPF
@@ -160,13 +163,13 @@ namespace PdfSharper.Drawing
         //}
 #endif
 
-        /// <summary>
-        /// Gets the name of the font family.
-        /// </summary>
-        public string Name
-        {
-            get { return FamilyInternal.Name; }
-        }
+		/// <summary>
+		/// Gets the name of the font family.
+		/// </summary>
+		public string Name { get; private set; }
+		//{
+		//    get { return FamilyInternal.Name; }
+		//}
 
 #if true__
         public double LineSpacing
@@ -179,41 +182,41 @@ namespace PdfSharper.Drawing
 
 #endif
 
-        /// <summary>
-        /// Returns the cell ascent, in design units, of the XFontFamily object of the specified style.
-        /// </summary>
-        public int GetCellAscent(XFontStyle style)
-        {
-            OpenTypeDescriptor descriptor = (OpenTypeDescriptor)FontDescriptorCache.GetOrCreateDescriptor(Name, style);
-            int result = descriptor.Ascender;
+		/// <summary>
+		/// Returns the cell ascent, in design units, of the XFontFamily object of the specified style.
+		/// </summary>
+		public int GetCellAscent(XFontStyle style)
+		{
+			OpenTypeDescriptor descriptor = (OpenTypeDescriptor)FontDescriptorCache.GetOrCreateDescriptor(Name, style);
+			int result = descriptor.Ascender;
 #if DEBUG_ && GDI
             int gdiValue = _gdiFamily.GetCellAscent((FontStyle)style);
             Debug.Assert(gdiValue == result);
 #endif
-            return result;
-        }
+			return result;
+		}
 
-        /// <summary>
-        /// Returns the cell descent, in design units, of the XFontFamily object of the specified style.
-        /// </summary>
-        public int GetCellDescent(XFontStyle style)
-        {
-            OpenTypeDescriptor descriptor = (OpenTypeDescriptor)FontDescriptorCache.GetOrCreateDescriptor(Name, style);
-            int result = descriptor.Descender;
+		/// <summary>
+		/// Returns the cell descent, in design units, of the XFontFamily object of the specified style.
+		/// </summary>
+		public int GetCellDescent(XFontStyle style)
+		{
+			OpenTypeDescriptor descriptor = (OpenTypeDescriptor)FontDescriptorCache.GetOrCreateDescriptor(Name, style);
+			int result = descriptor.Descender;
 #if DEBUG_ && GDI
             int gdiValue = _gdiFamily.GetCellDescent((FontStyle)style);
             Debug.Assert(gdiValue == result);
 #endif
-            return result;
-        }
+			return result;
+		}
 
-        /// <summary>
-        /// Gets the height, in font design units, of the em square for the specified style.
-        /// </summary>
-        public int GetEmHeight(XFontStyle style)
-        {
-            OpenTypeDescriptor descriptor = (OpenTypeDescriptor)FontDescriptorCache.GetOrCreateDescriptor(Name, style);
-            int result = descriptor.UnitsPerEm;
+		/// <summary>
+		/// Gets the height, in font design units, of the em square for the specified style.
+		/// </summary>
+		public int GetEmHeight(XFontStyle style)
+		{
+			OpenTypeDescriptor descriptor = (OpenTypeDescriptor)FontDescriptorCache.GetOrCreateDescriptor(Name, style);
+			int result = descriptor.UnitsPerEm;
 #if DEBUG_ && GDI
             int gdiValue = _gdiFamily.GetEmHeight((FontStyle)style);
             Debug.Assert(gdiValue == result);
@@ -222,17 +225,17 @@ namespace PdfSharper.Drawing
             int headValue = descriptor.FontFace.head.unitsPerEm;
             Debug.Assert(headValue == result);
 #endif
-            return result;
-        }
+			return result;
+		}
 
-        /// <summary>
-        /// Returns the line spacing, in design units, of the FontFamily object of the specified style.
-        /// The line spacing is the vertical distance between the base lines of two consecutive lines of text.
-        /// </summary>
-        public int GetLineSpacing(XFontStyle style)
-        {
-            OpenTypeDescriptor descriptor = (OpenTypeDescriptor)FontDescriptorCache.GetOrCreateDescriptor(Name, style);
-            int result = descriptor.LineSpacing;
+		/// <summary>
+		/// Returns the line spacing, in design units, of the FontFamily object of the specified style.
+		/// The line spacing is the vertical distance between the base lines of two consecutive lines of text.
+		/// </summary>
+		public int GetLineSpacing(XFontStyle style)
+		{
+			OpenTypeDescriptor descriptor = (OpenTypeDescriptor)FontDescriptorCache.GetOrCreateDescriptor(Name, style);
+			int result = descriptor.LineSpacing;
 #if DEBUG_ && GDI
             int gdiValue = _gdiFamily.GetLineSpacing((FontStyle)style);
             Debug.Assert(gdiValue == result);
@@ -241,19 +244,19 @@ namespace PdfSharper.Drawing
             int wpfValue = (int)Math.Round(_wpfFamily.LineSpacing * GetEmHeight(style));
             Debug.Assert(wpfValue == result);
 #endif
-            return result;
-        }
+			return result;
+		}
 
-        //public string GetName(int language);
+		//public string GetName(int language);
 
-        /// <summary>
-        /// Indicates whether the specified FontStyle enumeration is available.
-        /// </summary>
-        public bool IsStyleAvailable(XFontStyle style)
-        {
-            XGdiFontStyle xStyle = ((XGdiFontStyle)style) & XGdiFontStyle.BoldItalic;
+		/// <summary>
+		/// Indicates whether the specified FontStyle enumeration is available.
+		/// </summary>
+		public bool IsStyleAvailable(XFontStyle style)
+		{
+			XGdiFontStyle xStyle = ((XGdiFontStyle)style) & XGdiFontStyle.BoldItalic;
 #if CORE
-            throw new InvalidOperationException("In CORE build it is the responsibility of the developer to provide all required font faces.");
+			throw new InvalidOperationException("In CORE build it is the responsibility of the developer to provide all required font faces.");
 #endif
 #if GDI && !WPF
             if (GdiFamily != null)
@@ -277,29 +280,29 @@ namespace PdfSharper.Drawing
 #if NETFX_CORE || UWP
             throw new InvalidOperationException("In NETFX_CORE build it is the responsibility of the developer to provide all required font faces.");
 #endif
-        }
+		}
 
-        /// <summary>
-        /// Returns an array that contains all the FontFamily objects associated with the current graphics context.
-        /// </summary>
-        [Obsolete("Use platform API directly.")]
-        public static XFontFamily[] Families
-        {
-            get
-            {
-                throw new InvalidOperationException("Obsolete and not implemted any more.");
-            }
-        }
+		/// <summary>
+		/// Returns an array that contains all the FontFamily objects associated with the current graphics context.
+		/// </summary>
+		[Obsolete("Use platform API directly.")]
+		public static XFontFamily[] Families
+		{
+			get
+			{
+				throw new InvalidOperationException("Obsolete and not implemted any more.");
+			}
+		}
 
-        /// <summary>
-        /// Returns an array that contains all the FontFamily objects available for the specified 
-        /// graphics context.
-        /// </summary>
-        [Obsolete("Use platform API directly.")]
-        public static XFontFamily[] GetFamilies(XGraphics graphics)
-        {
-            throw new InvalidOperationException("Obsolete and not implemted any more.");
-        }
+		/// <summary>
+		/// Returns an array that contains all the FontFamily objects available for the specified 
+		/// graphics context.
+		/// </summary>
+		[Obsolete("Use platform API directly.")]
+		public static XFontFamily[] GetFamilies(XGraphics graphics)
+		{
+			throw new InvalidOperationException("Obsolete and not implemted any more.");
+		}
 
 #if GDI
         /// <summary>
@@ -323,9 +326,9 @@ namespace PdfSharper.Drawing
         }
 #endif
 
-        /// <summary>
-        /// The implementation sigleton of font family;
-        /// </summary>
-        internal FontFamilyInternal FamilyInternal;
-    }
+		/// <summary>
+		/// The implementation sigleton of font family;
+		/// </summary>
+		internal FontFamilyInternal FamilyInternal;
+	}
 }

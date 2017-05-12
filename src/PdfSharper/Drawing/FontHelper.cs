@@ -425,5 +425,27 @@ namespace PdfSharper.Drawing
 		{
 			return (isBold ? XFontStyle.Bold : 0) | (isItalic ? XFontStyle.Italic : 0);
 		}
+
+		public static string MapPlatformFontFamilyName(string familyName)
+		{
+			switch (familyName)
+			{
+				case "Courier New":
+					return "Courier";
+				case "Times":
+					return "Times-Roman";
+				case "Times New Roman":
+					return "TimesNewRomanPSMT";
+				default:
+					return familyName;
+			}
+		}
+
+		public static string MapFontFamilyNameToPlatformFont(string familyName)
+		{
+			string[] split = familyName.Split('-');
+
+			return split[0];		
+		}
 	}
 }

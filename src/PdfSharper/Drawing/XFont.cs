@@ -498,10 +498,7 @@ namespace PdfSharper.Drawing
 		/// Indeed it returns the font family name.
 		/// </summary>
 		// [Obsolete("This function returns the font family name, not the face name. Use xxx.FontFamily.Name or xxx.FaceName")]
-		public string Name
-		{
-			get { return _glyphTypeface.FontFamily.Name; }
-		}
+		public string Name { get; set; }
 
 		internal string FaceName
 		{

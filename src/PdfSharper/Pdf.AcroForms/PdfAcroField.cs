@@ -740,7 +740,7 @@ namespace PdfSharper.Pdf.AcroForms
 						}
 					}
 					BaseContentFontName = fontName.Substring(1);
-					font = new XFont(BaseContentFontName, fontSize);
+					font = new XFont(BaseContentFontName, fontSize) { Name = ContentFontName.Trim() };
 				}
 			}
 			catch { }
@@ -770,7 +770,7 @@ namespace PdfSharper.Pdf.AcroForms
 				RemoveJavascript();
 			}
 
-			foreach(var field in Fields)
+			foreach (var field in Fields)
 			{
 				field.Flatten();
 			}
@@ -906,25 +906,25 @@ namespace PdfSharper.Pdf.AcroForms
 			{
 				// Set XRef to normal state
 				ap.Elements["/N"] = form.PdfForm;
-
-
-				var normalStateDict = ap.Elements.GetDictionary("/N");
-				var resourceDict = new PdfDictionary(Owner);
-				resourceDict.IsCompact = IsCompact;
-				resourceDict.Elements[PdfResources.Keys.ProcSet] = new PdfArray(Owner, new PdfName("/PDF"), new PdfName("/Text"));
-
-				var defaultFormResources = Owner.AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
-				if (defaultFormResources != null && defaultFormResources.Elements.ContainsKey(PdfResources.Keys.Font))
-				{
-					var fontResourceItem = XForm.GetFontResourceItem(Font.FamilyName, defaultFormResources);
-					PdfDictionary fontDict = new PdfDictionary(Owner);
-					fontDict.IsCompact = IsCompact;
-					resourceDict.Elements[PdfResources.Keys.Font] = fontDict;
-					fontDict.Elements[fontResourceItem.Key] = fontResourceItem.Value;
-				}
-
-				normalStateDict.Elements.SetObject(PdfPage.Keys.Resources, resourceDict);
 			}
+
+			var normalStateDict = ap.Elements.GetDictionary("/N");
+			var resourceDict = new PdfDictionary(Owner);
+			resourceDict.IsCompact = IsCompact;
+			resourceDict.Elements[PdfResources.Keys.ProcSet] = new PdfArray(Owner, new PdfName("/PDF"), new PdfName("/Text"));
+
+			var defaultFormResources = Owner.AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
+			if (defaultFormResources != null && defaultFormResources.Elements.ContainsKey(PdfResources.Keys.Font))
+			{
+				var fontResourceItem = XForm.GetFontResourceItem(Font.FamilyName, defaultFormResources);
+				PdfDictionary fontDict = new PdfDictionary(Owner);
+				fontDict.IsCompact = IsCompact;
+				resourceDict.Elements[PdfResources.Keys.Font] = fontDict;
+				fontDict.Elements[fontResourceItem.Key] = fontResourceItem.Value;
+			}
+
+			normalStateDict.Elements.SetObject(PdfPage.Keys.Resources, resourceDict);
+
 
 			PdfFormXObject xobj = form.PdfForm;
 			if (xobj.Stream == null)
@@ -933,7 +933,8 @@ namespace PdfSharper.Pdf.AcroForms
 			string s = xobj.Stream.ToString();
 			if (!string.IsNullOrEmpty(s))
 			{
-				ap.Elements.GetDictionary("/N").Stream.Value = new RawEncoding().GetBytes(s);
+				normalStateDict.Elements.Remove("/Filter");
+				normalStateDict.Stream.Value = new RawEncoding().GetBytes(s);
 			}
 			else
 			{

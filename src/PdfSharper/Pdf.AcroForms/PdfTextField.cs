@@ -453,6 +453,12 @@ namespace PdfSharper.Pdf.AcroForms
 		{
 			if (text.Length == 0) return;
 
+			if (textOptions.Brush == null)
+			{
+				//HACK: we need to use the default style color
+				textOptions.Brush = new XSolidBrush(XColors.Black);
+			}
+
 			if (textOptions.UseComb && textOptions.MaxLength > 0)
 			{
 				var combWidth = xrect.Width / textOptions.MaxLength;

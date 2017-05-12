@@ -434,34 +434,21 @@ namespace PdfSharper.Drawing
 		/// <summary>
 		/// Gets the resource name of the specified font within this form.
 		/// </summary>
-		internal string GetFontName(XFont font, out PdfFont pdfFont)
+		internal void GetFontName(XFont font, out PdfFont pdfFont)
 		{
 			Debug.Assert(IsTemplate, "This function is for form templates only.");
-			string name = GetFontNameFromResources(font.FamilyName, font.Bold, font.Italic);
 
-			if (string.IsNullOrEmpty(name)) //sure go ahead and try your broken embedding
+			if (string.IsNullOrEmpty(font.Name)) //sure go ahead and try your broken embedding
 			{
 				pdfFont = _document.FontTable.GetFont(font);
 				Debug.Assert(pdfFont != null);
-				name = Resources.AddFont(pdfFont);
+				Resources.AddFont(pdfFont);
 			}
 			else
 			{
 				pdfFont = GetFontFromResources(font);
 				Debug.Assert(pdfFont != null);
 			}
-			return name;
-		}
-		private string GetFontNameFromResources(string familyName, bool isBold, bool isItalic)
-		{
-			//TODO: Check that bold an italic are found through just their font names
-			var defaultFormResources = Owner.AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
-			if (defaultFormResources != null && defaultFormResources.Elements.ContainsKey(PdfResources.Keys.Font))
-			{
-				return GetFontResourceItem(familyName, defaultFormResources).Key;
-			}
-
-			return string.Empty;
 		}
 
 		private PdfFont GetFontFromResources(XFont xFont)
@@ -496,6 +483,7 @@ namespace PdfSharper.Drawing
 
 		internal static KeyValuePair<string, PdfItem> GetFontResourceItem(string familyName, PdfDictionary defaultFormResources)
 		{
+			familyName = FontHelper.MapPlatformFontFamilyName(familyName);
 			familyName = familyName.TrimStart('/');
 			var fontList = defaultFormResources.Elements.GetDictionary(PdfResources.Keys.Font);
 
@@ -510,7 +498,9 @@ namespace PdfSharper.Drawing
 
 		string IContentStream.GetFontName(XFont font, out PdfFont pdfFont)
 		{
-			return GetFontName(font, out pdfFont);
+			GetFontName(font, out pdfFont);
+
+			return font.Name;
 		}
 
 		/// <summary>
