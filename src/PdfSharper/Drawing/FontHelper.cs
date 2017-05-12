@@ -490,6 +490,12 @@ namespace PdfSharper.Drawing
                         return "CoOb";
                     }
                     return "CoBO";
+                case "Courier-Oblique":
+                    return "CoOb";
+                case "Courier-Bold":
+                    return "CoBo";
+                case "Courier-BoldOblique":
+                    return "CoBO";
                 case "Helvetica":
                     if (!isBold && !isItalic)
                         return "Helv";
@@ -500,6 +506,12 @@ namespace PdfSharper.Drawing
                         return "HeOb";
                     }
                     return "HeBO";
+                case "Helvetica-Oblique":
+                    return "HeOb";
+                case "Helvetica-Bold":
+                    return "HeBo";
+                case "Helvetica-BoldOblique":
+                    return "HeBO";
                 case "Times-Roman":
                     if (!isBold && !isItalic)
                         return "TiRo";
@@ -509,6 +521,12 @@ namespace PdfSharper.Drawing
                     {
                         return "TiIt";
                     }
+                    return "TiBI";
+                case "Times-Italic":
+                    return "TiIt";
+                case "Times-Bold":
+                    return "TiBo";
+                case "Times-BoldItalic":
                     return "TiBI";
                 case "Times New Roman":
                     return "TimesNewRomanPSMT";
