@@ -81,7 +81,7 @@ namespace PdfSharper.Drawing
             XSize size = new XSize();
             if (!string.IsNullOrEmpty(text))
             {
-                AFMDetails afmDetails = AFMCache.Instance.GetFontMetricsByNameAndAttributes(font.FamilyName, font.Bold, font.Italic);
+                AFMDetails afmDetails = AFMCache.Instance.GetFontMetricsByNameAndAttributes(font.ContentFontName, font.Bold, font.Italic);
                 if (afmDetails != null)
                 {
                     size = GetSizeByAFM(text, font, afmDetails);
