@@ -1397,7 +1397,8 @@ namespace PdfSharper.Drawing.Pdf
                 //const byte PathPointTypeDashMode = 0x10; // currently in dash mode.
                 //const byte PathPointTypePathMarker = 0x20; // a marker for the path.
                 const byte PathPointTypeCloseSubpath = 0x80; // closed flag
-                                                             // ReSharper restore InconsistentNaming
+
+                // ReSharper restore InconsistentNaming
 
                 byte type = types[idx];
                 switch (type & PathPointTypePathTypeMask)
