@@ -140,6 +140,8 @@ namespace PdfSharper.Drawing.Layout
         /// </summary>
         /// <param name="text">The text to be drawn.</param>
         /// <param name="wrapText">Should the text be wrapped.</param>
+        /// <param name="useComb">Whether the text should be clipped.</param>
+        /// <param name="maxLength">Where to clip the text.</param>
         /// <param name="font">The font.</param>
         /// <param name="brush">The text brush.</param>
         /// <param name="layoutRectangle">The layout rectangle.</param>
