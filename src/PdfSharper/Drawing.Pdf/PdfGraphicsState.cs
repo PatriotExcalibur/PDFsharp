@@ -384,7 +384,7 @@ namespace PdfSharper.Drawing.Pdf
                 if (_renderer.Gfx.PageDirection == XPageDirection.Downwards)
                     _renderer.AppendFormatFont("/{0} {1:" + format + "} Tf\n", font.ContentFontName, font.Size);
                 else
-                    _renderer.AppendFormatFont("{0} {1:" + format + "} Tf\n", font.ContentFontName, font.Size);
+                    _renderer.AppendFormatFont("/{0} {1:" + format + "} Tf\n", font.ContentFontName, font.Size);
                 _realizedFontName = font.ContentFontName;
                 _realizedFontSize = font.Size;
             }
