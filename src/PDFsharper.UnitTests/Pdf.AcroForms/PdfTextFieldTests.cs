@@ -8,7 +8,7 @@ using PdfSharper.Pdf.Annotations;
 namespace PDFsharper.UnitTests.Pdf.AcroForms
 {
     [TestClass]
-    public class PdfTextFieldTests
+    public class PdfTextFieldTests : TestBase
     {
         [TestMethod]
         public void RenderAppearance()
@@ -140,7 +140,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             field1.Flatten();
 
             Assert.IsTrue(field1.Elements.ContainsKey(PdfAnnotation.Keys.AP), "field1 should have rendered an appearance stream.");
-            
+
             Assert.IsNotNull(document, "document should not be null");
             Assert.IsNotNull(document.Pages, "document Pages should not be null");
             Assert.IsTrue(document.Pages.Count == 1, "document Pages count is not correct");
@@ -415,7 +415,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             Assert.IsTrue(field.RightMargin == 0, "RightMargin should be 0");
 
             field.MultiLine = true;
-            
+
             Assert.IsTrue(field.TopMargin == 4, "TopMargin should be 4");
             Assert.IsTrue(field.BottomMargin == 4, "BottomMargin should be 4");
             Assert.IsTrue(field.LeftMargin == 2, "LeftMargin should be 2");
@@ -439,7 +439,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             Assert.IsTrue(field.RightMargin == 0, "RightMargin should be 0");
 
             field.MultiLine = false;
-            
+
             Assert.IsTrue(field.TopMargin == 0, "TopMargin should be 0");
             Assert.IsTrue(field.BottomMargin == 0, "BottomMargin should be 0");
             Assert.IsTrue(field.LeftMargin == 2, "LeftMargin should be 2");
@@ -455,7 +455,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             Assert.IsTrue(field.Text == string.Empty, "Text should be \"\"");
             Assert.IsTrue(field.Elements.GetString(PdfTextField.Keys.V) == string.Empty, "field elements should contain Value Key with Value of string.empty");
 
-            field.Text  = "Test";
+            field.Text = "Test";
 
             Assert.IsTrue(field.Text == "Test", "Text should be \"Test\"");
             Assert.IsTrue(field.Elements.GetString(PdfTextField.Keys.V) == "Test", "field elements should contain Value Key with Value of Test");

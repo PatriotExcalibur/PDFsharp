@@ -8,7 +8,7 @@ using System.Linq;
 namespace PDFsharper.UnitTests.Pdf.AcroForms
 {
     [TestClass]
-    public class PdfAcroFieldTests
+    public class PdfAcroFieldTests : TestBase
     {
         [TestMethod]
         public void DefaultFonts()
@@ -18,7 +18,8 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
 
             Assert.IsNotNull(field, "field should not be null");
             Assert.IsNotNull(field.Font, "field.Font should not be null");
-            Assert.IsTrue(field.Font.FamilyName == "Helv", "Font FamilyName is not correct");
+            Assert.IsTrue(field.Font.FamilyName == "Helvetica", "Font FamilyName is not correct");
+            Assert.IsTrue(field.Font.ContentFontName == "Helv", "Font FamilyName is not correct");
             Assert.IsTrue(field.Font.Size == 10, "Font Size is not correct");
         }
 

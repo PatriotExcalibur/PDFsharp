@@ -10,13 +10,12 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
 {
     public class PdfAcroFieldTestHelpers
     {
-        public static readonly string FONT_BASEFONT= "Helvetica";
+        public static readonly string FONT_BASEFONT = "Helvetica";
         public static readonly string FONT_NAME = "Helv";
+        private static readonly object GlobalFontSettingsLock = new object();
 
         public static PdfDocument SetupDocumentForTest()
         {
-            GlobalFontSettings.DefaultFontEncoding = PdfFontEncoding.WinAnsi;
-
             PdfDocument document = new PdfDocument();
 
             document.Catalog.AcroForm = new PdfAcroForm(document);
@@ -49,7 +48,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             textField.Rectangle = new PdfRectangle(new XRect(0, 0, 200, 20));
 
             document.AcroForm.Fields.Add(textField, 1);
-            
+
             return textField;
         }
 
@@ -58,7 +57,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             PdfCheckBoxField checkboxField = new PdfCheckBoxField(document, true);
             checkboxField.BorderColor = new XColor(XKnownColor.White);
             checkboxField.Rectangle = new PdfRectangle(new XRect(0, 0, 200, 20));
-            
+
             document.AcroForm.Fields.Add(checkboxField, 1);
             document.PrepareForSave();
 

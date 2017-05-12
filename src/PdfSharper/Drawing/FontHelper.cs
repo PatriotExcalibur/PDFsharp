@@ -57,155 +57,158 @@ using Windows.UI.Xaml.Media;
 using PdfSharper.Fonts;
 using PdfSharper.Fonts.OpenType;
 using PdfSharper.Fonts.AFM;
+using PdfSharper.Pdf;
+using PdfSharper.Pdf.Advanced;
+using System.Linq;
 
 namespace PdfSharper.Drawing
 {
-	/// <summary>
-	/// Bunch of functions that do not have a better place.
-	/// </summary>
-	public static class FontHelper
-	{
-		/// <summary>
-		/// Measure string directly from font data.
-		/// </summary>
-		public static XSize MeasureString(string text, XFont font)
-		{
-			if (text == null)
-				throw new ArgumentNullException("text");
-			if (font == null)
-				throw new ArgumentNullException("font");
+    /// <summary>
+    /// Bunch of functions that do not have a better place.
+    /// </summary>
+    public static class FontHelper
+    {
+        /// <summary>
+        /// Measure string directly from font data.
+        /// </summary>
+        public static XSize MeasureString(string text, XFont font)
+        {
+            if (text == null)
+                throw new ArgumentNullException("text");
+            if (font == null)
+                throw new ArgumentNullException("font");
 
-			XSize size = new XSize();
-			if (!string.IsNullOrEmpty(text))
-			{
-				AFMDetails afmDetails = AFMCache.Instance.GetFontMetricsByNameAndAttributes(font.FamilyName, font.Bold, font.Italic);
-				if (afmDetails != null)
-				{
-					size = GetSizeByAFM(text, font, afmDetails);
-				}
-				else
-				{
-					OpenTypeDescriptor descriptor = FontDescriptorCache.GetOrCreateDescriptorFor(font) as OpenTypeDescriptor;
-					if (descriptor != null)
-					{
-						size = GetSizeByOpenTypeDescriptor(text, font, descriptor);
-					}
-				}
-			}
+            XSize size = new XSize();
+            if (!string.IsNullOrEmpty(text))
+            {
+                AFMDetails afmDetails = AFMCache.Instance.GetFontMetricsByNameAndAttributes(font.FamilyName, font.Bold, font.Italic);
+                if (afmDetails != null)
+                {
+                    size = GetSizeByAFM(text, font, afmDetails);
+                }
+                else
+                {
+                    OpenTypeDescriptor descriptor = FontDescriptorCache.GetOrCreateDescriptorFor(font) as OpenTypeDescriptor;
+                    if (descriptor != null)
+                    {
+                        size = GetSizeByOpenTypeDescriptor(text, font, descriptor);
+                    }
+                }
+            }
 
-			return size;
-		}
+            return size;
+        }
 
-		private static XSize GetSizeByOpenTypeDescriptor(string text, XFont font, OpenTypeDescriptor descriptor)
-		{
-			XSize size = new XSize();
-			if (!string.IsNullOrWhiteSpace(text))
-			{
-				if (descriptor != null)
-				{
-					// Height is the sum of ascender and descender.
-					// 11.49 = x * (10/1000)
-					// 1149 = (Asc - Desc)T
-					size.Height = (descriptor.Ascender - descriptor.Descender) * (font.Size / font.UnitsPerEm);
-					Debug.Assert(descriptor.Ascender > 0);
+        private static XSize GetSizeByOpenTypeDescriptor(string text, XFont font, OpenTypeDescriptor descriptor)
+        {
+            XSize size = new XSize();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                if (descriptor != null)
+                {
+                    // Height is the sum of ascender and descender.
+                    // 11.49 = x * (10/1000)
+                    // 1149 = (Asc - Desc)T
+                    size.Height = (descriptor.Ascender - descriptor.Descender) * (font.Size / font.UnitsPerEm);
+                    Debug.Assert(descriptor.Ascender > 0);
 
-					bool symbol = descriptor.FontFace.cmap.symbol;
-					int length = text.Length;
-					int width = 0;
-					for (int idx = 0; idx < length; idx++)
-					{
-						char ch = text[idx];
-						// HACK: Unclear what to do here.
-						if (ch < 32)
-							continue;
+                    bool symbol = descriptor.FontFace.cmap.symbol;
+                    int length = text.Length;
+                    int width = 0;
+                    for (int idx = 0; idx < length; idx++)
+                    {
+                        char ch = text[idx];
+                        // HACK: Unclear what to do here.
+                        if (ch < 32)
+                            continue;
 
-						if (symbol)
-						{
-							// Remap ch for symbol fonts.
-							ch = (char)(ch | (descriptor.FontFace.os2.usFirstCharIndex & 0xFF00));  // @@@ refactor
-																									// Used | instead of + because of: http://PdfSharper.codeplex.com/workitem/15954
-						}
-						int glyphIndex = descriptor.CharCodeToGlyphIndex(ch);
-						width += descriptor.GlyphIndexToWidth(glyphIndex);
-					}
-					// What? size.Width = width * font.Size * (font.Italic ? 1 : 1) / descriptor.UnitsPerEm;
-					size.Width = width * font.Size / descriptor.UnitsPerEm;
+                        if (symbol)
+                        {
+                            // Remap ch for symbol fonts.
+                            ch = (char)(ch | (descriptor.FontFace.os2.usFirstCharIndex & 0xFF00));  // @@@ refactor
+                                                                                                    // Used | instead of + because of: http://PdfSharper.codeplex.com/workitem/15954
+                        }
+                        int glyphIndex = descriptor.CharCodeToGlyphIndex(ch);
+                        width += descriptor.GlyphIndexToWidth(glyphIndex);
+                    }
+                    // What? size.Width = width * font.Size * (font.Italic ? 1 : 1) / descriptor.UnitsPerEm;
+                    size.Width = width * font.Size / descriptor.UnitsPerEm;
 
-					// Adjust bold simulation.
-					if ((font.GlyphTypeface.StyleSimulations & XStyleSimulations.BoldSimulation) == XStyleSimulations.BoldSimulation ||
-						DoApplyBoldHack(font.FamilyName)) //BOLD hacks for helvetica
-					{
-						// Add 2% of the em-size for each character.
-						// Unsure how to deal with white space. Currently count as regular character.
-						size.Width += length * font.Size * Const.BoldEmphasis;
-					}
-				}
+                    // Adjust bold simulation.
+                    if ((font.GlyphTypeface.StyleSimulations & XStyleSimulations.BoldSimulation) == XStyleSimulations.BoldSimulation ||
+                        DoApplyBoldHack(font.FamilyName)) //BOLD hacks for helvetica
+                    {
+                        // Add 2% of the em-size for each character.
+                        // Unsure how to deal with white space. Currently count as regular character.
+                        size.Width += length * font.Size * Const.BoldEmphasis;
+                    }
+                }
 
-				Debug.Assert(descriptor != null, "No OpenTypeDescriptor.");
-			}
+                Debug.Assert(descriptor != null, "No OpenTypeDescriptor.");
+            }
 
-			return new XSize();
-		}
+            return new XSize();
+        }
 
-		private static XSize GetSizeByAFM(string text, XFont font, AFMDetails afmDetails)
-		{
-			XSize size = new XSize();
+        private static XSize GetSizeByAFM(string text, XFont font, AFMDetails afmDetails)
+        {
+            XSize size = new XSize();
 
-			if (!string.IsNullOrEmpty(text) && afmDetails != null)
-			{
-				// Height is the sum of ascender and descender.
-				int width = 0;
-				int height = afmDetails.Ascender + afmDetails.Descender;
+            if (!string.IsNullOrEmpty(text) && afmDetails != null)
+            {
+                // Height is the sum of ascender and descender.
+                int width = 0;
+                int height = afmDetails.Ascender + afmDetails.Descender;
 
-				for (int idx = 0; idx < text.Length; idx++)
-				{
-					int characterWidth = 0;
-					afmDetails.CharacterWidths.TryGetValue(text[idx], out characterWidth);
-					width += characterWidth;
-				}
+                for (int idx = 0; idx < text.Length; idx++)
+                {
+                    int characterWidth = 0;
+                    afmDetails.CharacterWidths.TryGetValue(text[idx], out characterWidth);
+                    width += characterWidth;
+                }
 
-				if (width > 0)
-				{
-					size.Width = width * font.Size * .001F;
-				}
-				else
-				{
-					size.Width = 250 * font.Size * .001F;
-				}
+                if (width > 0)
+                {
+                    size.Width = width * font.Size * .001F;
+                }
+                else
+                {
+                    size.Width = 250 * font.Size * .001F;
+                }
 
-				if (height > 0)
-				{
-					size.Height = (afmDetails.BBoxURY - afmDetails.BBoxLLY) * font.Size * .001f;
-				}
-				else
-				{
-					size.Height = 1200 * font.Size * .001f; ;
-				}
-			}
+                if (height > 0)
+                {
+                    size.Height = (afmDetails.BBoxURY - afmDetails.BBoxLLY) * font.Size * .001f;
+                }
+                else
+                {
+                    size.Height = 1200 * font.Size * .001f; ;
+                }
+            }
 
-			return size;
-		}
+            return size;
+        }
 
-		private static bool DoApplyBoldHack(string familyName)
-		{
-			//TODO: remove when we parse afm files from adobe
-			switch (familyName)
-			{
-				case "Helvetica-Bold":
-					return true;
-				default:
-					return false; ;
-			}
-		}
+        private static bool DoApplyBoldHack(string familyName)
+        {
+            //TODO: remove when we parse afm files from adobe
+            switch (familyName)
+            {
+                case "Helvetica-Bold":
+                    return true;
+                default:
+                    return false; ;
+            }
+        }
 
 #if CORE || GDI
-		internal static GdiFont CreateFont(string familyName, double emSize, GdiFontStyle style, out XFontSource fontSource)
-		{
-			fontSource = null;
-			// ReSharper disable once JoinDeclarationAndInitializer
-			GdiFont font;
+        internal static GdiFont CreateFont(string familyName, double emSize, GdiFontStyle style, out XFontSource fontSource)
+        {
+            fontSource = null;
+            // ReSharper disable once JoinDeclarationAndInitializer
+            GdiFont font;
 
-			// Use font resolver in CORE build. XPrivateFontCollection exists only in GDI and WPF build.
+            // Use font resolver in CORE build. XPrivateFontCollection exists only in GDI and WPF build.
 #if GDI
             // Try private font collection first.
             font = XPrivateFontCollection.TryCreateFont(familyName, emSize, style, out fontSource);
@@ -215,10 +218,10 @@ namespace PdfSharper.Drawing
                 return font;
             }
 #endif
-			// Create ordinary Win32 font.
-			font = new GdiFont(familyName, (float)emSize, style, GraphicsUnit.World);
-			return font;
-		}
+            // Create ordinary Win32 font.
+            font = new GdiFont(familyName, (float)emSize, style, GraphicsUnit.World);
+            return font;
+        }
 #endif
 
 #if WPF
@@ -386,66 +389,144 @@ namespace PdfSharper.Drawing
         }
 #endif
 
-		/// <summary>
-		/// Calculates an Adler32 checksum combined with the buffer length
-		/// in a 64 bit unsigned integer.
-		/// </summary>
-		public static ulong CalcChecksum(byte[] buffer)
-		{
-			if (buffer == null)
-				throw new ArgumentNullException("buffer");
+        /// <summary>
+        /// Calculates an Adler32 checksum combined with the buffer length
+        /// in a 64 bit unsigned integer.
+        /// </summary>
+        public static ulong CalcChecksum(byte[] buffer)
+        {
+            if (buffer == null)
+                throw new ArgumentNullException("buffer");
 
-			const uint prime = 65521; // largest prime smaller than 65536
-			uint s1 = 0;
-			uint s2 = 0;
-			int length = buffer.Length;
-			int offset = 0;
-			while (length > 0)
-			{
-				int n = 3800;
-				if (n > length)
-					n = length;
-				length -= n;
-				while (--n >= 0)
-				{
-					s1 += buffer[offset++];
-					s2 = s2 + s1;
-				}
-				s1 %= prime;
-				s2 %= prime;
-			}
-			//return ((ulong)((ulong)(((ulong)s2 << 16) | (ulong)s1)) << 32) | (ulong)buffer.Length;
-			ulong ul1 = (ulong)s2 << 16;
-			ul1 = ul1 | s1;
-			ulong ul2 = (ulong)buffer.Length;
-			return (ul1 << 32) | ul2;
-		}
+            const uint prime = 65521; // largest prime smaller than 65536
+            uint s1 = 0;
+            uint s2 = 0;
+            int length = buffer.Length;
+            int offset = 0;
+            while (length > 0)
+            {
+                int n = 3800;
+                if (n > length)
+                    n = length;
+                length -= n;
+                while (--n >= 0)
+                {
+                    s1 += buffer[offset++];
+                    s2 = s2 + s1;
+                }
+                s1 %= prime;
+                s2 %= prime;
+            }
+            //return ((ulong)((ulong)(((ulong)s2 << 16) | (ulong)s1)) << 32) | (ulong)buffer.Length;
+            ulong ul1 = (ulong)s2 << 16;
+            ul1 = ul1 | s1;
+            ulong ul2 = (ulong)buffer.Length;
+            return (ul1 << 32) | ul2;
+        }
 
-		public static XFontStyle CreateStyle(bool isBold, bool isItalic)
-		{
-			return (isBold ? XFontStyle.Bold : 0) | (isItalic ? XFontStyle.Italic : 0);
-		}
+        public static XFontStyle CreateStyle(bool isBold, bool isItalic)
+        {
+            return (isBold ? XFontStyle.Bold : 0) | (isItalic ? XFontStyle.Italic : 0);
+        }
 
-		public static string MapPlatformFontFamilyName(string familyName)
-		{
-			switch (familyName)
-			{
-				case "Courier New":
-					return "Courier";
-				case "Times":
-					return "Times-Roman";
-				case "Times New Roman":
-					return "TimesNewRomanPSMT";
-				default:
-					return familyName;
-			}
-		}
+        internal static PdfFont GetFontFromResources(PdfDictionary resourceOwner, string resourceKey, XFont xFont)
+        {
+            var defaultFormResources = resourceOwner.Elements.GetDictionary(resourceKey);
+            if (defaultFormResources != null && defaultFormResources.Elements.ContainsKey(PdfResources.Keys.Font))
+            {
+                var fontList = defaultFormResources.Elements.GetDictionary(PdfResources.Keys.Font);
 
-		public static string MapFontFamilyNameToPlatformFont(string familyName)
-		{
-			string[] split = familyName.Split('-');
+                var font = GetFontResourceItem(xFont.ContentFontName, defaultFormResources);
 
-			return split[0];		
-		}
-	}
+                PdfItem value = font.Value;
+
+                if (value is PdfReference)
+                {
+                    value = ((PdfReference)value).Value;
+                }
+
+                PdfFont systemFont = new PdfFont(value as PdfDictionary);
+                if (systemFont.FontEncoding == PdfFontEncoding.Unicode)
+                {
+                    OpenTypeDescriptor ttDescriptor = (OpenTypeDescriptor)FontDescriptorCache.GetOrCreateDescriptorFor(xFont);
+                    systemFont.FontDescriptor = new PdfFontDescriptor(resourceOwner.Owner, ttDescriptor);
+                }
+
+                return systemFont;
+            }
+
+            return null;
+        }
+
+        internal static KeyValuePair<string, PdfItem> GetFontResourceItem(string contentFontName, PdfDictionary defaultFormResources)
+        {
+            contentFontName = contentFontName.TrimStart('/');
+            var fontList = defaultFormResources.Elements.GetDictionary(PdfResources.Keys.Font);
+
+            var font = fontList.Elements.FirstOrDefault(e => e.Key.TrimStart('/') == contentFontName);
+
+            return font;
+        }
+
+        public static string MapFamilyNameToSystemFontName(string familyName, bool isBold, bool isItalic)
+        {
+            switch (familyName)
+            {
+                case "Arial":
+                    return "ArialMT";
+                case "ArialBoldItalic":
+                    return "Arial-BoldItalicMT";
+                case "ArialItalic":
+                    return "Arial-ItalicMT";
+                case "ArialBold":
+                    return "Arial-BoldMT";
+                case "Courier":
+                    if (!isBold && !isItalic)
+                        return "Cour";
+                    else if (isBold && !isItalic)
+                        return "CoBo";
+                    else if (isItalic && !isBold)
+                    {
+                        return "CoOb";
+                    }
+                    return "CoBO";
+                case "Helvetica":
+                    if (!isBold && !isItalic)
+                        return "Helv";
+                    else if (isBold && !isItalic)
+                        return "HeBo";
+                    else if (isItalic && !isBold)
+                    {
+                        return "HeOb";
+                    }
+                    return "HeBO";
+                case "Times-Roman":
+                    if (!isBold && !isItalic)
+                        return "TiRo";
+                    else if (isBold && !isItalic)
+                        return "TiBo";
+                    else if (isItalic && !isBold)
+                    {
+                        return "TiIt";
+                    }
+                    return "TiBI";
+                case "Times New Roman":
+                    return "TimesNewRomanPSMT";
+                case "Symbol":
+                    return "Symb";
+                case "ZapfDingbats":
+                    return "ZaDb";
+                default:
+                    return familyName;
+            }
+        }
+
+
+        public static string MapFontFamilyNameToPlatformFont(string familyName)
+        {
+            string[] split = familyName.Split('-');
+
+            return split[0];
+        }
+    }
 }

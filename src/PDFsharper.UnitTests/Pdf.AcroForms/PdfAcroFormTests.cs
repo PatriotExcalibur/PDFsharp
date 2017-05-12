@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace PDFsharper.UnitTests.Pdf.AcroForms
 {
     [TestClass]
-    public class PdfAcroFormTests
+    public class PdfAcroFormTests : TestBase
     {
         [TestMethod]
         public void Flatten()
@@ -87,7 +87,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
 
             PdfDictionary names = new PdfDictionary();
             names.Elements.Add("/JavaScript", javascript);
-            
+
             document.Catalog.Elements.Add("/Names", names);
 
             Assert.IsTrue(document.Catalog.Elements.Any(e => e.Key == "/Names"), "document-catalog should have a names item");
@@ -105,7 +105,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
 
             Assert.IsFalse(document.Catalog.Elements.Any(e => e.Key == "/Names"), "document-catalog should not have a Names item");
-            
+
             document.AcroForm.RemoveJavascript();
 
             Assert.IsFalse(document.Catalog.Elements.Any(e => e.Key == "/Names"), "document-catalog should not have a Names item");
