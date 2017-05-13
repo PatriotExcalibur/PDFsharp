@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="ContentReaderTests.cs" />
     <Compile Include="Drawing.Layout\XTextFormatterTests.cs" />
+    <Compile Include="Drawing\XFontTests.cs" />
     <Compile Include="Drawing\FontHelperTests.cs" />
     <Compile Include="Pdf.AcroForms\PdfAcroFieldTestHelpers.cs" />
     <Compile Include="Pdf.AcroForms\PdfAcroFieldTests.cs" />

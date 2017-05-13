@@ -378,9 +378,10 @@ namespace PdfSharper.Pdf.AcroForms
             if (GetIsVisible())
             {
                 PdfRectangle rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
-                XForm form = new XForm(_document, rect.Size);
+                XRect xrect = GetXRectFromRectangleAndPageRotation(rect);
+                XForm form = new XForm(_document, xrect.Size);
                 XGraphics gfx = XGraphics.FromForm(form);
-                XRect xrect = (rect.ToXRect() - rect.Location);
+
 
                 if (BackColor != XColor.Empty)
                     gfx.DrawRectangle(new XSolidBrush(BackColor), xrect);
