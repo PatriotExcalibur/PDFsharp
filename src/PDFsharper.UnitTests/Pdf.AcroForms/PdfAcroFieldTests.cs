@@ -8,7 +8,7 @@ using System.Linq;
 namespace PDFsharper.UnitTests.Pdf.AcroForms
 {
     [TestClass]
-    public class PdfAcroFieldTests : TestBase
+    public class PdfAcroFieldTests 
     {
         [TestMethod]
         public void DefaultFonts()

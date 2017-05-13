@@ -10,7 +10,7 @@ using System;
 namespace PDFsharper.UnitTests.Drawing.Layout
 {
     [TestClass]
-    public class XTextFormatterTests : TestBase
+    public class XTextFormatterTests 
     {
         [TestMethod]
         public void Defaults()

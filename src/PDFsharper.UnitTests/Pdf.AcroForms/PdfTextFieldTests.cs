@@ -8,7 +8,7 @@ using PdfSharper.Pdf.Annotations;
 namespace PDFsharper.UnitTests.Pdf.AcroForms
 {
     [TestClass]
-    public class PdfTextFieldTests : TestBase
+    public class PdfTextFieldTests 
     {
         [TestMethod]
         public void RenderAppearance()

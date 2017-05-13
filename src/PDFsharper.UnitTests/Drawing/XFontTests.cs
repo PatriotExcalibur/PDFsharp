@@ -5,7 +5,7 @@ using System;
 namespace PDFsharper.UnitTests.Drawing
 {
     [TestClass]
-    public class XFontTests : TestBase
+    public class XFontTests 
     {
         [TestMethod]
         public void MapFamilyNameToSystemFontName_Arial()

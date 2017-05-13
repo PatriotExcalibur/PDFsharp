@@ -5,7 +5,7 @@ using System;
 namespace PDFsharper.UnitTests.Drawing
 {
     [TestClass]
-    public class FontHelperTests : TestBase
+    public class FontHelperTests 
     {
         [TestMethod]
         public void MeasureString_Courier()

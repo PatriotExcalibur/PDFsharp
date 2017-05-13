@@ -88,7 +88,7 @@ namespace PdfSharper.Fonts
             get
             {
                 if (!_fontEncodingInitialized)
-                    DefaultFontEncoding = PdfFontEncoding.Unicode;
+                    DefaultFontEncoding = PdfFontEncoding.WinAnsi;
                 return _fontEncoding;
             }
             set

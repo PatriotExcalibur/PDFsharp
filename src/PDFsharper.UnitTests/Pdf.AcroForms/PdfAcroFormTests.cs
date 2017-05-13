@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace PDFsharper.UnitTests.Pdf.AcroForms
 {
     [TestClass]
-    public class PdfAcroFormTests : TestBase
+    public class PdfAcroFormTests 
     {
         [TestMethod]
         public void Flatten()
