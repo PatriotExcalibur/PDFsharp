@@ -5,6 +5,7 @@ namespace PdfSharper.Fonts.AFM
     public class AFMDetails
     {
         public string FontName { get; set; }
+        public string EncodingScheme { get; set; }
         public int Ascender { get; set; }
         public int Descender { get; set; }
         public int CapHeight { get; set; }

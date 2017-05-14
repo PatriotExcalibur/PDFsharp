@@ -436,7 +436,7 @@ namespace PdfSharper.Drawing
             {
                 var fontList = defaultFormResources.Elements.GetDictionary(PdfResources.Keys.Font);
 
-                var font = GetFontResourceItem(xFont.ContentFontName, defaultFormResources);
+                var font = GetFontResourceItem(xFont, defaultFormResources);
 
                 PdfItem value = font.Value;
 
@@ -458,14 +458,42 @@ namespace PdfSharper.Drawing
             return null;
         }
 
-        internal static KeyValuePair<string, PdfItem> GetFontResourceItem(string contentFontName, PdfDictionary defaultFormResources)
+        internal static KeyValuePair<string, PdfItem> GetFontResourceItem(XFont xFont, PdfDictionary resourceDictionary)
         {
-            contentFontName = contentFontName.TrimStart('/');
-            var fontList = defaultFormResources.Elements.GetDictionary(PdfResources.Keys.Font);
+            var fontList = resourceDictionary.Elements.GetDictionary(PdfResources.Keys.Font);
 
-            var font = fontList.Elements.FirstOrDefault(e => e.Key.TrimStart('/') == contentFontName);
+            var font = fontList.Elements.FirstOrDefault(e => e.Key.TrimStart('/') == xFont.ContentFontName);
+
+            if (string.IsNullOrEmpty(font.Key))
+            {
+                font = TryAddSystemFont(xFont, fontList);
+            }
 
             return font;
+        }
+
+        private static KeyValuePair<string, PdfItem> TryAddSystemFont(XFont xFont, PdfDictionary fontList)
+        {
+            AFMDetails fontMetrics = AFMCache.Instance.GetFontMetricsByNameAndAttributes(xFont.ContentFontName, xFont.Bold, xFont.Italic);
+            if (fontMetrics == null)
+            {
+                return new KeyValuePair<string, PdfItem>();
+            }
+            PdfType1Font systemFont = new PdfType1Font(fontList.Owner, xFont.ContentFontName, fontMetrics.FontName);
+
+            fontList.Owner.Internals.AddObject(systemFont);
+            fontList.Elements.SetReference("/" + xFont.ContentFontName, systemFont);
+            switch (fontMetrics.EncodingScheme)
+            {
+                case "AdobeStandardEncoding":
+                    PdfReference ser = GetAdobeStandardFontEncoding(fontList.Owner);
+                    if (ser != null)
+                    {
+                        systemFont.Elements.SetReference(PdfType1Font.Keys.Encoding, ser);
+                    }
+                    break;
+            }
+            return fontList.Elements.FirstOrDefault(e => e.Key.TrimStart('/') == xFont.ContentFontName); ;
         }
 
         public static string MapFamilyNameToSystemFontName(string familyName, bool isBold, bool isItalic)
@@ -547,6 +575,35 @@ namespace PdfSharper.Drawing
             string[] split = familyName.Split('-');
 
             return split[0];
+        }
+
+        private static PdfReference GetAdobeStandardFontEncoding(PdfDocument doc)
+        {
+            PdfDictionary standardEncoding = doc.Internals.GetAllObjects().OfType<PdfDictionary>().SingleOrDefault(d => d.Elements.GetString(PdfFont.Keys.Type) == PdfTrueTypeFont.Keys.Encoding && d.Elements.ContainsKey("/Differences"));
+            if (standardEncoding == null)
+            {
+                standardEncoding = new PdfDictionary(doc);
+                doc.Internals.AddObject(standardEncoding);
+                standardEncoding.Elements.SetName(PdfType1Font.Keys.Type, PdfType1Font.Keys.Encoding);
+                PdfArray standardDiffArray = new PdfArray(doc);
+                standardEncoding.Elements.SetObject("/Differences", standardDiffArray);
+                string[] standardElements = "24, /breve, /caron, /circumflex, /dotaccent, /hungarumlaut, /ogonek, /ring, /tilde, 39, /quotesingle, 96, /grave, 128, /bullet, /dagger, /daggerdbl, /ellipsis, /emdash, /endash, /florin, /fraction, /guilsinglleft, /guilsinglright, /minus, /perthousand, /quotedblbase, /quotedblleft, /quotedblright, /quoteleft, /quoteright, /quotesinglbase, /trademark, /fi, /fl, /Lslash, /OE, /Scaron, /Ydieresis, /Zcaron, /dotlessi, /lslash, /oe, /scaron, /zcaron, 160, /Euro, 164, /currency, 166, /brokenbar, 168, /dieresis, /copyright, /ordfeminine, 172, /logicalnot, /.notdef, /registered, /macron, /degree, /plusminus, /twosuperior, /threesuperior, /acute, /mu, 183, /periodcentered, /cedilla, /onesuperior, /ordmasculine, 188, /onequarter, /onehalf, /threequarters, 192, /Agrave, /Aacute, /Acircumflex, /Atilde, /Adieresis, /Aring, /AE, /Ccedilla, /Egrave, /Eacute, /Ecircumflex, /Edieresis, /Igrave, /Iacute, /Icircumflex, /Idieresis, /Eth, /Ntilde, /Ograve, /Oacute, /Ocircumflex, /Otilde, /Odieresis, /multiply, /Oslash, /Ugrave, /Uacute, /Ucircumflex, /Udieresis, /Yacute, /Thorn, /germandbls, /agrave, /aacute, /acircumflex, /atilde, /adieresis, /aring, /ae, /ccedilla, /egrave, /eacute, /ecircumflex, /edieresis, /igrave, /iacute, /icircumflex, /idieresis, /eth, /ntilde, /ograve, /oacute, /ocircumflex, /otilde, /odieresis, /divide, /oslash, /ugrave, /uacute, /ucircumflex, /udieresis, /yacute, /thorn, /ydieresis".Split(',');
+                int intValue = 0;
+                foreach (string element in standardElements)
+                {
+                    string trimmedElement = element.Trim();
+                    if (int.TryParse(trimmedElement, out intValue))
+                    {
+                        standardDiffArray.Elements.Add(new PdfInteger(intValue));
+                    }
+                    else
+                    {
+                        standardDiffArray.Elements.Add(new PdfName(trimmedElement));
+                    }
+                }
+            }
+            return standardEncoding.Reference;
+
         }
     }
 }

@@ -27,7 +27,6 @@
 // DEALINGS IN THE SOFTWARE.
 #endregion
 
-#if true_  // Not yet implemented-
 
 using System;
 using System.Collections;
@@ -42,33 +41,19 @@ namespace PdfSharper.Pdf.Advanced
     /// </summary>
     internal sealed class PdfType1Font : PdfFont
     {
-        public PdfType1Font(PdfDocument document)
+        public PdfType1Font(PdfDocument document, string contentFontName, string baseFont)
             : base(document)
         {
-            Elements["\\Type"] = new PdfName("Font");
-            Elements["\\Subtype"] = new PdfName("Type1");
+            Elements.SetName(Keys.Type, "Font");
+            Elements.SetName(Keys.Subtype, "Type1");
+            Elements.SetName(Keys.BaseFont, baseFont);
+            Elements.SetName(Keys.Name, contentFontName);
         }
 
-        //public string BaseFont
-        //{
-        //  get {return baseFont;}
-        //  set {baseFont = value;}
-        //}
-        //string baseFont;
-
-
-        //    internal override void AssignObjectID(ref int objectID)
-        //    {
-        //      SetObjectID(ref objectID);
-        //    }
-        //
-        //    protected override void WriteObject(Stream stream)
-        //    {
-        //      base.WriteObject(stream);
-        //      StringBuilder pdf = new StringBuilder();
-        //      pdf.AppendFormat("{0} 0 obj\n<<\n/Type /Font\n/Subtype /Type1\n/BaseFont /Helvetica\n/Encoding /WinAnsiEncoding\n>>\nendobj\n", ObjectID);
-        //      WriteString(stream, pdf.ToString());
-        //    }
+        public string BaseFont
+        {
+            get { return Elements.GetString(Keys.BaseFont); }
+        }
         /// <summary>
         /// Predefined keys of this dictionary.
         /// </summary>
@@ -181,4 +166,3 @@ namespace PdfSharper.Pdf.Advanced
         }
     }
 }
-#endif

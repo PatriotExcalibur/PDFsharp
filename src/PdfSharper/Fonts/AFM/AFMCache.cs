@@ -90,6 +90,7 @@ namespace PdfSharper.Fonts.AFM
         private AFMDetails BuildFontMetrics(string afm)
         {
             string fontNameLabel = "FontName ";
+            string encodingSchemeLabel = "EncodingScheme ";
             string ascenderLabel = "Ascender ";
             string descenderLabel = "Descender ";
             string capHeightLabel = "CapHeight ";
@@ -121,6 +122,7 @@ namespace PdfSharper.Fonts.AFM
                     int bboxURX = 0;
                     int bboxURY = 0;
                     string fontName = string.Empty;
+                    string encodingScheme = string.Empty;
                     Dictionary<char, int> characterWidths = new Dictionary<char, int>();
 
                     while (continueReading)
@@ -142,6 +144,11 @@ namespace PdfSharper.Fonts.AFM
                         if (line.StartsWith(fontNameLabel))
                         {
                             fontName = line.Substring(fontNameLabel.Length);
+                        }
+
+                        if (line.StartsWith(encodingSchemeLabel))
+                        {
+                            encodingScheme = line.Substring(encodingSchemeLabel.Length);
                         }
 
                         if (line.StartsWith(ascenderLabel))
@@ -184,6 +191,7 @@ namespace PdfSharper.Fonts.AFM
                         fontMetric = new AFMDetails
                         {
                             FontName = fontName,
+                            EncodingScheme = encodingScheme,
                             Ascender = ascender,
                             Descender = descender,
                             CapHeight = capHeight,
