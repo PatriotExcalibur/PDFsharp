@@ -136,7 +136,7 @@ namespace PdfSharper.Pdf.Advanced
         /// <summary>
         /// Replaces the current content of the page with the specified bytes.
         /// </summary>
-        PdfContent ReplaceContent(byte[] contentBytes)
+        public PdfContent ReplaceContent(byte[] contentBytes)
         {
             Debug.Assert(Owner != null);
 
