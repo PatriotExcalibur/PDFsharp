@@ -60,6 +60,8 @@
     <Compile Include="Drawing.Layout\XTextFormatterTests.cs" />
     <Compile Include="Drawing\XFontTests.cs" />
     <Compile Include="Drawing\FontHelperTests.cs" />
+    <Compile Include="Fonts\AFM\AFMCacheTests.cs" />
+    <Compile Include="Fonts\AFM\AFMSourceTests.cs" />
     <Compile Include="Pdf.AcroForms\PdfAcroFieldTestHelpers.cs" />
     <Compile Include="Pdf.AcroForms\PdfAcroFieldTests.cs" />
     <Compile Include="Pdf.AcroForms\PdfAcroFormTests.cs" />
