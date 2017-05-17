@@ -1854,7 +1854,7 @@ namespace PdfSharper.Pdf.IO
             public Symbol Symbol;
         }
 
-        byte[] DecodeCrossReferenceStream(byte[] bytes, int columns, int predictor)
+        internal static byte[] DecodeCrossReferenceStream(byte[] bytes, int columns, int predictor)
         {
             int size = bytes.Length;
             if (predictor < 10 || predictor > 15)
@@ -1891,6 +1891,11 @@ namespace PdfSharper.Pdf.IO
                 }
             }
             return result;
+        }
+
+        internal static byte[] EncodeCrossReferenceStream(byte[] bytes, int columns, int predictor)
+        {
+            return bytes;
         }
 
         private readonly PdfDocument _document;
