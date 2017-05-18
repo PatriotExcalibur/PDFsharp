@@ -88,6 +88,10 @@ namespace PdfSharper.Pdf.Advanced
 #endif
         }
 
+        internal PdfReference(PdfObjectID objectID, PdfObjectStream sourceStream)
+        {
+        }
+
         /// <summary>
         /// Writes the object in PDF iref table format.
         /// </summary>
