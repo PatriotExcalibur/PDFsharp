@@ -55,11 +55,11 @@ namespace PdfSharper.Pdf.Filters
         public byte[] Encode(byte[] data, PdfFlateEncodeMode mode)
         {
             using (MemoryStream ms = new MemoryStream())
+            using (DeflateStream zip = new DeflateStream(ms, CompressionMode.Compress, true))
             {
                 ms.WriteByte(0x78);
                 ms.WriteByte(0x01);
 
-                DeflateStream zip = new DeflateStream(ms, CompressionMode.Compress, true);
                 zip.Write(data, 0, data.Length);
                 zip.Close();
 
