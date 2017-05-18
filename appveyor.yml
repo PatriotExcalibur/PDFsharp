@@ -6,7 +6,7 @@ install:
 
 before_build: 
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo src\PdfSharper\Properties\AssemblyInfo.cs
-  - nuget restore
+  - nuget restore src\BuildAll-PdfSharp.sln
 
 build:
   project: src\BuildAll-PdfSharp.sln
