@@ -74,6 +74,7 @@
     <Compile Include="Pdf.AcroForms\PdfTextFieldTests.cs" />
     <Compile Include="Pdf.IO\ParserTests.cs" />
     <Compile Include="Pdf\PdfPageTests.cs" />
+    <Compile Include="Pdf\PdfDictionaryTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

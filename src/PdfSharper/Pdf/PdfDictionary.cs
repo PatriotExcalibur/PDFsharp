@@ -1925,6 +1925,11 @@ namespace PdfSharper.Pdf
                                 string message = String.Format("«Cannot decode filter '{0}'»", filter);
                                 bytes = PdfEncoders.RawEncoding.GetBytes(message);
                             }
+
+                            if (HasDecodeParams)
+                            {
+                                bytes = DecodeStream(bytes, DecodeColumns, DecodePredictor);
+                            }
                         }
                         else
                         {
@@ -2012,19 +2017,79 @@ namespace PdfSharper.Pdf
                 return stream;
             }
 
-            //internal void WriteObject_(Stream stream)
-            //{
-            //    if (_value != null)
-            //        stream.Write(_value, 0, value.Length);
-            //}
 
-            ///// <summary>
-            ///// Converts a raw encoded string into a byte array.
-            ///// </summary>
-            //public static byte[] RawEncode(string content)
-            //{
-            //    return PdfEncoders.RawEncoding.GetBytes(content);
-            //}
+            //SEE RFC 2083 and the "UP" section
+            internal static byte[] DecodeStream(byte[] bytes, int columns, int predictor)
+            {
+                int size = bytes.Length;
+                if (predictor < 10 || predictor > 15)
+                    throw new ArgumentException("Invalid predictor.", "predictor");
+
+                int rowSizeRaw = columns + 1;
+
+                if (size % rowSizeRaw != 0)
+                    throw new ArgumentException("Columns and size of array do not match.");
+
+                int rows = size / rowSizeRaw;
+
+                byte[] result = new byte[rows * columns];
+#if DEBUG
+                for (int i = 0; i < result.Length; ++i)
+                    result[i] = 88;
+#endif
+
+                for (int row = 0; row < rows; ++row)
+                {
+                    if (bytes[row * rowSizeRaw] != 2)
+                        throw new ArgumentException("Invalid predictor in array.");
+
+                    for (int col = 0; col < columns; ++col)
+                    {
+                        // Copy data for first row.
+                        if (row == 0)
+                            result[row * columns + col] = bytes[row * rowSizeRaw + col + 1];
+                        else
+                        {
+                            // For other rows, add previous row.
+                            result[row * columns + col] = (byte)(result[row * columns - columns + col] + bytes[row * rowSizeRaw + col + 1]);
+                        }
+                    }
+                }
+                return result;
+            }
+
+            internal static byte[] EncodeStream(byte[] bytes, int columns, int predictor)
+            {
+                int size = bytes.Length;
+                if (predictor < 10 || predictor > 15)
+                    throw new ArgumentException("Invalid predictor.", "predictor");
+
+                int rowSizeRaw = columns + 1;
+
+                int rows = size / columns;
+
+                byte[] result = new byte[rows * rowSizeRaw];
+
+                for (int row = 0; row < rows; row++)
+                {
+                    result[row * rowSizeRaw] = 2;
+
+                    for (int col = 0; col < columns; col++)
+                    {
+                        if (row == 0)
+                        {
+                            result[row * columns + col + 1] = bytes[row * columns + col];
+                        }
+                        else
+                        {
+                            result[row * rowSizeRaw + col + 1] = (byte)((bytes[row * columns + col] - bytes[(row - 1) * columns + col]) % 255);
+                        }
+                    }
+                }
+
+                return result;
+            }
+
 
             /// <summary>
             /// Common keys for all streams.

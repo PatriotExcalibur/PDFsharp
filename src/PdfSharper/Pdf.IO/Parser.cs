@@ -1270,30 +1270,22 @@ namespace PdfSharper.Pdf.IO
             ReadSymbol(Symbol.BeginStream);
             ReadStream(xrefStream);
 
-            //xrefTable.Add(new PdfReference(objectID, position));
+
             PdfReference iref = new PdfReference(xrefStream);
             iref.Document = _document;
             iref.ObjectID = objectID;
             iref.Value = xrefStream;
             xrefTable.Add(iref);
 
-            //TODO: is this the correct revision?
+            if (!xrefTable.Contains(iref.ObjectID))
+            {
+                xrefTable.Add(iref);
+            }
             trailerTable.Add(iref);
 
             Debug.Assert(xrefStream.Stream != null);
-            //string sValue = new RawEncoding().GetString(xrefStream.Stream.UnfilteredValue,);
-            //sValue.GetType();
-            byte[] bytesRaw = xrefStream.Stream.UnfilteredValue;
-            byte[] bytes = bytesRaw;
 
-            // HACK: Should be done in UnfilteredValue.
-            if (xrefStream.Stream.HasDecodeParams)
-            {
-                int predictor = xrefStream.Stream.DecodePredictor;
-                int columns = xrefStream.Stream.DecodeColumns;
-                bytes = DecodeCrossReferenceStream(bytesRaw, columns, predictor);
-            }
-
+            byte[] bytes = xrefStream.Stream.UnfilteredValue;
 #if DEBUG_
             for (int idx = 0; idx < bytes.Length; idx++)
             {
@@ -1309,9 +1301,9 @@ namespace PdfSharper.Pdf.IO
             //    xrefTable.Add(new PdfReference(objectID, -1));
 
             int size = xrefStream.Elements.GetInteger(PdfCrossReferenceStream.Keys.Size);
-            PdfArray index = xrefStream.Elements.GetValue(PdfCrossReferenceStream.Keys.Index) as PdfArray;
+            PdfArray index = xrefStream.Elements.GetArray(PdfCrossReferenceStream.Keys.Index);
             int prev = xrefStream.Elements.GetInteger(PdfCrossReferenceStream.Keys.Prev);
-            PdfArray w = (PdfArray)xrefStream.Elements.GetValue(PdfCrossReferenceStream.Keys.W);
+            PdfArray w = xrefStream.Elements.GetArray(PdfCrossReferenceStream.Keys.W);
 
             // E.g.: W[1 2 1] � Index[7 12] � Size 19
 
@@ -1324,7 +1316,7 @@ namespace PdfSharper.Pdf.IO
                 // Setup with default values.
                 subsectionCount = 1;
                 subsections = new int[subsectionCount][];
-                subsections[0] = new int[] { 0, size }; // HACK: What is size? Contratiction in PDF reference.
+                subsections[0] = new int[] { 0, size }; //equivalent to the size entry in a non compressed trailer
                 subsectionEntryCount = size;
             }
             else
@@ -1361,7 +1353,7 @@ namespace PdfSharper.Pdf.IO
                     switch (field1)
                     {
                         case 0:
-                            res += "Fee list: object number, generation number";
+                            res += "Free list: object number, generation number";
                             break;
 
                         case 1:
@@ -1852,78 +1844,6 @@ namespace PdfSharper.Pdf.IO
         {
             public int Position;
             public Symbol Symbol;
-        }
-
-        //SEE RFC 2083 and the "UP" section
-        internal static byte[] DecodeCrossReferenceStream(byte[] bytes, int columns, int predictor)
-        {
-            int size = bytes.Length;
-            if (predictor < 10 || predictor > 15)
-                throw new ArgumentException("Invalid predictor.", "predictor");
-
-            int rowSizeRaw = columns + 1;
-
-            if (size % rowSizeRaw != 0)
-                throw new ArgumentException("Columns and size of array do not match.");
-
-            int rows = size / rowSizeRaw;
-
-            byte[] result = new byte[rows * columns];
-#if DEBUG
-            for (int i = 0; i < result.Length; ++i)
-                result[i] = 88;
-#endif
-
-            for (int row = 0; row < rows; ++row)
-            {
-                if (bytes[row * rowSizeRaw] != 2)
-                    throw new ArgumentException("Invalid predictor in array.");
-
-                for (int col = 0; col < columns; ++col)
-                {
-                    // Copy data for first row.
-                    if (row == 0)
-                        result[row * columns + col] = bytes[row * rowSizeRaw + col + 1];
-                    else
-                    {
-                        // For other rows, add previous row.
-                        result[row * columns + col] = (byte)(result[row * columns - columns + col] + bytes[row * rowSizeRaw + col + 1]);
-                    }
-                }
-            }
-            return result;
-        }
-
-        internal static byte[] EncodeCrossReferenceStream(byte[] bytes, int columns, int predictor)
-        {
-            int size = bytes.Length;
-            if (predictor < 10 || predictor > 15)
-                throw new ArgumentException("Invalid predictor.", "predictor");
-
-            int rowSizeRaw = columns + 1;
-
-            int rows = size / columns;
-
-            byte[] result = new byte[rows * rowSizeRaw];
-
-            for (int row = 0; row < rows; row++)
-            {
-                result[row * rowSizeRaw] = 2;
-
-                for (int col = 0; col < columns; col++)
-                {
-                    if (row == 0)
-                    {
-                        result[row * columns + col + 1] = bytes[row * columns + col];
-                    }
-                    else
-                    {
-                        result[row * rowSizeRaw + col + 1] = (byte)((bytes[row * columns + col] - bytes[(row - 1) * columns + col]) % 255);
-                    }
-                }
-            }
-
-            return result;
         }
 
         private readonly PdfDocument _document;
