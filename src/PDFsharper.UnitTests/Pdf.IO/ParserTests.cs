@@ -34,5 +34,12 @@ namespace PDFsharper.UnitTests.Pdf.IO
             byte[] actual = Parser.EncodeCrossReferenceStream(rawXRefStream, 4, 12);
             Assert.IsTrue(expected.SequenceEqual(actual), "Encoded stream does not match expected");
         }
+#if DEBUG
+        [TestMethod]
+        public void Debug_FileRead()
+        {
+            PdfDocument doc = PdfReader.Open(@"D:\Blank.pdf");
+        }
+#endif
     }
 }
