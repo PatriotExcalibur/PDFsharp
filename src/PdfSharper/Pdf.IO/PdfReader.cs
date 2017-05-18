@@ -517,7 +517,7 @@ namespace PdfSharper.Pdf.IO
                             if (!objectStreams.ContainsKey(objectNumber))
                             {
                                 objectStreams.Add(objectNumber, null);
-                                PdfObjectID objectID = new PdfObjectID((int)item.Field2);
+                                PdfObjectID objectID = new PdfObjectID(objectNumber);
                                 parser.ReadIRefsFromCompressedObject(objectID, xRefTable);
                             }
                         }
@@ -544,8 +544,6 @@ namespace PdfSharper.Pdf.IO
                             //document._irefTable.Add(irefNew);
                         }
                     }
-
-                    xRefTable.Remove(iref); //we have parsed the cross reference stream out go away!
                 }
             }
         }
