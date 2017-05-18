@@ -1854,6 +1854,7 @@ namespace PdfSharper.Pdf.IO
             public Symbol Symbol;
         }
 
+        //SEE RFC 2083 and the "UP" section
         internal static byte[] DecodeCrossReferenceStream(byte[] bytes, int columns, int predictor)
         {
             int size = bytes.Length;
@@ -1895,7 +1896,34 @@ namespace PdfSharper.Pdf.IO
 
         internal static byte[] EncodeCrossReferenceStream(byte[] bytes, int columns, int predictor)
         {
-            return bytes;
+            int size = bytes.Length;
+            if (predictor < 10 || predictor > 15)
+                throw new ArgumentException("Invalid predictor.", "predictor");
+
+            int rowSizeRaw = columns + 1;
+
+            int rows = size / columns;
+
+            byte[] result = new byte[rows * rowSizeRaw];
+
+            for (int row = 0; row < rows; row++)
+            {
+                result[row * rowSizeRaw] = 2;
+
+                for (int col = 0; col < columns; col++)
+                {
+                    if (row == 0)
+                    {
+                        result[row * columns + col + 1] = bytes[row * columns + col];
+                    }
+                    else
+                    {
+                        result[row * rowSizeRaw + col + 1] = (byte)((bytes[row * columns + col] - bytes[(row - 1) * columns + col]) % 255);
+                    }
+                }
+            }
+
+            return result;
         }
 
         private readonly PdfDocument _document;

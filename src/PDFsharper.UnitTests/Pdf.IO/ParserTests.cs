@@ -4,6 +4,8 @@ using PdfSharper.Pdf;
 using PdfSharper.Pdf.IO;
 using PdfSharper.Pdf.Filters;
 using System.Linq;
+using System.IO.Compression;
+using System.IO;
 
 namespace PDFsharper.UnitTests.Pdf.IO
 {
@@ -20,18 +22,17 @@ namespace PDFsharper.UnitTests.Pdf.IO
 
             byte[] expected = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 176, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 17, 0, 2, 0, 17, 1, 1, 14, 112, 0, 2, 0, 18, 0, 1, 14, 164, 0, 0, 0, 0, 0, 1, 15, 83, 0, 2, 0, 18, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 15, 159, 0, 1, 0, 16, 0, 1, 0, 203, 0, 1, 15, 208, 0 };
             Assert.IsTrue(expected.SequenceEqual(actual), "Decoded stream does not match expected");
-
         }
 
         [TestMethod]
         public void EncodeCrossReferenceStream()
         {
-            byte[] encodedXRefStream = new byte[] { 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 1, 1, 176, 0, 2, 255, 255, 80, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 2, 0, 17, 0, 2, 0, 0, 0, 1, 2, 255, 14, 95, 255, 2, 1, 242, 162, 0, 2, 255, 14, 146, 0, 2, 255, 242, 92, 0, 2, 1, 15, 83, 0, 2, 1, 241, 191, 1, 2, 254, 0, 238, 255, 2, 0, 0, 0, 0, 2, 1, 15, 159, 0, 2, 0, 241, 113, 0, 2, 0, 0, 187, 0, 2, 0, 15, 5, 0 };
+            byte[] expected = new byte[] { 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 1, 1, 176, 0, 2, 255, 255, 80, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 2, 0, 17, 0, 2, 0, 0, 0, 1, 2, 255, 14, 95, 255, 2, 1, 242, 162, 0, 2, 255, 14, 146, 0, 2, 255, 242, 92, 0, 2, 1, 15, 83, 0, 2, 1, 241, 191, 1, 2, 254, 0, 238, 255, 2, 0, 0, 0, 0, 2, 1, 15, 159, 0, 2, 0, 241, 113, 0, 2, 0, 0, 187, 0, 2, 0, 15, 5, 0 };
             byte[] rawXRefStream = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 176, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 17, 0, 2, 0, 17, 1, 1, 14, 112, 0, 2, 0, 18, 0, 1, 14, 164, 0, 0, 0, 0, 0, 1, 15, 83, 0, 2, 0, 18, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 15, 159, 0, 1, 0, 16, 0, 1, 0, 203, 0, 1, 15, 208, 0 };
 
 
-            Parser.EncodeCrossReferenceStream(rawXRefStream, 4, 12);
-
+            byte[] actual = Parser.EncodeCrossReferenceStream(rawXRefStream, 4, 12);
+            Assert.IsTrue(expected.SequenceEqual(actual), "Encoded stream does not match expected");
         }
     }
 }
