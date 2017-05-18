@@ -40,10 +40,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>..\PEX.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+  </PropertyGroup> 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'TestKey|AnyCPU'">
     <OutputPath>bin\TestKey\</OutputPath>
     <DefineConstants>TRACE;TESTKEY</DefineConstants>
