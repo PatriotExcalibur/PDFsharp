@@ -5,4 +5,4 @@ before_build:
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo
 
 build:
-  project: BuildAll-PdfSharp.sln
+  project: src\BuildAll-PdfSharp.sln
