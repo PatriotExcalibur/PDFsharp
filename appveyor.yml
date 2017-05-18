@@ -2,7 +2,7 @@
   - choco install gitversion.portable -pre -y
 
 before_build: 
-  - ps: gitversion /l console /output buildserver /updateAssemblyInfo
+  - ps: gitversion /l console /output buildserver /updateAssemblyInfo src\PdfSharper\Properties\AssemblyInfo.cs
 
 build:
   project: src\BuildAll-PdfSharp.sln
