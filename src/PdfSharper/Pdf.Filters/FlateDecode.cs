@@ -75,8 +75,8 @@ namespace PdfSharper.Pdf.Filters
             //header bytes are not wanted by .net
             using (MemoryStream msInput = new MemoryStream(data, 2, data.Length - 2))
             using (MemoryStream msOutput = new MemoryStream())
+            using (DeflateStream zip = new DeflateStream(msInput, CompressionMode.Decompress, true))
             {
-                DeflateStream zip = new DeflateStream(msInput, CompressionMode.Decompress, true);
                 int cbRead;
                 byte[] abResult = new byte[1024];
                 do
@@ -86,6 +86,7 @@ namespace PdfSharper.Pdf.Filters
                         msOutput.Write(abResult, 0, cbRead);
                 }
                 while (cbRead > 0);
+
                 zip.Close();
                 msOutput.Flush();
 
