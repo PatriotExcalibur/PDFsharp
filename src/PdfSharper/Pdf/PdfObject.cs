@@ -253,6 +253,7 @@ namespace PdfSharper.Pdf
                 //Gather all references to this object
 
                 PdfObjectID objID = this.ObjectID;
+                //TODO: Compressed object? 
                 PdfReference cloneReference = new PdfReference(Reference.ObjectID, Reference.Position);
                 cloneReference.Document = _document;
                 Reference = null;

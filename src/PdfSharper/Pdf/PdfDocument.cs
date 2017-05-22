@@ -487,6 +487,11 @@ namespace PdfSharper.Pdf
 
         private void WriteTrailer(PdfWriter writer, PdfTrailer trailer)
         {
+            if (trailer is PdfCrossReferenceStream)
+            {
+                WriteCrossReferenceTrailer(writer, trailer as PdfCrossReferenceStream);
+                return;
+            }
             PdfReference[] irefs = trailer.XRefTable.AllReferences;
             int count = irefs.Length;
             for (int idx = 0; idx < count; idx++)
@@ -513,6 +518,44 @@ namespace PdfSharper.Pdf
                 Debug.Assert(trailer.Prev.StartXRef != -1, "Previous trailer was not written yet");
                 trailer.Elements.SetInteger("/Prev", trailer.Prev.StartXRef);
             }
+
+            trailer.Write(writer);
+            writer.WriteEof(this, trailer.StartXRef);
+        }
+
+        private void WriteCrossReferenceTrailer(PdfWriter writer, PdfCrossReferenceStream trailer)
+        {
+            //write the object streams by position?
+            PdfReference[] irefs = trailer.XRefTable.AllReferences.Where(iref => iref.Value is PdfObjectStream)
+                                                                  .OrderBy(iref => iref.ObjectNumber)
+                                                                  .ToArray();
+
+            foreach (PdfReference objStreamRef in irefs)
+            {
+                objStreamRef.Position = writer.Position;
+
+                objStreamRef.Value.Write(writer);
+            }
+
+
+            //TODO: grouping of sequential objects
+            irefs = trailer.XRefTable.AllReferences;
+            int count = irefs.Length;
+            for (int idx = 0; idx < count; idx++)
+            {
+                PdfReference iref = irefs[idx];
+                if (iref.Value is PdfObjectStream ||
+                    !iref.ContainingStreamID.IsEmpty ||
+                    iref.Value == trailer)
+                {
+                    continue;
+                }
+
+                iref.Position = writer.Position;
+                iref.Value.Write(writer);
+            }
+
+            trailer.StartXRef = writer.Position;
 
             trailer.Write(writer);
             writer.WriteEof(this, trailer.StartXRef);
@@ -555,17 +598,6 @@ namespace PdfSharper.Pdf
 
             // Let catalog do the rest.
             Catalog.PrepareForSave();
-
-#if true
-            if ((_openMode == PdfDocumentOpenMode.Modify || _trailers.Count == 1) && !_trailers.Any(t => t.IsReadOnly))
-            {
-                // Remove all unreachable objects (e.g. from deleted pages)
-                int removed = _irefTable.Compact();
-                if (removed != 0)
-                    Debug.WriteLine("PrepareForSave: Number of deleted unreachable objects: " + removed);
-                _irefTable.Renumber();
-            }
-#endif
         }
 
         /// <summary>

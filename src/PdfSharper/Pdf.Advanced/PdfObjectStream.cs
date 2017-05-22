@@ -31,6 +31,8 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using PdfSharper.Pdf.IO;
+using System.Linq;
+using PdfSharper.Pdf.Internal;
 
 namespace PdfSharper.Pdf.Advanced
 {
@@ -91,10 +93,7 @@ namespace PdfSharper.Pdf.Advanced
 
                 PdfObjectID objectID = new PdfObjectID(objectNumber);
 
-                // HACK: -1 indicates compressed object.
-                PdfReference iref = new PdfReference(objectID, -1);
-                ////iref.ObjectID = objectID;
-                ////iref.Value = xrefStream;
+                PdfReference iref = new PdfReference(objectID, this.ObjectID, idx);
                 if (!xrefTable.Contains(iref.ObjectID))
                 {
                     xrefTable.Add(iref);
@@ -131,6 +130,41 @@ namespace PdfSharper.Pdf.Advanced
         /// i.e. the byte offset plus First entry.
         /// </summary>
         private readonly int[][] _header;  // Reference: Page 102
+
+        protected override void WriteObject(PdfWriter writer)
+        {
+            //setup our stream             
+            using (MemoryStream msObjects = new MemoryStream())
+            using (MemoryStream fullOutput = new MemoryStream())
+            {
+                PdfWriter objStreamWriter = new PdfWriter(msObjects, _document.SecurityHandler, true);
+                for (int i = 0; i < _header.Length; i++)
+                {
+                    int objectNumber = _header[i][0];
+                    //non-offset position 
+                    _header[i][1] = objStreamWriter.Position;
+
+                    //TODO: get the object from the correct trailer, it's not always the most recent version that
+                    //should be written here
+                    _document._irefTable[new PdfObjectID(objectNumber)].Value.Write(objStreamWriter);
+                }
+
+                string objectStreamHeader = string.Join(" ", _header.Select(h => $"{h[0]} {h[1]}")) + " ";
+
+
+                Elements.SetInteger(Keys.First, objectStreamHeader.Length);
+
+                var rawHeader = new RawEncoding().GetBytes(objectStreamHeader);
+                fullOutput.Write(rawHeader, 0, rawHeader.Length);
+
+                msObjects.Seek(0, SeekOrigin.Begin);
+                msObjects.CopyTo(fullOutput);
+
+                Stream = new PdfStream(fullOutput.ToArray(), this, Stream.Trailer);
+                Stream.Zip();
+            }
+            base.WriteObject(writer);
+        }
 
         /// <summary>
         /// Predefined keys common to all font dictionaries.

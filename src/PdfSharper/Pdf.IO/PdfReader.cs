@@ -389,33 +389,30 @@ namespace PdfSharper.Pdf.IO
                 bool signaturePresent = document.Internals.GetAllObjects().OfType<PdfDictionary>().Any(pd => pd.Elements.GetString(PdfSignatureField.Keys.Type) == "/Sig");
 
 
-                if (foundNonCrossRef && signaturePresent)
+                if (signaturePresent)
                 {
                     foreach (var trailer in document._trailers)
                     {
                         trailer.IsReadOnly = true;
                     }
                 }
-                else if (!signaturePresent) //we don't support writing CrossRef streams, flatten them
+                else if (!signaturePresent && document._trailers.Count == 1)
                 {
-                    document._trailers.Clear();
-                    document._irefTable.Compact();
+                    int removed = document._irefTable.Compact();
+                    if (removed != 0)
+                        Debug.WriteLine("Number of deleted unreachable objects: " + removed);
 
-                    if (document._trailer is PdfCrossReferenceStream)
-                    {
-                        document._trailer = new PdfTrailer((PdfCrossReferenceStream)document._trailer);
-                    }
 
                     document._trailer.XRefTable = document._irefTable;
 
                     PdfPages pages = document.Pages;
                     Debug.Assert(pages != null);
 
-                    document._irefTable.CheckConsistence();
-                    document._irefTable.Renumber();
-                    document._irefTable.CheckConsistence();
+                    //TODO: Renumber does not go and remap references to the existing object, how has this ever worked?
+                    //document._irefTable.CheckConsistence();
+                    //document._irefTable.Renumber();
+                    //document._irefTable.CheckConsistence();
 
-                    document._trailers.Add(document._trailer);
                     document._trailer.Prev = null;
                     document._trailer.Next = null;
                 }
@@ -453,22 +450,6 @@ namespace PdfSharper.Pdf.IO
 
                     // Change modification date
                     document.Info.ModificationDate = DateTime.Now;
-
-                    // Remove all unreachable objects
-                    int removed = document._irefTable.Compact();
-                    if (removed != 0)
-                        Debug.WriteLine("Number of deleted unreachable objects: " + removed);
-
-                    // Force flattening of page tree
-                    PdfPages pages = document.Pages;
-                    Debug.Assert(pages != null);
-
-                    //bool b = document.irefTable.Contains(new PdfObjectID(1108));
-                    //b.GetType();
-
-                    document._irefTable.CheckConsistence();
-                    document._irefTable.Renumber();
-                    document._irefTable.CheckConsistence();
                 }
 
                 if (signaturePresent) //original stream must be preserved for the signature

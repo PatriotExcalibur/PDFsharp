@@ -191,7 +191,7 @@ namespace PdfSharper.Pdf.Advanced
             get
             {
                 if (_securityHandler == null)
-                    _securityHandler = (PdfStandardSecurityHandler)Elements.GetValue(Keys.Encrypt, VCF.CreateIndirect);
+                    _securityHandler = (PdfStandardSecurityHandler)Elements.GetValue(Keys.Encrypt, VCF.None);
                 return _securityHandler;
             }
         }

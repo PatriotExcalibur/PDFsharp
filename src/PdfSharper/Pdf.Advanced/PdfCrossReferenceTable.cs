@@ -556,6 +556,27 @@ namespace PdfSharper.Pdf.Advanced
                         }
                     }
                 }
+
+                if (pdfObject is PdfCrossReferenceStream)
+                {
+                    if (!objects.ContainsKey(pdfObject.Reference))
+                    {
+                        objects.Add(pdfObject.Reference, null);
+                    }
+                    PdfCrossReferenceStream xRefStream = pdfObject as PdfCrossReferenceStream;
+                    foreach (var entry in xRefStream.Entries)
+                    {
+                        if (entry.Type == 2)
+                        {
+                            PdfReference iref = xRefStream.XRefTable.AllReferences.FirstOrDefault(ir => ir.ObjectNumber == entry.Field2);
+                            if (!objects.ContainsKey(iref))
+                            {
+                                objects.Add(iref, null);
+                            }
+                        }
+
+                    }
+                }
             }
             finally
             {

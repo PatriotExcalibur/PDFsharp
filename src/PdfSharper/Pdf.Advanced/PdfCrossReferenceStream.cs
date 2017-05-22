@@ -29,6 +29,9 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using PdfSharper.Pdf.IO;
+using System.IO;
+using System;
 
 namespace PdfSharper.Pdf.Advanced
 {
@@ -62,6 +65,74 @@ namespace PdfSharper.Pdf.Advanced
             public uint Field2;
 
             public uint Field3;
+        }
+
+        protected override void WriteObject(PdfWriter writer)
+        {
+            //setup new entries stream
+            PdfArray widthsArray = Elements.GetArray(Keys.W);
+            int typeWidth = widthsArray.Elements.GetInteger(0);
+            int field2Width = widthsArray.Elements.GetInteger(1);
+            int field3Width = widthsArray.Elements.GetInteger(2);
+
+            //TODO: support subsections and index key
+            using (MemoryStream ms = new MemoryStream())
+            using (BinaryWriter bw = new BinaryWriter(ms))
+            {
+                for (int i = 0; i < Entries.Count; i++)
+                {
+                    CrossReferenceStreamEntry entry = Entries[i];
+                    PdfObjectID objectID;
+                    WriteEntryValue(bw, typeWidth, entry.Type);
+
+                    if (entry.Type == 1)
+                    {
+                        objectID = new PdfObjectID(i);
+                        WriteEntryValue(bw, field2Width, (uint)XRefTable[objectID].Position);
+                    }
+                    else
+                    {
+                        WriteEntryValue(bw, field2Width, entry.Field2);
+                    }
+                    WriteEntryValue(bw, field3Width, entry.Field3);
+                }
+
+                bw.Flush();
+
+                Stream = new PdfStream(ms.ToArray(), this, Stream.Trailer);
+                //make sure filter is reapplied
+                Elements.Remove(PdfObjectStream.Keys.Filter);
+                Stream.Zip();
+            }
+
+            base.WriteObject(writer);
+        }
+
+        private void WriteEntryValue(BinaryWriter bw, int width, uint value)
+        {
+            switch (width)
+            {
+                case 1:
+                    bw.Write((byte)value);
+                    break;
+                case 2:
+                    bw.Write((byte)(value >> 8));
+                    bw.Write((byte)(value));
+                    break;
+                case 3:
+                    bw.Write((byte)(value >> 16));
+                    bw.Write((byte)(value >> 8));
+                    bw.Write((byte)(value));
+                    break;
+                case 4:
+                    bw.Write((byte)(value >> 24));
+                    bw.Write((byte)(value >> 16));
+                    bw.Write((byte)(value >> 8));
+                    bw.Write((byte)(value));
+                    break;
+                default:
+                    throw new NotSupportedException($"Unknown cross reference width {width}");
+            }
         }
 
         /// <summary>

@@ -1977,11 +1977,15 @@ namespace PdfSharper.Pdf
                 if (_value == null)
                     return;
 
-                if (!_ownerDictionary.Elements.ContainsKey("/Filter"))
+                if (!_ownerDictionary.Elements.ContainsKey(Keys.Filter))
                 {
+                    if (_ownerDictionary.Stream.HasDecodeParams)
+                    {
+                        _value = EncodeStream(_value, _ownerDictionary.Stream.DecodeColumns, _ownerDictionary.Stream.DecodePredictor);
+                    }
                     _value = Filtering.FlateDecode.Encode(_value, _ownerDictionary._document.Options.FlateEncodeMode);
-                    _ownerDictionary.Elements["/Filter"] = new PdfName("/FlateDecode");
-                    _ownerDictionary.Elements["/Length"] = new PdfInteger(_value.Length);
+                    _ownerDictionary.Elements.SetName(Keys.Filter, "/FlateDecode");
+                    _ownerDictionary.Elements.SetInteger(Keys.Length, _value.Length);
                 }
             }
 

@@ -44,10 +44,11 @@ namespace PdfSharper.Pdf.IO
     /// </summary>
     public class PdfWriter
     {
-        public PdfWriter(Stream pdfStream, PdfStandardSecurityHandler securityHandler)
+        public PdfWriter(Stream pdfStream, PdfStandardSecurityHandler securityHandler, bool writingToObjectStream = false)
         {
             _stream = pdfStream;
             _securityHandler = securityHandler;
+            _writingToObjectStream = writingToObjectStream;
             //System.Xml.XmlTextWriter
 #if DEBUG
             _layout = PdfWriterLayout.Verbose;
@@ -318,7 +319,10 @@ namespace PdfSharper.Pdf.IO
             bool indirect = obj.IsIndirect;
             if (indirect)
             {
-                WriteObjectAddress(obj);
+                if (!_writingToObjectStream)
+                {
+                    WriteObjectAddress(obj);
+                }
                 if (_securityHandler != null)
                     _securityHandler.SetHashKey(obj.ObjectID);
             }
@@ -386,8 +390,15 @@ namespace PdfSharper.Pdf.IO
             {
                 if (indirect)
                 {
-                    WriteRaw("\n]\n");
-                    _lastCat = CharCat.NewLine;
+                    if (_writingToObjectStream)
+                    {
+                        WriteRaw("]");
+                    }
+                    else
+                    {
+                        WriteRaw("\n]\n");
+                        _lastCat = CharCat.NewLine;
+                    }
                 }
                 else
                 {
@@ -401,7 +412,11 @@ namespace PdfSharper.Pdf.IO
                 {
                     if (!stackItem.HasStream)
                     {
-                        if (_layout == PdfWriterLayout.Compact)
+                        if (_writingToObjectStream)
+                        {
+                            WriteRaw(">>");
+                        }
+                        else if (_layout == PdfWriterLayout.Compact)
                         {
                             WriteRaw(">>\r");
                         }
@@ -426,7 +441,7 @@ namespace PdfSharper.Pdf.IO
 
                 }
             }
-            if (indirect)
+            if (indirect && !_writingToObjectStream)
             {
                 if (_lastCat != CharCat.NewLine)
                     NewLine();
@@ -661,6 +676,8 @@ namespace PdfSharper.Pdf.IO
             set { _securityHandler = value; }
         }
         PdfStandardSecurityHandler _securityHandler;
+
+        bool _writingToObjectStream;
 
         class StackItem
         {
