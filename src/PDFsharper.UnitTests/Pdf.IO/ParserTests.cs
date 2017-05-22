@@ -12,12 +12,14 @@ namespace PDFsharper.UnitTests.Pdf.IO
     [TestClass]
     public class ParserTests
     {
-       
+
 #if DEBUG
         [TestMethod]
         public void Debug_FileRead()
         {
             PdfDocument doc = PdfReader.Open(@"D:\Blank.pdf");
+
+            doc.Save(@"D:\Blank_passthrough.pdf");
         }
 #endif
     }
