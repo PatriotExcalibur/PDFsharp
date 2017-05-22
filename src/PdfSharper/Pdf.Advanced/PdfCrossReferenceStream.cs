@@ -65,6 +65,8 @@ namespace PdfSharper.Pdf.Advanced
             public uint Field2;
 
             public uint Field3;
+
+            public int ObjectNumber;
         }
 
         protected override void WriteObject(PdfWriter writer)
@@ -75,20 +77,17 @@ namespace PdfSharper.Pdf.Advanced
             int field2Width = widthsArray.Elements.GetInteger(1);
             int field3Width = widthsArray.Elements.GetInteger(2);
 
-            //TODO: support subsections and index key
             using (MemoryStream ms = new MemoryStream())
             using (BinaryWriter bw = new BinaryWriter(ms))
             {
                 for (int i = 0; i < Entries.Count; i++)
                 {
                     CrossReferenceStreamEntry entry = Entries[i];
-                    PdfObjectID objectID;
                     WriteEntryValue(bw, typeWidth, entry.Type);
 
                     if (entry.Type == 1)
                     {
-                        objectID = new PdfObjectID(i);
-                        WriteEntryValue(bw, field2Width, (uint)XRefTable[objectID].Position);
+                        WriteEntryValue(bw, field2Width, (uint)XRefTable[new PdfObjectID(entry.ObjectNumber)].Position);
                     }
                     else
                     {

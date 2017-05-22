@@ -1376,8 +1376,8 @@ namespace PdfSharper.Pdf.IO
             int index2 = -1;
             for (int ssc = 0; ssc < subsectionCount; ssc++)
             {
-                int abc = subsections[ssc][1];
-                for (int idx = 0; idx < abc; idx++)
+                int subsectionObjectCount = subsections[ssc][1];
+                for (int idx = 0; idx < subsectionObjectCount; idx++)
                 {
                     index2++;
 
