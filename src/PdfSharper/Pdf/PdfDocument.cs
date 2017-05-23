@@ -231,6 +231,10 @@ namespace PdfSharper.Pdf
             get { return true; }
         }
 
+        public PdfLinearizationParameters LinearizationParamaters { get; internal set; }
+
+        public bool IsLinearized { get { return LinearizationParamaters != null; } }
+
         /// <summary>
         /// Closes this instance.
         /// </summary>
@@ -401,7 +405,7 @@ namespace PdfSharper.Pdf
 
                 PrepareForSave();
 
-                PdfTrailer writeableTrailer = _trailers.SingleOrDefault(t => t.IsReadOnly == false);
+                PdfTrailer writeableTrailer = _trailers.SingleOrDefault(t => t.IsReadOnly == false && t.Next == null);
                 if (writeableTrailer != null)
                 {
                     writeableTrailer.Info.ModificationDate = DateTime.Now;
@@ -429,11 +433,101 @@ namespace PdfSharper.Pdf
                 }
                 else
                 {
-                    var trailer = _trailers.SingleOrDefault(t => t.Prev == null);
-                    while (trailer != null)
+                    if (IsLinearized) //write out objects in their original order
                     {
-                        WriteTrailer(writer, trailer);
-                        trailer = trailer.Next;
+                        var objectsByPosition = _irefTable.AllReferences
+                                                    .Where(iref => iref.ContainingStreamID.IsEmpty)
+                                                    .Select(iref => new
+                                                    {
+                                                        Position = iref.Value is PdfCrossReferenceStream ?
+                                                                    ((PdfCrossReferenceStream)iref.Value).StartXRef : iref.Position,
+                                                        Reference = iref
+                                                    })
+                                                    .OrderBy(anon => anon.Position)
+                                                    .Select(anon => anon.Reference)
+                                                    .ToList();
+
+                        PdfCrossReferenceStream linearXRef = null;
+                        int linMinObjectNumber = 0;
+                        int linMaxObjectNumber = 0;
+                        int writerStartPosition = 0;
+                        for (int idx = 0; idx < objectsByPosition.Count; idx++)
+                        {
+                            writerStartPosition = writer.Position;
+                            PdfReference iref = objectsByPosition[idx];
+                            if (iref == LinearizationParamaters.HintStream.Reference)
+                            {
+                                LinearizationParamaters.Elements.GetArray(PdfLinearizationParameters.Keys.Hint).Elements[0] = new PdfInteger(writerStartPosition);
+                            }
+
+                            if (linearXRef != null && (iref.ObjectNumber < linMinObjectNumber || iref.ObjectNumber > linMaxObjectNumber))
+                            {
+                                continue; //once the linear contents have been written, return to the normal path
+                            }
+
+                            if (iref.Value is PdfCrossReferenceStream)
+                            {
+                                if (linearXRef == null)
+                                {
+                                    linearXRef = iref.Value as PdfCrossReferenceStream;
+                                    linMinObjectNumber = linearXRef.XRefTable.AllReferences.Min(liref => liref.ObjectNumber);
+                                    linMaxObjectNumber = linearXRef.XRefTable.AllReferences.Max(liref => liref.ObjectNumber);
+                                }
+
+                                linearXRef.StartXRef = writer.Position;
+                                iref.Position = linearXRef.StartXRef;
+                                iref.Value.Write(writer);
+                                writer.WriteEof(this, 0); //the first linear xref always starts at 0
+                                //padding for when the stream is updated with the object positions
+                                writer.WriteRaw(new string(' ', 125));
+                                writer.WriteRaw("\r\n");
+                            }
+                            else
+                            {
+                                iref.Position = writer.Position;
+                                iref.Value.Write(writer);
+
+                                if (iref.Value is PdfLinearizationParameters)
+                                {
+                                    writer.WriteRaw(new string(' ', 19));
+                                    writer.WriteRaw("\r\n");
+                                }
+                            }
+
+                            if (iref == LinearizationParamaters.HintStream.Reference)
+                            {
+                                LinearizationParamaters.Elements.GetArray(PdfLinearizationParameters.Keys.Hint).Elements[1] = new PdfInteger(writer.Position - writerStartPosition);
+                            }
+                        }
+
+
+                        LinearizationParamaters.EndOfFirstPage = writer.Position;
+
+                        var trailer = linearXRef.Prev;
+                        while (trailer != null && trailer != linearXRef)
+                        {
+                            WriteTrailer(writer, trailer, linearXRef);
+                            trailer = trailer.Next;
+                        }
+
+                        LinearizationParamaters.Length = writer.Position;
+                        writer.Stream.Seek(LinearizationParamaters.Reference.Position, SeekOrigin.Begin);
+                        LinearizationParamaters.Write(writer);
+
+                        //update positions of objects in start stream since it is written before the objects
+                        writer.Stream.Seek(linearXRef.StartXRef, SeekOrigin.Begin);
+                        linearXRef.Write(writer);
+                        writer.WriteEof(this, 0); //the first linear xref always starts at 0
+                        writer.Stream.Seek(0, SeekOrigin.End);
+                    }
+                    else
+                    {
+                        var trailer = _trailers.SingleOrDefault(t => t.Prev == null);
+                        while (trailer != null)
+                        {
+                            WriteTrailer(writer, trailer);
+                            trailer = trailer.Next;
+                        }
                     }
                 }
 
@@ -485,11 +579,11 @@ namespace PdfSharper.Pdf
             return endingTrailer;
         }
 
-        private void WriteTrailer(PdfWriter writer, PdfTrailer trailer)
+        private void WriteTrailer(PdfWriter writer, PdfTrailer trailer, PdfCrossReferenceStream linearXRefTrailer = null)
         {
             if (trailer is PdfCrossReferenceStream)
             {
-                WriteCrossReferenceTrailer(writer, trailer as PdfCrossReferenceStream);
+                WriteCrossReferenceTrailer(writer, trailer as PdfCrossReferenceStream, linearXRefTrailer);
                 return;
             }
             PdfReference[] irefs = trailer.XRefTable.AllReferences;
@@ -523,7 +617,7 @@ namespace PdfSharper.Pdf
             writer.WriteEof(this, trailer.StartXRef);
         }
 
-        private void WriteCrossReferenceTrailer(PdfWriter writer, PdfCrossReferenceStream trailer)
+        private void WriteCrossReferenceTrailer(PdfWriter writer, PdfCrossReferenceStream trailer, PdfCrossReferenceStream linearXRefTrailer)
         {
             //write the object streams by position?
             PdfReference[] irefs = trailer.XRefTable.AllReferences.Where(iref => iref.Value is PdfObjectStream)
@@ -555,8 +649,18 @@ namespace PdfSharper.Pdf
                 iref.Value.Write(writer);
             }
 
-            trailer.StartXRef = writer.Position;
+            if (trailer.Next == null || trailer.Next != linearXRefTrailer)
+            {
+                trailer.StartXRef = writer.Position;
+            }
+            else
+            {
+                LinearizationParamaters.MainCrossReferenceStreamOffset = writer.Position;
+                linearXRefTrailer.Elements.SetInteger(PdfCrossReferenceStream.Keys.Prev, writer.Position);
+                trailer.StartXRef = linearXRefTrailer.StartXRef;
+            }
 
+            trailer.Reference.Position = writer.Position;
             trailer.Write(writer);
             writer.WriteEof(this, trailer.StartXRef);
         }

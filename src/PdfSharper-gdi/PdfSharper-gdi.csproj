@@ -703,6 +703,9 @@
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfInternals.cs">
       <Link>Pdf.Advanced\PdfInternals.cs</Link>
     </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfLinearizationParameters.cs">
+      <Link>Pdf.Advanced\PdfLinearizationParameters.cs</Link>
+    </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfObjectInternals.cs">
       <Link>Pdf.Advanced\PdfObjectInternals.cs</Link>
     </Compile>

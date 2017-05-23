@@ -534,6 +534,7 @@ namespace PdfSharper.Pdf.IO
             PdfReference[] irefs = xRefTable.AllReferences;
             int count = irefs.Length;
 
+            PdfReference hintStreamReference = null;
             // Read all indirect objects.
             for (int idx = 0; idx < count; idx++)
             {
@@ -556,6 +557,18 @@ namespace PdfSharper.Pdf.IO
                         PdfObject pdfObject = parser.ReadObject(null, iref.ObjectID, false, false, false, xRefTable);
 
                         iref.Value = pdfObject;
+
+
+                        if (document.LinearizationParamaters == null && pdfObject is PdfDictionary)
+                        {
+                            PdfDictionary objDictionary = pdfObject as PdfDictionary;
+                            if (objDictionary.Elements.ContainsKey(PdfLinearizationParameters.Keys.Linearized))
+                            {
+                                document.LinearizationParamaters = new PdfLinearizationParameters(objDictionary);
+                                int hintStreamPosition = document.LinearizationParamaters.Elements.GetArray(PdfLinearizationParameters.Keys.Hint).Elements.GetInteger(0);
+                                hintStreamReference = xRefTable.AllReferences.SingleOrDefault(href => href.Position == hintStreamPosition);
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -568,6 +581,11 @@ namespace PdfSharper.Pdf.IO
                 {
                     Debug.Assert(xRefTable.Contains(iref.ObjectID));
                     //iref.GetType();
+                }
+
+                if (iref == hintStreamReference && document.LinearizationParamaters != null)
+                {
+                    document.LinearizationParamaters.HintStream = (PdfDictionary)iref.Value;
                 }
             }
 

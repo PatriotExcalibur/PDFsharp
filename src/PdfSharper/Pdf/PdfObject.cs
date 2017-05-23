@@ -236,12 +236,13 @@ namespace PdfSharper.Pdf
 
         public virtual void FlagAsDirty()
         {
-            if (IsDirty || _document._trailers.Count == 1)
+            if (IsDirty || _document._trailers.All(t => t.IsReadOnly == false))
             {
                 return; //we have already cloned ourselves for modification  or the document is not incrementally updated
             }
 
-            PdfTrailer writableTrailer = _document._trailers.SingleOrDefault(t => t.IsReadOnly == false);
+            PdfTrailer writableTrailer = _document._trailers.SingleOrDefault(t => t.XRefTable.Contains(ObjectID) && (t.Next == null || !t.Next.XRefTable.Contains(ObjectID)) && t.IsReadOnly == false);
+
             if (writableTrailer == null)
             {
                 writableTrailer = _document.MakeNewTrailer();

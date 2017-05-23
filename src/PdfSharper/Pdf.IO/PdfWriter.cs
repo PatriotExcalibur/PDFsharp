@@ -624,7 +624,7 @@ namespace PdfSharper.Pdf.IO
                     {
                         if (cat == CharCat.Character)
                         {
-                            Stream.Seek(-1, SeekOrigin.End);
+                            Stream.Seek(-1, SeekOrigin.Current);
                             if (Stream.ReadByte() != 32)//space 
                                 _stream.WriteByte((byte)' ');
                         }

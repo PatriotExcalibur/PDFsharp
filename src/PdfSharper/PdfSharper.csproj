@@ -244,6 +244,7 @@
     <Compile Include="Pdf.Advanced\PdfImageTable.cs" />
     <Compile Include="Pdf.Advanced\PdfImportedObjectTable.cs" />
     <Compile Include="Pdf.Advanced\PdfInternals.cs" />
+    <Compile Include="Pdf.Advanced\PdfLinearizationParameters.cs" />
     <Compile Include="Pdf.Advanced\PdfObjectInternals.cs" />
     <Compile Include="Pdf.Advanced\PdfObjectStream.cs" />
     <Compile Include="Pdf.Advanced\PdfPageInheritableObjects.cs" />
