@@ -409,10 +409,7 @@ namespace PdfSharper.Pdf
                 if (writeableTrailer != null)
                 {
                     writeableTrailer.Info.ModificationDate = DateTime.Now;
-
                 }
-
-
 
                 if (encrypt)
                     _securitySettings.SecurityHandler.PrepareEncryption();
@@ -550,6 +547,36 @@ namespace PdfSharper.Pdf
             }
         }
 
+        internal PdfTrailer GetWritableTrailer(PdfObjectID forObjectID)
+        {
+            if (_trailers.Count == 1)
+            {
+                return _trailers.FirstOrDefault();
+            }
+
+            if (_trailers.All(t => t.IsReadOnly == false))
+            {
+                foreach (PdfTrailer trailer in _trailers)
+                {
+                    if ((trailer.XRefTable.Contains(forObjectID) || trailer.XRefTable._maxObjectNumber + 1 == forObjectID.ObjectNumber)
+                        && (trailer.Next == null || !trailer.Next.XRefTable.Contains(forObjectID)))
+                    {
+                        return trailer;
+                    }
+                }
+
+                return MakeNewTrailer();
+
+
+            }
+
+            if (_trailers.All(t => t.IsReadOnly))
+            {
+                return MakeNewTrailer();
+            }
+
+            return _trailers.SingleOrDefault(t => t.IsReadOnly == false);
+        }
         internal PdfTrailer MakeNewTrailer()
         {
             PdfTrailer endingTrailer = new PdfTrailer(this);

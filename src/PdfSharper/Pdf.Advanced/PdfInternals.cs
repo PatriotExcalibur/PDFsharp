@@ -127,7 +127,7 @@ namespace PdfSharper.Pdf.Advanced
         {
             PdfFormXObjectTable table = _document.FormTable;
             PdfImportedObjectTable iot = table.GetImportedObjectTable(externalObject.Owner);
-            PdfReference reference= iot[externalObject.ObjectID];
+            PdfReference reference = iot[externalObject.ObjectID];
             return reference == null ? null : reference.Value;
         }
 
@@ -244,7 +244,7 @@ namespace PdfSharper.Pdf.Advanced
             if (obj.Owner != _document)
                 throw new InvalidOperationException("Object does not belong to this document.");
 
-            var writeableTrailer = _document._trailers.SingleOrDefault(t => t.IsReadOnly == false);
+            var writeableTrailer = _document.GetWritableTrailer(obj.ObjectID);
             writeableTrailer.XRefTable.Remove(obj.Reference);
             _document._irefTable.Remove(obj.Reference);
         }

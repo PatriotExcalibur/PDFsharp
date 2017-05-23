@@ -89,7 +89,7 @@ namespace PdfSharper.Pdf.Advanced
             if (value.ObjectID.IsEmpty)
             {
                 value.SetObjectID(GetNewObjectNumber(), 0);
-                var writeableTrailer = _document._trailers.SingleOrDefault(t => t.IsReadOnly == false);
+                var writeableTrailer = _document.GetWritableTrailer(value.ObjectID);
                 if (writeableTrailer != null && !ReferenceEquals(writeableTrailer.XRefTable, _document._irefTable) && !writeableTrailer.XRefTable.Contains(value.ObjectID))
                 {
                     writeableTrailer.XRefTable.Add(value.Reference);

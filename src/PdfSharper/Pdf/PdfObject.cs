@@ -241,12 +241,7 @@ namespace PdfSharper.Pdf
                 return; //we have already cloned ourselves for modification  or the document is not incrementally updated
             }
 
-            PdfTrailer writableTrailer = _document._trailers.SingleOrDefault(t => t.XRefTable.Contains(ObjectID) && (t.Next == null || !t.Next.XRefTable.Contains(ObjectID)) && t.IsReadOnly == false);
-
-            if (writableTrailer == null)
-            {
-                writableTrailer = _document.MakeNewTrailer();
-            }
+            PdfTrailer writableTrailer = _document.GetWritableTrailer(ObjectID);
 
             if (IsIndirect)
             {

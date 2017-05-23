@@ -29,11 +29,9 @@
 
 using PdfSharper.Drawing;
 using PdfSharper.Drawing.Layout;
-using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Annotations;
-using PdfSharper.Pdf.Internal;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 
 namespace PdfSharper.Pdf.AcroForms
 {
@@ -77,7 +75,7 @@ namespace PdfSharper.Pdf.AcroForms
             {
                 bool wasDirty = IsDirty;
                 Elements.SetString(Keys.V, value);
-                if (wasDirty != IsDirty || _document._trailers.Count == 1)
+                if (wasDirty != IsDirty || _document._trailers.All(t => t.IsReadOnly == false))
                 {
                     _needsAppearances = true;
                 }
