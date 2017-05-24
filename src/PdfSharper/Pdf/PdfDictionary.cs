@@ -2086,7 +2086,7 @@ namespace PdfSharper.Pdf
                         }
                         else
                         {
-                            result[row * rowSizeRaw + col + 1] = (byte)((bytes[row * columns + col] - bytes[(row - 1) * columns + col]) % 255);
+                            result[row * rowSizeRaw + col + 1] = (byte)((bytes[row * columns + col] - bytes[(row - 1) * columns + col]));
                         }
                     }
                 }

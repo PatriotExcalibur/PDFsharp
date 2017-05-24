@@ -31,5 +31,15 @@ namespace PDFsharper.UnitTests.Pdf
             byte[] actual = PdfDictionary.PdfStream.EncodeStream(rawXRefStream, 4, 12);
             Assert.IsTrue(expected.SequenceEqual(actual), "Encoded stream does not match expected");
         }
+
+        [TestMethod]
+        public void EncodeStream_Max()
+        {
+            byte[] expected = new byte[] { 2, 0, 0, 0, 0, 0, 2, 1, 0, 221, 177, 0, 2, 0, 0, 4, 196, 0, 2, 0, 0, 8, 13, 0, 2, 0, 0, 3, 10, 0, 2, 0, 0, 4, 60, 0, 2, 0, 0, 15, 251, 0, 2, 0, 1, 1, 138, 0 };
+            byte[] rawXRefStream = new byte[] { 0, 0, 0, 0, 0, 1, 0, 221, 177, 0, 1, 0, 225, 117, 0, 1, 0, 233, 130, 0, 1, 0, 236, 140, 0, 1, 0, 240, 200, 0, 1, 0, 255, 195, 0, 1, 1, 0, 77, 0 };
+
+            byte[] actual = PdfDictionary.PdfStream.EncodeStream(rawXRefStream, 5, 12);
+            Assert.IsTrue(expected.SequenceEqual(actual), "Encoded stream does not match expected");
+        }
     }
 }
