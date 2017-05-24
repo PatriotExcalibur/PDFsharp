@@ -371,7 +371,7 @@ namespace PdfSharper.Pdf.IO
                 //most recent needs to be what goes in the document_ireftable is why we read this first
                 foreach (var trailer in document._trailers)
                 {
-                    ReadObjects(document, parser, trailer.XRefTable, trailer is PdfCrossReferenceStream);
+                    ReadObjects(document, parser, trailer);
                 }
 
                 document._irefTable.IsUnderConstruction = false;
@@ -529,9 +529,11 @@ namespace PdfSharper.Pdf.IO
             }
         }
 
-        private static void ReadObjects(PdfDocument document, Parser parser, PdfCrossReferenceTable xRefTable, bool isCrossReferenceStream)
+        private static void ReadObjects(PdfDocument document, Parser parser, PdfTrailer trailer)
         {
-            PdfReference[] irefs = xRefTable.AllReferences;
+            PdfCrossReferenceStream crossRefStream = trailer as PdfCrossReferenceStream;
+            bool isCrossReferenceStream = crossRefStream != null;
+            PdfReference[] irefs = trailer.XRefTable.AllReferences;
             int count = irefs.Length;
 
             PdfReference hintStreamReference = null;
@@ -547,14 +549,14 @@ namespace PdfSharper.Pdf.IO
 #endif
                     if (isCrossReferenceStream && document._irefTable.Contains(iref.ObjectID) && document._irefTable[iref.ObjectID].Value != null)
                     {
-                        xRefTable.Remove(iref);
-                        xRefTable.Add(document._irefTable[iref.ObjectID]);
+                        trailer.XRefTable.Remove(iref);
+                        trailer.XRefTable.Add(document._irefTable[iref.ObjectID]);
                         continue;
                     }
                     try
                     {
-                        Debug.Assert(xRefTable.Contains(iref.ObjectID));
-                        PdfObject pdfObject = parser.ReadObject(null, iref.ObjectID, false, false, false, xRefTable);
+                        Debug.Assert(trailer.XRefTable.Contains(iref.ObjectID));
+                        PdfObject pdfObject = parser.ReadObject(null, iref.ObjectID, false, false, false, trailer.XRefTable);
 
                         iref.Value = pdfObject;
 
@@ -566,7 +568,7 @@ namespace PdfSharper.Pdf.IO
                             {
                                 document.LinearizationParamaters = new PdfLinearizationParameters(objDictionary);
                                 int hintStreamPosition = document.LinearizationParamaters.Elements.GetArray(PdfLinearizationParameters.Keys.Hint).Elements.GetInteger(0);
-                                hintStreamReference = xRefTable.AllReferences.SingleOrDefault(href => href.Position == hintStreamPosition);
+                                hintStreamReference = trailer.XRefTable.AllReferences.SingleOrDefault(href => href.Position == hintStreamPosition);
                             }
                         }
                     }
@@ -579,13 +581,18 @@ namespace PdfSharper.Pdf.IO
                 }
                 else
                 {
-                    Debug.Assert(xRefTable.Contains(iref.ObjectID));
+                    Debug.Assert(trailer.XRefTable.Contains(iref.ObjectID));
                     //iref.GetType();
                 }
 
                 if (iref == hintStreamReference && document.LinearizationParamaters != null)
                 {
                     document.LinearizationParamaters.HintStream = (PdfDictionary)iref.Value;
+                }
+
+                if (iref.Value is PdfObjectStream)
+                {
+                    trailer.ObjectStreams.Add((PdfObjectStream)iref.Value);
                 }
             }
 

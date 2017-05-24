@@ -712,6 +712,9 @@
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfObjectStream.cs">
       <Link>Pdf.Advanced\PdfObjectStream.cs</Link>
     </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfObjectStreamHeader.cs">
+      <Link>Pdf.Advanced\PdfObjectStreamHeader.cs</Link>
+    </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfPageInheritableObjects.cs">
       <Link>Pdf.Advanced\PdfPageInheritableObjects.cs</Link>
     </Compile>

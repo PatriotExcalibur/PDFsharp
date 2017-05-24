@@ -92,7 +92,7 @@ namespace PdfSharper.Pdf.Advanced
                 var writeableTrailer = _document.GetWritableTrailer(value.ObjectID);
                 if (writeableTrailer != null && !ReferenceEquals(writeableTrailer.XRefTable, _document._irefTable) && !writeableTrailer.XRefTable.Contains(value.ObjectID))
                 {
-                    writeableTrailer.XRefTable.Add(value.Reference);
+                    writeableTrailer.AddReference(value.Reference);
                 }
             }
 

@@ -32,6 +32,7 @@ using System.Diagnostics;
 using PdfSharper.Pdf.IO;
 using System.IO;
 using System;
+using System.Linq;
 
 namespace PdfSharper.Pdf.Advanced
 {
@@ -67,6 +68,89 @@ namespace PdfSharper.Pdf.Advanced
             public uint Field3;
 
             public int ObjectNumber;
+        }
+
+
+
+        internal override void AddReference(PdfReference iref)
+        {
+            lock (this)
+            {
+                if (iref == Reference)
+                {
+                    return;
+                }
+
+                base.AddReference(iref);
+
+                if (!(iref.Value is PdfFormXObject))
+                {
+                    AddCompressedObject(iref);
+                }
+                else
+                {
+                    AddObject(iref);
+                }
+
+                Size++;
+
+                PdfArray indexArray = Elements.GetArray(Keys.Index);
+                if (indexArray != null)
+                {
+                    indexArray.Elements[1] = new PdfInteger(Size - indexArray.Elements.GetInteger(0));
+                }
+            }
+        }
+
+        private void AddCompressedObject(PdfReference iref)
+        {
+            //find an objectstream with room
+            var viableStream = ObjectStreams.FirstOrDefault(os => !ObjectStreams.Any(osi => osi.Elements.GetReference(Keys.Extends)?.ObjectNumber == os.ObjectNumber));
+            if (viableStream.Reference == iref)
+            {
+                return;
+            }
+
+            if (viableStream.Number >= 100)
+            {
+                PdfReference newExtendsRef = viableStream.Reference;
+                viableStream = new PdfObjectStream(Owner);
+                viableStream.Elements.SetReference(Keys.Extends, newExtendsRef);
+                ObjectStreams.Add(viableStream);
+                Owner.Internals.AddObject(viableStream);
+                Entries.Add(new CrossReferenceStreamEntry
+                {
+                    Type = 1,
+                    Field2 = 0, //we use position from iref later
+                    Field3 = 0,
+                    ObjectNumber = viableStream.ObjectNumber
+                });
+            }
+
+            int index = viableStream.AddObject(iref);
+            Entries.Add(new CrossReferenceStreamEntry
+            {
+                Type = 2,
+                Field2 = (uint)viableStream.ObjectNumber, //we use position from iref later
+                Field3 = (uint)index,
+                ObjectNumber = iref.ObjectNumber
+            });
+
+            iref.ContainingStreamID = viableStream.ObjectID;
+            iref.ContainingStreamIndex = index;
+
+        }
+
+
+        private void AddObject(PdfReference iref)
+        {
+            Entries.Add(new CrossReferenceStreamEntry
+            {
+                Type = 1,
+                Field2 = 0, //we use position from iref later
+                Field3 = 0,
+                ObjectNumber = iref.ObjectNumber
+            });
         }
 
         protected override void WriteObject(PdfWriter writer)
@@ -205,6 +289,10 @@ namespace PdfSharper.Pdf.Advanced
             /// </summary>
             [KeyInfo(KeyType.Array | KeyType.Required)]
             public const string W = "/W";
+
+
+            [KeyInfo(KeyType.MustBeIndirect)]
+            public const string Extends = "/Extends";
 
             /// <summary>
             /// Gets the KeysMeta for these keys.

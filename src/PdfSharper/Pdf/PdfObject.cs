@@ -273,7 +273,7 @@ namespace PdfSharper.Pdf
 
                 if (!writableTrailer.XRefTable.Contains(ObjectID))
                 {
-                    writableTrailer.XRefTable.Add(this);
+                    writableTrailer.AddReference(this.Reference);
                 }
                 IsDirty = true;
             }

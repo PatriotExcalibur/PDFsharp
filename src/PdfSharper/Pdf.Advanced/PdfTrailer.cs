@@ -52,6 +52,8 @@ namespace PdfSharper.Pdf.Advanced
 
         internal PdfTrailer Next { get; set; }
 
+        internal List<PdfObjectStream> ObjectStreams { get; } = new List<PdfObjectStream>();
+
         /// <summary>
         /// Initializes a new instance of PdfTrailer.
         /// </summary>
@@ -278,7 +280,15 @@ namespace PdfSharper.Pdf.Advanced
             XRefTable.FixXRefs(forceDocument);
         }
 
+        internal virtual void AddReference(PdfReference iref)
+        {
+            if (iref == Reference)
+            {
+                return;
+            }
 
+            XRefTable.Add(iref);
+        }
 
 
         /// <summary>

@@ -169,12 +169,14 @@ namespace PdfSharper.Pdf.Advanced
         public PdfObjectID ContainingStreamID
         {
             get { return _containingStreamID; }
+            internal set { _containingStreamID = value; }
         }
         PdfObjectID _containingStreamID;
 
         public int ContainingStreamIndex
         {
             get { return _containingStreamIndex; }
+            internal set { _containingStreamIndex = value; }
         }
 
         int _containingStreamIndex;

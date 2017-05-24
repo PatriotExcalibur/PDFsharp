@@ -247,6 +247,7 @@
     <Compile Include="Pdf.Advanced\PdfLinearizationParameters.cs" />
     <Compile Include="Pdf.Advanced\PdfObjectInternals.cs" />
     <Compile Include="Pdf.Advanced\PdfObjectStream.cs" />
+    <Compile Include="Pdf.Advanced\PdfObjectStreamHeader.cs" />
     <Compile Include="Pdf.Advanced\PdfPageInheritableObjects.cs" />
     <Compile Include="Pdf.Advanced\PdfPageInterals.cs" />
     <Compile Include="Pdf.Advanced\PdfReference.cs" />

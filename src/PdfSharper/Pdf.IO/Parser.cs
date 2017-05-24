@@ -35,6 +35,7 @@ using PdfSharper.Internal;
 using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Internal;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace PdfSharper.Pdf.IO
 {
@@ -1069,14 +1070,14 @@ namespace PdfSharper.Pdf.IO
         /// stream of an object stream. Parameter first is the value of the First entry of
         /// the the object stream object.
         /// </summary>
-        internal int[][] ReadObjectStreamHeader(int n, int first)
+        internal List<PdfObjectStreamHeader> ReadObjectStreamHeader(int n, int first)
         {
             // TODO: Concept for general error  handling.
             // If the stream is corrupted a lot of things can go wrong here.
             // Make it sense to do a more detailed error checking?
 
             // Create n pairs of integers with object number and offset.
-            int[][] header = new int[n][];
+            List<PdfObjectStreamHeader> header = new List<PdfObjectStreamHeader>();
             for (int idx = 0; idx < n; idx++)
             {
                 int number = ReadInteger();
@@ -1085,7 +1086,11 @@ namespace PdfSharper.Pdf.IO
                     GetType();
 #endif
                 int offset = ReadInteger() + first;  // Calculate absolute offset.
-                header[idx] = new int[] { number, offset };
+                header.Add(new PdfObjectStreamHeader
+                {
+                    ObjectNumber = number,
+                    Offset = offset
+                });
             }
             return header;
         }
@@ -1376,6 +1381,7 @@ namespace PdfSharper.Pdf.IO
             int index2 = -1;
             for (int ssc = 0; ssc < subsectionCount; ssc++)
             {
+
                 int subsectionObjectCount = subsections[ssc][1];
                 for (int idx = 0; idx < subsectionObjectCount; idx++)
                 {
@@ -1387,7 +1393,7 @@ namespace PdfSharper.Pdf.IO
                     item.Type = StreamHelper.ReadBytes(bytes, index2 * wsum, wsize[0]);
                     item.Field2 = StreamHelper.ReadBytes(bytes, index2 * wsum + wsize[0], wsize[1]);
                     item.Field3 = StreamHelper.ReadBytes(bytes, index2 * wsum + wsize[0] + wsize[1], wsize[2]);
-
+                    item.ObjectNumber = subsections[ssc][0] + idx;
                     xrefStream.Entries.Add(item);
 
                     switch (item.Type)
