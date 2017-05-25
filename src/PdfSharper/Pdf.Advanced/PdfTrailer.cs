@@ -101,12 +101,6 @@ namespace PdfSharper.Pdf.Advanced
             //we do not auto clone them for modifications
         }
 
-        // TODO: needed when linearized...
-        //public int Prev
-        //{
-        //  get {return Elements.GetInteger(Keys.Prev);}
-        //}
-
         public PdfDocumentInformation Info
         {
             get
@@ -249,8 +243,6 @@ namespace PdfSharper.Pdf.Advanced
                 _document._trailer._securityHandler.Reference = iref;
                 iref.Value.Reference = iref;
             }
-
-            Elements.Remove(Keys.Prev);
 
             Debug.Assert(_document._irefTable.IsUnderConstruction == false);
             _document._irefTable.IsUnderConstruction = false;

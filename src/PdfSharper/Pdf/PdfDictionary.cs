@@ -1878,6 +1878,15 @@ namespace PdfSharper.Pdf
                     }
                     return 0;
                 }
+
+                set
+                {
+                    PdfDictionary dictionary = _ownerDictionary.Elements.GetDictionary(Keys.DecodeParms);
+                    if (dictionary != null)
+                    {
+                        dictionary.Elements.SetInteger("/Columns", value);
+                    }
+                }
             }
 
             public string Trailer { get { return _trailer; } }

@@ -383,6 +383,8 @@ namespace PdfSharper.Pdf.IO
                     foundNonCrossRef = !(trailer is PdfCrossReferenceStream);
                 }
 
+                document.Options.CompressContentStreams = !foundNonCrossRef;
+
                 //point to the latest version for everything
                 document._irefTable.FixXRefs(true);
 

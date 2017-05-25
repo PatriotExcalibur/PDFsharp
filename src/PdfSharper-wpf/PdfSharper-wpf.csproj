@@ -1036,9 +1036,6 @@
     <Compile Include="..\PdfSharper\Pdf\PdfRectangle.cs">
       <Link>Pdf\PdfRectangle.cs</Link>
     </Compile>
-    <Compile Include="..\PdfSharper\Pdf\PdfReferenceTable.cs">
-      <Link>Pdf\PdfReferenceTable.cs</Link>
-    </Compile>
     <Compile Include="..\PdfSharper\Pdf\PdfString.cs">
       <Link>Pdf\PdfString.cs</Link>
     </Compile>

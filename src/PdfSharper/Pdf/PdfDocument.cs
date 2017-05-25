@@ -447,7 +447,7 @@ namespace PdfSharper.Pdf
 
                         writer.WriteEof(this, 0); //the first linear xref always starts at 0
                                                   //padding for when the stream is updated with the object positions
-                        writer.WriteRaw(new string(' ', 125));
+                        writer.WriteRaw(new string(' ', 400));
                         writer.WriteRaw("\r\n");
 
                         PdfObject viewerPrefs = Catalog.Elements.GetObject(PdfCatalog.Keys.ViewerPreferences);
@@ -504,9 +504,12 @@ namespace PdfSharper.Pdf
                         LinearizationParamaters.EndOfFirstPage = writer.Position;
 
                         var trailer = firstPageCrossReferenceTable.Prev;
-                        while (trailer != null && trailer != firstPageCrossReferenceTable)
+                        while (trailer != null)
                         {
-                            WriteTrailer(writer, trailer, firstPageCrossReferenceTable);
+                            if (trailer != firstPageCrossReferenceTable)
+                            {
+                                WriteTrailer(writer, trailer, firstPageCrossReferenceTable);
+                            }
                             trailer = trailer.Next;
                         }
 

@@ -375,7 +375,6 @@
     <Compile Include="Pdf\PdfReal.cs" />
     <Compile Include="Pdf\PdfRealObject.cs" />
     <Compile Include="Pdf\PdfRectangle.cs" />
-    <Compile Include="Pdf\PdfReferenceTable.cs" />
     <Compile Include="Pdf\PdfString.cs" />
     <Compile Include="Pdf\PdfStringObject.cs" />
     <Compile Include="Pdf\PdfUInteger.cs" />
