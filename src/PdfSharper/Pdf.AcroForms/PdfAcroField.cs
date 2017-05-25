@@ -920,9 +920,13 @@ namespace PdfSharper.Pdf.AcroForms
             string s = xobj.Stream.ToString();
             if (!string.IsNullOrEmpty(s))
             {
+                normalStateDict.IsCompact = Owner.Options.CompressContentStreams;
                 normalStateDict.Elements.Remove("/Filter");
                 normalStateDict.Stream.Value = new RawEncoding().GetBytes(s);
-
+                if (Owner.Options.CompressContentStreams)
+                {
+                    normalStateDict.Stream.Zip();
+                }
                 var resourceDict = new PdfDictionary(Owner);
                 resourceDict.IsCompact = IsCompact;
                 resourceDict.Elements[PdfResources.Keys.ProcSet] = new PdfArray(Owner, new PdfName("/PDF"), new PdfName("/Text"));
