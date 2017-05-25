@@ -700,6 +700,9 @@
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTransparencyGroupAttributes.cs">
       <Link>Pdf.Advanced\PdfTransparencyGroupAttributes.cs</Link>
     </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTraversalUtility.cs">
+      <Link>Pdf.Advanced\PdfTraversalUtility.cs</Link>
+    </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTrueTypeFont.cs">
       <Link>Pdf.Advanced\PdfTrueTypeFont.cs</Link>
     </Compile>

@@ -261,6 +261,7 @@
     <Compile Include="Pdf.Advanced\PdfToUnicodeMap.cs" />
     <Compile Include="Pdf.Advanced\PdfTrailer.cs" />
     <Compile Include="Pdf.Advanced\PdfTransparencyGroupAttributes.cs" />
+    <Compile Include="Pdf.Advanced\PdfTraversalUtility.cs" />
     <Compile Include="Pdf.Advanced\PdfTrueTypeFont.cs" />
     <Compile Include="Pdf.Advanced\PdfType0Font.cs" />
     <Compile Include="Pdf.Advanced\PdfType1Font.cs" />

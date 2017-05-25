@@ -247,7 +247,7 @@ namespace PdfSharper.Pdf.Advanced
             var writeableTrailer = _document.GetWritableTrailer(obj.ObjectID);
             writeableTrailer.XRefTable.Remove(obj.Reference);
             _document._irefTable.Remove(obj.Reference);
-        }
+        }        
 
         /// <summary>
         /// Returns an array containing the specified object as first element follows by its transitive
@@ -258,16 +258,7 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         public PdfObject[] GetClosure(PdfObject obj)
         {
-            return GetClosure(obj, Int32.MaxValue);
-        }
-
-        /// <summary>
-        /// Returns an array containing the specified object as first element follows by its transitive
-        /// closure limited by the specified number of iterations.
-        /// </summary>
-        public PdfObject[] GetClosure(PdfObject obj, int depth)
-        {
-            PdfReference[] references = _document._irefTable.TransitiveClosure(obj, depth);
+            PdfReference[] references = PdfTraversalUtility.TransitiveClosure(obj);
             int count = references.Length + 1;
             PdfObject[] objects = new PdfObject[count];
             objects[0] = obj;
