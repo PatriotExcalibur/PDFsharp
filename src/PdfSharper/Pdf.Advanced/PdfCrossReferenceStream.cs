@@ -113,7 +113,7 @@ namespace PdfSharper.Pdf.Advanced
 
             if (viableStream.Number >= 100)
             {
-                PdfReference newExtendsRef = viableStream.Reference;
+                PdfReference newExtendsRef = viableStream.Elements.GetReference(Keys.Extends) ?? viableStream.Reference;
                 viableStream = new PdfObjectStream(Owner);
                 viableStream.Elements.SetReference(Keys.Extends, newExtendsRef);
                 ObjectStreams.Add(viableStream);
@@ -161,6 +161,27 @@ namespace PdfSharper.Pdf.Advanced
             int field2Width = widthsArray.Elements.GetInteger(1);
             int field3Width = widthsArray.Elements.GetInteger(2);
 
+            //do we need to increase width?
+            uint maxPosition = (uint)Entries.Where(e => e.Type == 1).Select(e => XRefTable[new PdfObjectID(e.ObjectNumber)].Position).Max();
+            if (maxPosition > 255 && maxPosition <= ushort.MaxValue && field2Width == 1)
+            {
+                field2Width = 2;
+                widthsArray.Elements[1] = new PdfInteger(2);
+                Stream.DecodeColumns++;
+            }
+            else if (maxPosition > ushort.MaxValue && maxPosition <= 16777215 && field2Width == 2)
+            {
+                field2Width = 3;
+                widthsArray.Elements[1] = new PdfInteger(3);
+                Stream.DecodeColumns++;
+            }
+            else if (maxPosition > 16777215 && maxPosition <= uint.MaxValue && field2Width == 3) //larger than 2GB files?!
+            {
+                field2Width = 4;
+                widthsArray.Elements[1] = new PdfInteger(4);
+                Stream.DecodeColumns++;
+            }
+
             using (MemoryStream ms = new MemoryStream())
             using (BinaryWriter bw = new BinaryWriter(ms))
             {
@@ -171,7 +192,9 @@ namespace PdfSharper.Pdf.Advanced
 
                     if (entry.Type == 1)
                     {
-                        WriteEntryValue(bw, field2Width, (uint)XRefTable[new PdfObjectID(entry.ObjectNumber)].Position);
+                        uint position = (uint)XRefTable[new PdfObjectID(entry.ObjectNumber)].Position;
+
+                        WriteEntryValue(bw, field2Width, position);
                     }
                     else
                     {
@@ -187,6 +210,32 @@ namespace PdfSharper.Pdf.Advanced
                 Elements.Remove(PdfObjectStream.Keys.Filter);
                 Stream.Zip();
             }
+
+            //get groupings and update index 
+
+            PdfReference[] irefs = XRefTable.AllReferences;
+            int minObjectNumber = irefs.Min(ir => ir.ObjectNumber);
+
+            var xrefGroupings = irefs.OrderBy(iref => iref.ObjectNumber).GroupWhile((prev, next) => prev.ObjectNumber + 1 == next.ObjectNumber)
+                .Select(anon => new
+                {
+                    Count = anon.Count(),
+                    Irefs = anon.ToList()
+                }).ToList();
+
+            if (minObjectNumber > 1 || xrefGroupings.Count > 1)
+            {
+                PdfArray indexArray = new PdfArray(Owner);
+                foreach (var grouping in xrefGroupings)
+                {
+                    indexArray.Elements.Add(new PdfInteger(grouping.Irefs.Min(ir => ir.ObjectNumber)));
+                    indexArray.Elements.Add(new PdfInteger(grouping.Count));
+                }
+
+                Elements.SetObject(Keys.Index, indexArray);
+            }
+
+            Size = minObjectNumber == 1 ? XRefTable._maxObjectNumber + 1 : XRefTable._maxObjectNumber;
 
             base.WriteObject(writer);
         }
