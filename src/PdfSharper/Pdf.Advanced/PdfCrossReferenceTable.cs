@@ -163,7 +163,7 @@ namespace PdfSharper.Pdf.Advanced
 
             PdfReference[] irefs = AllReferences;
 
-            var xrefGroupings = irefs.GroupWhile((prev, next) => prev.ObjectNumber + 1 == next.ObjectNumber)
+            var xrefGroupings = irefs.OrderBy(iref => iref.ObjectNumber).GroupWhile((prev, next) => prev.ObjectNumber + 1 == next.ObjectNumber)
                 .Select(anon => new
                 {
                     Count = anon.Count(),
