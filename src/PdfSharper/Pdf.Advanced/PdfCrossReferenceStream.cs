@@ -57,7 +57,7 @@ namespace PdfSharper.Pdf.Advanced
 
         public readonly List<CrossReferenceStreamEntry> Entries = new List<CrossReferenceStreamEntry>();
 
-        public struct CrossReferenceStreamEntry
+        public class CrossReferenceStreamEntry
         {
             // Reference: TABLE 3.16  Entries in a cross-refernece stream / Page 109
 
@@ -91,8 +91,6 @@ namespace PdfSharper.Pdf.Advanced
                 {
                     AddObject(iref);
                 }
-
-                Size++;
 
                 PdfArray indexArray = Elements.GetArray(Keys.Index);
                 if (indexArray != null)
@@ -155,6 +153,23 @@ namespace PdfSharper.Pdf.Advanced
 
         protected override void WriteObject(PdfWriter writer)
         {
+            //update object stream positions in case they have changed
+
+            var compressedObjectReferenceLookup = Entries.ToDictionary(e => e.ObjectNumber);
+
+            foreach (PdfObjectStream objStream in ObjectStreams)
+            {
+                PdfObjectStreamHeader header;
+                for (int i = 0; i < objStream._header.Count; i++)
+                {
+                    header = objStream._header[i];
+
+                    compressedObjectReferenceLookup[header.ObjectNumber].Field3 = (uint)i;
+
+                }
+            }
+
+
             //setup new entries stream
             PdfArray widthsArray = Elements.GetArray(Keys.W);
             int typeWidth = widthsArray.Elements.GetInteger(0);
@@ -219,7 +234,7 @@ namespace PdfSharper.Pdf.Advanced
             var xrefGroupings = irefs.OrderBy(iref => iref.ObjectNumber).GroupWhile((prev, next) => prev.ObjectNumber + 1 == next.ObjectNumber)
                 .Select(anon => new
                 {
-                    Count = anon.Count(),
+                    Count = anon.FirstOrDefault().ObjectNumber == 1 ? anon.Count() + 1 : anon.Count(),
                     Irefs = anon.ToList()
                 }).ToList();
 
@@ -235,7 +250,8 @@ namespace PdfSharper.Pdf.Advanced
                 Elements.SetObject(Keys.Index, indexArray);
             }
 
-            Size = minObjectNumber == 1 ? XRefTable._maxObjectNumber + 1 : XRefTable._maxObjectNumber;
+
+            Size = XRefTable._maxObjectNumber + 1;
 
             base.WriteObject(writer);
         }

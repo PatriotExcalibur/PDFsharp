@@ -134,7 +134,7 @@ namespace PdfSharper.Pdf.Advanced
         /// The second integer represents the absolute offset of that object in the decoded stream,
         /// i.e. the byte offset plus First entry.
         /// </summary>
-        private List<PdfObjectStreamHeader> _header = new List<PdfObjectStreamHeader>();  // Reference: Page 102
+        internal List<PdfObjectStreamHeader> _header = new List<PdfObjectStreamHeader>();  // Reference: Page 102
 
         public int Number
         {
@@ -158,6 +158,20 @@ namespace PdfSharper.Pdf.Advanced
             }
         }
 
+        internal void RemoveObject(PdfReference iref)
+        {
+            lock (_header)
+            {
+                var toRemove = _header.FirstOrDefault(he => he.ObjectNumber == iref.ObjectNumber);
+                if (toRemove != null)
+                {
+                    _header.Remove(toRemove);
+                    iref.ContainingStreamID = PdfObjectID.Empty;
+                    iref.ContainingStreamIndex = 0;
+                    Number--;
+                }
+            }
+        }
 
         protected override void WriteObject(PdfWriter writer)
         {
