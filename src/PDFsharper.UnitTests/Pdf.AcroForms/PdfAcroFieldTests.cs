@@ -79,43 +79,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             Assert.IsFalse(isNotVisible, "isVisible should be false");
         }
 
-        [TestMethod]
-        public void RemoveJavascript()
-        {
-            PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
-            PdfAcroField field = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
 
-            Assert.IsFalse(document.Catalog.Elements.Any(e => e.Key == "/Names"), "document-catalog should not have a Names item");
-
-            PdfDictionary javascript = new PdfDictionary();
-            javascript.Elements.Add("/NoMatter", new PdfArray());
-
-            PdfDictionary names = new PdfDictionary();
-            names.Elements.Add("/JavaScript", javascript);
-
-            document.Catalog.Elements.Add("/Names", names);
-
-            Assert.IsTrue(document.Catalog.Elements.Any(e => e.Key == "/Names"), "document-catalog should have a names item");
-            Assert.IsTrue(document.Catalog.Elements.GetDictionary("/Names").Elements.Any(e => e.Key == "/JavaScript"), "document-catalog should have a Javascript item");
-
-            field.RemoveJavascript();
-
-            Assert.IsTrue(document.Catalog.Elements.Any(e => e.Key == "/Names"), "document should have a Names item");
-            Assert.IsFalse(document.Catalog.Elements.GetDictionary("/Names").Elements.Any(e => e.Key == "/JavaScript"), "document-catalog should not have a Javascript item");
-        }
-
-        [TestMethod]
-        public void RemoveJavascript_NoJavascript()
-        {
-            PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
-            PdfAcroField field = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
-
-            Assert.IsFalse(document.Catalog.Elements.Any(e => e.Key == "/Names"), "document-catalog should not have a Names item");
-
-            field.RemoveJavascript();
-
-            Assert.IsFalse(document.Catalog.Elements.Any(e => e.Key == "/Names"), "document-catalog should not have a Names item");
-        }
 
         [TestMethod]
         public void RenderContentStream_Landscape()
