@@ -245,9 +245,19 @@ namespace PdfSharper.Pdf.Advanced
                 throw new InvalidOperationException("Object does not belong to this document.");
 
             var writeableTrailer = _document.GetWritableTrailer(obj.ObjectID);
-            writeableTrailer.XRefTable.Remove(obj.Reference);
+            writeableTrailer.RemoveReference(obj.Reference);
             _document._irefTable.Remove(obj.Reference);
-        }        
+
+            if (obj.Reference.ContainingStreamID.IsEmpty == false)
+            {
+                PdfObjectStream containingStream = writeableTrailer.XRefTable[obj.Reference.ContainingStreamID].Value as PdfObjectStream;
+                if (containingStream != null)
+                {
+                    containingStream.RemoveObject(obj.Reference);
+                }
+
+            }
+        }
 
         /// <summary>
         /// Returns an array containing the specified object as first element follows by its transitive

@@ -55,7 +55,7 @@ namespace PdfSharper.Pdf.Advanced
 #endif
         }
 
-        public readonly List<CrossReferenceStreamEntry> Entries = new List<CrossReferenceStreamEntry>();
+        public List<CrossReferenceStreamEntry> Entries { get; private set; } = new List<CrossReferenceStreamEntry>();
 
         public class CrossReferenceStreamEntry
         {
@@ -83,7 +83,7 @@ namespace PdfSharper.Pdf.Advanced
 
                 base.AddReference(iref);
 
-                if (!(iref.Value is PdfFormXObject))
+                if (!(iref.Value is PdfFormXObject) && !(iref.Value is PdfContent))
                 {
                     AddCompressedObject(iref);
                 }
@@ -151,10 +151,20 @@ namespace PdfSharper.Pdf.Advanced
             });
         }
 
+        internal override void RemoveReference(PdfReference iref)
+        {
+            base.RemoveReference(iref);
+            PdfCrossReferenceStream.CrossReferenceStreamEntry entry = Entries.FirstOrDefault(e => e.ObjectNumber == iref.ObjectNumber);
+            if (entry != null)
+            {
+                Entries.Remove(entry);
+            }
+        }
+
         protected override void WriteObject(PdfWriter writer)
         {
             //update object stream positions in case they have changed
-
+            Entries = Entries.OrderBy(e => e.ObjectNumber).ToList();
             var compressedObjectReferenceLookup = Entries.ToDictionary(e => e.ObjectNumber);
 
             foreach (PdfObjectStream objStream in ObjectStreams)

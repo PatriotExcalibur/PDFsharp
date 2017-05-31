@@ -232,14 +232,6 @@ namespace PdfSharper.Pdf.AcroForms
         }
         XColor borderColor = XColor.Empty;
 
-        public virtual void RemoveJavascript()
-        {
-            if (_document != null && _document.AcroForm != null)
-            {
-                _document.AcroForm.RemoveJavascript();
-            }
-        }
-
         /// <summary>
         /// Gets or sets the value of the field.
         /// </summary>
@@ -740,6 +732,18 @@ namespace PdfSharper.Pdf.AcroForms
 
         public virtual void Flatten()
         {
+            PdfStructure structRoot = Owner.Catalog.StructTreeRoot;
+            bool canRemove = !(this is PdfGenericField);
+            if (structRoot != null)
+            {
+                bool referencedByStructure = structRoot.AllReferences.ContainsKey(ObjectNumber);
+                if (referencedByStructure)
+                {
+                    canRemove = false;
+                    Elements.SetBoolean("/removed", true);
+                }
+            }
+
             // Copy Font-Resources to the Page
             // This is neccessary, because Fonts used by AcroFields may be referenced only by the AcroForm, which is deleted after flattening
             if (Page != null)
@@ -759,15 +763,27 @@ namespace PdfSharper.Pdf.AcroForms
 
                 Page.Annotations.Remove(this);
 
-                RemoveJavascript();
+
+                if (Page.Annotations.Count == 0)
+                {
+                    if (canRemove)
+                    {
+                        _document.Internals.RemoveObject(Page.Annotations);
+                    }
+                    Page.Elements.Remove(PdfPage.Keys.Annots);
+                }
             }
 
-            foreach (var field in Fields)
+            var children = Fields.Cast<PdfAcroField>().ToList();
+            foreach (var field in children)
             {
                 field.Flatten();
             }
-
-            _document.Internals.RemoveObject(this);
+            if (Parent != null)
+            {
+                Parent.Fields.Remove(this);
+                Elements.Remove(Keys.Parent);
+            }
         }
 
         /// <summary>
@@ -1096,6 +1112,18 @@ namespace PdfSharper.Pdf.AcroForms
                 Elements.Add(field);
 
                 field._parent = null;
+            }
+
+            internal void Remove(PdfAcroField field)
+            {
+                if (field.IsIndirect)
+                {
+                    Elements.Remove(field.Reference);
+                }
+                else
+                {
+                    Elements.Remove(field);
+                }
             }
 
 

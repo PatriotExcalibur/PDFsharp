@@ -81,7 +81,8 @@ namespace PdfSharper.Pdf.AcroForms
                 var field = Fields[i];
                 field.Flatten();
             }
-            _document.Catalog.AcroForm = null;
+
+            RemoveJavascript();
         }
 
         public void RemoveJavascript()

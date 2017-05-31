@@ -448,7 +448,7 @@ namespace PdfSharper.Pdf
 
                         writer.WriteEof(this, 0); //the first linear xref always starts at 0
                                                   //padding for when the stream is updated with the object positions
-                        writer.WriteRaw(new string(' ', 400));
+                        writer.WriteRaw(new string(' ', _irefTable._maxObjectNumber));
                         writer.WriteRaw("\r\n");
 
                         PdfObject viewerPrefs = Catalog.Elements.GetObject(PdfCatalog.Keys.ViewerPreferences);
@@ -724,8 +724,7 @@ namespace PdfSharper.Pdf
                     PdfCrossReferenceStream containingStream = refLookup[iref];
                     PdfCrossReferenceStream.CrossReferenceStreamEntry irefEntry = containingStream.Entries.FirstOrDefault(e => e.ObjectNumber == iref.ObjectNumber);
 
-                    containingStream.Entries.Remove(irefEntry);
-                    containingStream.XRefTable.Remove(iref);
+                    containingStream.RemoveReference(iref);
                     refLookup[iref] = firstPageCrossReferenceTable;
 
                     if (!iref.ContainingStreamID.IsEmpty)
@@ -749,21 +748,23 @@ namespace PdfSharper.Pdf
                 exclusions.Add(Pages[i].Reference);
             }
 
-            foreach (var field in AcroForm.Fields) //top level fields are not part of the page annotations array
+            if (AcroForm != null)
             {
-                exclusions.Add(field.Reference);
-            }
-
-            PdfDictionary defaultFormResources = AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
-            if (defaultFormResources != null)
-            {
-                PdfReference[] formResourceReferences = PdfTraversalUtility.TransitiveClosure(defaultFormResources);
-                foreach (var iref in formResourceReferences)
+                foreach (var field in AcroForm.Fields) //top level fields are not part of the page annotations array
                 {
-                    exclusions.Add(iref);
+                    exclusions.Add(field.Reference);
+                }
+
+                PdfDictionary defaultFormResources = AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
+                if (defaultFormResources != null)
+                {
+                    PdfReference[] formResourceReferences = PdfTraversalUtility.TransitiveClosure(defaultFormResources);
+                    foreach (var iref in formResourceReferences)
+                    {
+                        exclusions.Add(iref);
+                    }
                 }
             }
-
             exclusions.Add(Pages.Reference);
 
             var firstPageObjects = PdfTraversalUtility.TransitiveClosure(Pages[0], exclusions).ToList();

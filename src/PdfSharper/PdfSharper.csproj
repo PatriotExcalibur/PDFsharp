@@ -257,6 +257,7 @@
     <Compile Include="Pdf.Advanced\PdfShading.cs" />
     <Compile Include="Pdf.Advanced\PdfShadingPattern.cs" />
     <Compile Include="Pdf.Advanced\PdfSoftMask.cs" />
+    <Compile Include="Pdf.Advanced\PdfStructure.cs" />
     <Compile Include="Pdf.Advanced\PdfTilingPattern.cs" />
     <Compile Include="Pdf.Advanced\PdfToUnicodeMap.cs" />
     <Compile Include="Pdf.Advanced\PdfTrailer.cs" />

@@ -151,11 +151,9 @@ namespace PdfSharper.Pdf.Advanced
 
             if (Stream != null)
             {
-                //if (Owner.Options.CompressContentStreams)
                 if (Owner.Options.CompressContentStreams && Elements.GetName("/Filter").Length == 0)
                 {
                     Stream.Value = Filtering.FlateDecode.Encode(Stream.Value, _document.Options.FlateEncodeMode);
-                    //Elements["/Filter"] = new PdfName("/FlateDecode");
                     Elements.SetName("/Filter", "/FlateDecode");
                 }
                 Elements.SetInteger("/Length", Stream.Length);

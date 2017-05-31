@@ -742,6 +742,9 @@
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfSoftMask.cs">
       <Link>Pdf.Advanced\PdfSoftMask.cs</Link>
     </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfStructure.cs">
+      <Link>Pdf.Advanced\PdfStructure.cs</Link>
+    </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTilingPattern.cs">
       <Link>Pdf.Advanced\PdfTilingPattern.cs</Link>
     </Compile>

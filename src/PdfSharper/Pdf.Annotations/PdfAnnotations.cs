@@ -27,14 +27,11 @@
 // DEALINGS IN THE SOFTWARE.
 #endregion
 
-using System;
-using System.Diagnostics;
-using System.Collections;
-using System.Text;
-using System.IO;
 using PdfSharper.Pdf.Advanced;
-using PdfSharper.Pdf.IO;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace PdfSharper.Pdf.Annotations
 {
@@ -70,7 +67,6 @@ namespace PdfSharper.Pdf.Annotations
             if (annotation.Owner != Owner)
                 throw new InvalidOperationException("The annotation does not belong to this document.");
 
-            Owner.Internals.RemoveObject(annotation);
             Elements.Remove(annotation.Reference);
         }
 

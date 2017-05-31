@@ -282,6 +282,16 @@ namespace PdfSharper.Pdf.Advanced
             XRefTable.Add(iref);
         }
 
+        internal virtual void RemoveReference(PdfReference iref)
+        {
+            if (iref == Reference)
+            {
+                return;
+            }
+
+            XRefTable.Remove(iref);
+        }
+
 
         /// <summary>
         /// Predefined keys of this dictionary.
