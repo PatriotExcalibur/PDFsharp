@@ -1146,7 +1146,7 @@ namespace PdfSharper.Pdf.IO
             else
             {
                 // For larger files we read 1 kiB - in most cases we find "startxref" in that range.
-                string trail = _lexer.ReadRawString(length - 1031, 1030);
+                string trail = _lexer.ReadRawString(length - 1031, 1031);
                 idx = trail.LastIndexOf("startxref", StringComparison.Ordinal);
                 _lexer.Position = length - 1031 + idx;
             }

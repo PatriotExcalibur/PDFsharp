@@ -53,8 +53,8 @@ namespace PdfSharper.Pdf.IO
         /// </summary>
         public Lexer(Stream pdfInputStream)
         {
-            _pdfSteam = pdfInputStream;
-            _pdfLength = (int)_pdfSteam.Length;
+            _pdfStream = pdfInputStream;
+            _pdfLength = (int)_pdfStream.Length;
             _idxChar = 0;
             Position = 0;
         }
@@ -68,16 +68,52 @@ namespace PdfSharper.Pdf.IO
             set
             {
                 _idxChar = value;
-                _pdfSteam.Position = value;
-                // ReadByte return -1 (eof) at the end of the stream.
-                _currChar = (char)_pdfSteam.ReadByte();
-                _nextChar = (char)_pdfSteam.ReadByte();
-                _token = new StringBuilder();
+                _pdfStream.Position = value;
+                FillBuffer();
+                _token.Clear();
+                _currChar = Chars.NUL;
+                _nextChar = Chars.NUL;
+
             }
         }
 
         internal bool HasReadNewLineOrCarriageReturn = false;
         internal bool HasReadSpace = false;
+
+        private int _bufferOffset = 0;
+        private int _bufferLength = 0;
+        private char[] _buffer = new char[8192];
+        private byte[] _byteBuffer = new byte[8192];
+
+        private void ReadChar()
+        {
+            int bufferPosition = _idxChar - _bufferOffset;
+            if (_idxChar == _pdfLength)
+            {
+                _nextChar = Chars.EOF;
+                return;
+            }
+
+            _nextChar = _buffer[bufferPosition];
+            _idxChar++;
+            if (_idxChar - _bufferOffset >= _bufferLength && _idxChar < _pdfLength)
+            {
+                _pdfStream.Position = _idxChar;
+                FillBuffer();
+            }
+        }
+
+        private void FillBuffer()
+        {
+            if (_pdfStream.Position - _bufferOffset >= _bufferLength ||
+                _bufferLength == 0 ||
+                _pdfStream.Position < _bufferOffset)
+            {
+                _bufferOffset = (int)_pdfStream.Position;
+                _bufferLength = _pdfStream.Read(_byteBuffer, 0, _byteBuffer.Length);
+                _buffer = Encoding.Default.GetChars(_byteBuffer, 0, _bufferLength);
+            }
+        }
 
         /// <summary>
         /// Reads the next token and returns its type. If the token starts with a digit, the parameter
@@ -90,7 +126,7 @@ namespace PdfSharper.Pdf.IO
         public Symbol ScanNextToken()
         {
             Again:
-            _token = new StringBuilder();
+            _token.Clear();
 
             char ch = MoveToNonWhiteSpace();
             switch (ch)
@@ -176,32 +212,32 @@ namespace PdfSharper.Pdf.IO
         /// </summary>
         public byte[] ReadStream(int length)
         {
-            int pos;
+            byte[] bytes = new byte[length];
 
             // Skip illegal blanks behind �stream�.            
             MoveToNonSpace();
 
-            // Skip new line behind �stream�.
-            if (_currChar == Chars.CR)
+            int pos = _idxChar - _bufferOffset;
+            int read = 0;
+            do
             {
-                if (_nextChar == Chars.LF)
-                    pos = _idxChar + 2;
-                else
-                    pos = _idxChar + 1;
-            }
-            else
-                pos = _idxChar + 1;
+                int available = Math.Min(length - read, _bufferLength - pos);
+                Buffer.BlockCopy(_byteBuffer, pos, bytes, read, available);
+                read += available;
 
-            _pdfSteam.Position = pos;
-            byte[] bytes = new byte[length];
-            int read = _pdfSteam.Read(bytes, 0, length);
-            Debug.Assert(read == length);
-            if (bytes.Length != read)
-            {
-                Array.Resize(ref bytes, read);
-            }
-            // Synchronize idxChar etc.
-            Position = (int)_pdfSteam.Position;
+                if (read < length)
+                {
+                    _pdfStream.Position = _bufferOffset + _bufferLength;
+                    _bufferOffset = (int)_pdfStream.Position;
+                    _bufferLength = _pdfStream.Read(_byteBuffer, 0, _byteBuffer.Length);
+                    _buffer = Encoding.Default.GetChars(_byteBuffer, 0, _bufferLength);
+                    pos = 0;
+                }
+            } while (read < length);
+
+
+            _idxChar += length;
+            Position = _idxChar;
 
             return bytes;
         }
@@ -211,10 +247,32 @@ namespace PdfSharper.Pdf.IO
         /// </summary>
         public String ReadRawString(int position, int length)
         {
-            _pdfSteam.Position = position;
+            Position = position;
             byte[] bytes = new byte[length];
-            _pdfSteam.Read(bytes, 0, length);
-            return PdfEncoders.RawEncoding.GetString(bytes, 0, bytes.Length);
+
+            int pos = _idxChar - _bufferOffset;
+            int read = 0;
+            do
+            {
+                int available = Math.Min(length - read, _bufferLength - pos);
+                Buffer.BlockCopy(_byteBuffer, pos, bytes, read, available);
+                read += available;
+
+                if (read < length)
+                {
+                    _pdfStream.Position = _bufferOffset + _bufferLength;
+                    _bufferOffset = (int)_pdfStream.Position;
+                    _bufferLength = _pdfStream.Read(_byteBuffer, 0, _byteBuffer.Length);
+                    _buffer = Encoding.Default.GetChars(_byteBuffer, 0, _bufferLength);
+                    pos = 0;
+                }
+            } while (read < length);
+
+            string result = Encoding.Default.GetString(bytes);
+
+            _idxChar += length;
+            Position = _idxChar;
+            return result;
         }
 
         /// <summary>
@@ -224,7 +282,7 @@ namespace PdfSharper.Pdf.IO
         {
             Debug.Assert(_currChar == Chars.Percent);
 
-            _token = new StringBuilder();
+            _token.Clear();
             while (true)
             {
                 char ch = AppendAndScanNextChar();
@@ -244,7 +302,7 @@ namespace PdfSharper.Pdf.IO
         {
             Debug.Assert(_currChar == Chars.Slash);
 
-            _token = new StringBuilder();
+            _token.Clear();
             while (true)
             {
                 char ch = AppendAndScanNextChar();
@@ -277,7 +335,7 @@ namespace PdfSharper.Pdf.IO
             bool period = false;
             //bool sign;
 
-            _token = new StringBuilder();
+            _token.Clear();
             char ch = _currChar;
             if (ch == '+' || ch == '-')
             {
@@ -334,7 +392,7 @@ namespace PdfSharper.Pdf.IO
         /// </summary>
         public Symbol ScanKeyword()
         {
-            _token = new StringBuilder();
+            _token.Clear();
             char ch = _currChar;
             // Scan token
             while (true)
@@ -366,8 +424,11 @@ namespace PdfSharper.Pdf.IO
                     return _symbol = Symbol.R;
 
                 case "stream":
+                    if (_nextChar != Chars.LF && _nextChar != Chars.CR)
+                    {//reset position to the beginning of the stream
+                        Position = _idxChar - 1;
+                    }
                     return _symbol = Symbol.BeginStream;
-
                 case "endstream":
                     return _symbol = Symbol.EndStream;
 
@@ -394,7 +455,7 @@ namespace PdfSharper.Pdf.IO
             // Reference: TABLE 3.32  String Types / Page 157
 
             Debug.Assert(_currChar == Chars.ParenLeft);
-            _token = new StringBuilder();
+            _token.Clear();
             int parenLevel = 0;
             char ch = ScanNextChar(false);
 
@@ -513,7 +574,7 @@ namespace PdfSharper.Pdf.IO
             if (_token.Length >= 2 && _token[0] == '\xFE' && _token[1] == '\xFF')
             {
                 // Combine two ANSI characters to get one Unicode character.
-                StringBuilder temp = _token;
+                StringBuilder temp = new StringBuilder(_token.ToString());
                 int length = temp.Length;
                 if ((length & 1) == 1)
                 {
@@ -522,7 +583,7 @@ namespace PdfSharper.Pdf.IO
                     ++length;
                     DebugBreak.Break();
                 }
-                _token = new StringBuilder();
+                _token.Clear();
                 for (int i = 2; i < length; i += 2)
                 {
                     _token.Append((char)(256 * temp[i] + temp[i + 1]));
@@ -533,7 +594,7 @@ namespace PdfSharper.Pdf.IO
             if (_token.Length >= 2 && _token[0] == '\xFF' && _token[1] == '\xFE')
             {
                 // Combine two ANSI characters to get one Unicode character.
-                StringBuilder temp = _token;
+                StringBuilder temp = new StringBuilder(_token.ToString());
                 int length = temp.Length;
                 if ((length & 1) == 1)
                 {
@@ -542,7 +603,7 @@ namespace PdfSharper.Pdf.IO
                     ++length;
                     DebugBreak.Break();
                 }
-                _token = new StringBuilder();
+                _token.Clear();
                 for (int i = 2; i < length; i += 2)
                 {
                     _token.Append((char)(256 * temp[i + 1] + temp[i]));
@@ -556,7 +617,7 @@ namespace PdfSharper.Pdf.IO
         {
             Debug.Assert(_currChar == Chars.Less);
 
-            _token = new StringBuilder();
+            _token.Clear();
             _hexUpper = false;
             char[] hex = new char[2];
             ScanNextChar(true);
@@ -601,32 +662,24 @@ namespace PdfSharper.Pdf.IO
         /// </summary>
         internal char ScanNextChar(bool handleCRLF)
         {
-            if (_pdfLength <= _idxChar)
+
+            _currChar = _nextChar;
+            ReadChar();
+            if (handleCRLF && _currChar == Chars.CR)
             {
-                _currChar = Chars.EOF;
-                _nextChar = Chars.EOF;
-            }
-            else
-            {
-                _currChar = _nextChar;
-                _nextChar = (char)_pdfSteam.ReadByte();
-                _idxChar++;
-                if (handleCRLF && _currChar == Chars.CR)
+                if (_nextChar == Chars.LF)
                 {
-                    if (_nextChar == Chars.LF)
-                    {
-                        // Treat CR LF as LF.
-                        _currChar = _nextChar;
-                        _nextChar = (char)_pdfSteam.ReadByte();
-                        _idxChar++;
-                    }
-                    else
-                    {
-                        // Treat single CR as LF.
-                        _currChar = Chars.LF;
-                    }
+                    // Treat CR LF as LF.
+                    _currChar = _nextChar;
+                    ReadChar();
+                }
+                else
+                {
+                    // Treat single CR as LF.
+                    _currChar = Chars.LF;
                 }
             }
+
             return _currChar;
         }
 
@@ -643,7 +696,7 @@ namespace PdfSharper.Pdf.IO
             // A Reference has the form "nnn mmm R". The implementation of the the parser used a
             // reduce/shift algorithm in the first place. But this case is the only one we need to
             // look ahead 3 tokens. 
-            int positon = Position;
+            int position = _idxChar - 2;
 
             // Skip digits.
             while (char.IsDigit(_currChar))
@@ -678,11 +731,15 @@ namespace PdfSharper.Pdf.IO
             if (_currChar != 'R')
                 goto False;
 
-            Position = positon;
+            Position = position;
+            ScanNextChar(false);
+            ScanNextChar(false);
             return true;
 
             False:
-            Position = positon;
+            Position = position;
+            ScanNextChar(false);
+            ScanNextChar(false);
             return false;
         }
 
@@ -784,11 +841,11 @@ namespace PdfSharper.Pdf.IO
             const int range = 20;
             int start = Math.Max(Position - range, 0);
             int length = Math.Min(2 * range, PdfLength - start);
-            long posOld = _pdfSteam.Position;
-            _pdfSteam.Position = start;
+            long posOld = _pdfStream.Position;
+            _pdfStream.Position = start;
             byte[] bytes = new byte[length];
-            _pdfSteam.Read(bytes, 0, length);
-            _pdfSteam.Position = posOld;
+            _pdfStream.Read(bytes, 0, length);
+            _pdfStream.Position = posOld;
             string result = "";
             if (hex)
             {
@@ -932,10 +989,10 @@ namespace PdfSharper.Pdf.IO
         int _idxChar;
         char _currChar;
         char _nextChar;
-        StringBuilder _token;
+        StringBuilder _token = new StringBuilder();
         Symbol _symbol = Symbol.None;
         internal bool _hexUpper = false;
 
-        readonly Stream _pdfSteam;
+        readonly Stream _pdfStream;
     }
 }
