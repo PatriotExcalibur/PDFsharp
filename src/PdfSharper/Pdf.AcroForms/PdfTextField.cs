@@ -495,10 +495,16 @@ namespace PdfSharper.Pdf.AcroForms
                 var appearance = Elements.GetDictionary(PdfAnnotation.Keys.AP);
                 if (appearance != null)
                 {
-                    var apps = appearance.Elements.GetDictionary("/N");
-                    if (apps != null)
+                    PdfDictionary normalAppearance = appearance.Elements.GetDictionary("/N");
+                    if (normalAppearance != null)
                     {
-                        RenderContentStream(apps.Stream);
+                        RenderContentStream(normalAppearance.Stream);
+                    }
+
+                    Elements.Remove(Keys.AP);
+                    if (normalAppearance != null && normalAppearance.IsIndirect)
+                    {
+                        _document.Internals.RemoveObject(normalAppearance);
                     }
                 }
             }

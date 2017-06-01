@@ -446,9 +446,12 @@ namespace PdfSharper.Pdf
                         firstPageCrossReferenceTable.Reference.Position = firstPageCrossReferenceTable.StartXRef;
                         firstPageCrossReferenceTable.Write(writer);
 
+
                         writer.WriteEof(this, 0); //the first linear xref always starts at 0
                                                   //padding for when the stream is updated with the object positions
+                        int firstPageCrossRefTableLength = writer.Position - firstPageCrossReferenceTable.StartXRef;
                         writer.WriteRaw(new string(' ', _irefTable._maxObjectNumber));
+
                         writer.WriteRaw("\r\n");
 
                         PdfObject viewerPrefs = Catalog.Elements.GetObject(PdfCatalog.Keys.ViewerPreferences);
@@ -522,6 +525,14 @@ namespace PdfSharper.Pdf
                         writer.Stream.Seek(firstPageCrossReferenceTable.StartXRef, SeekOrigin.Begin);
                         firstPageCrossReferenceTable.Write(writer);
                         writer.WriteEof(this, 0); //the first linear xref always starts at 0
+                        writer.WriteRaw("\r\n");
+                        //refill padding
+                        int newFirstXrefLength = writer.Position - firstPageCrossReferenceTable.StartXRef;
+
+                        if (newFirstXrefLength < firstPageCrossRefTableLength)
+                        {
+                            writer.WriteRaw(new string(' ', firstPageCrossRefTableLength - newFirstXrefLength));
+                        }
                         writer.Stream.Seek(0, SeekOrigin.End);
                     }
                     else
@@ -758,7 +769,7 @@ namespace PdfSharper.Pdf
                 PdfDictionary defaultFormResources = AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
                 if (defaultFormResources != null)
                 {
-                    PdfReference[] formResourceReferences = PdfTraversalUtility.TransitiveClosure(defaultFormResources);
+                    PdfReference[] formResourceReferences = PdfTraversalUtility.TransitiveClosure(defaultFormResources).Select(kvp => kvp.Key).ToArray();
                     foreach (var iref in formResourceReferences)
                     {
                         exclusions.Add(iref);
@@ -767,7 +778,7 @@ namespace PdfSharper.Pdf
             }
             exclusions.Add(Pages.Reference);
 
-            var firstPageObjects = PdfTraversalUtility.TransitiveClosure(Pages[0], exclusions).ToList();
+            var firstPageObjects = PdfTraversalUtility.TransitiveClosure(Pages[0], exclusions).Select(kvp => kvp.Key).ToList();
 
             var fieldsWithKids = firstPageObjects.Select(iref => iref.Value)
                                                  .OfType<PdfAcroField>()
@@ -790,7 +801,7 @@ namespace PdfSharper.Pdf
             PdfDictionary names = Catalog.Elements.GetDictionary(PdfCatalog.Keys.Names);
             if (names != null)
             {
-                PdfReference[] nameRefererences = PdfTraversalUtility.TransitiveClosure(names).Where(iref => iref.ObjectNumber < Pages[0].ObjectNumber).ToArray();
+                PdfReference[] nameRefererences = PdfTraversalUtility.TransitiveClosure(names).Select(kvp => kvp.Key).Where(iref => iref.ObjectNumber < Pages[0].ObjectNumber).ToArray();
                 firstPageObjects.AddRange(nameRefererences);
             }
 

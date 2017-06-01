@@ -309,9 +309,6 @@ namespace PdfSharper.Pdf
         /// </summary>
         public PdfStream CreateStream(byte[] value)
         {
-            if (_stream != null)
-                throw new InvalidOperationException("The dictionary already has a stream.");
-
             _stream = new PdfStream(value, this);
             // Always set the length.
             Elements[PdfStream.Keys.Length] = new PdfInteger(_stream.Length);
@@ -1535,6 +1532,29 @@ namespace PdfSharper.Pdf
                     if (_ownerDictionary != null && _ownerDictionary.Owner != null && !_ownerDictionary.Owner.UnderConstruction)
                     {
                         Owner.FlagAsDirty();
+
+                        PdfReference iref = GetReference(key);
+                        if (iref != null)
+                        {
+                            var structKeyRoot = Owner.Owner.Catalog.StructTreeRoot;
+
+                            if (structKeyRoot != null)
+                            {
+                                int count = 0;
+                                if (structKeyRoot.AllReferences.TryGetValue(iref.ObjectNumber, out count))
+                                {
+                                    if (count == 1)
+                                    {
+                                        structKeyRoot.AllReferences.Remove(iref.ObjectNumber);
+                                    }
+                                    else
+                                    {
+                                        structKeyRoot.AllReferences[iref.ObjectNumber]--;
+                                    }
+                                }
+
+                            }
+                        }
                     }
                 }
                 return _elements.Remove(key);

@@ -244,7 +244,7 @@ namespace PdfSharper.Pdf.Advanced
             int removed = ObjectTable.Count;
             //CheckConsistence();
             // We can only compact the last trailer, if at all
-            PdfReference[] irefs = PdfTraversalUtility.TransitiveClosure(_document._trailer);
+            PdfReference[] irefs = PdfTraversalUtility.TransitiveClosure(_document._trailer).Select(kvp => kvp.Key).ToArray();
 
 #if DEBUG
             // Have any two objects the same ID?

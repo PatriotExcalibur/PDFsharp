@@ -11,9 +11,9 @@ namespace PdfSharper.Pdf.Advanced
     /// </summary>
     public class PdfStructure : PdfDictionary
     {
-        private Dictionary<int, bool> _allReferences;
+        private Dictionary<int, int> _allReferences;
 
-        public Dictionary<int, bool> AllReferences
+        public Dictionary<int, int> AllReferences
         {
             get
             {
@@ -22,7 +22,7 @@ namespace PdfSharper.Pdf.Advanced
                     if (_allReferences == null)
                     {
                         _allReferences = PdfTraversalUtility.TransitiveClosure(this)
-                            .ToDictionary(iref => iref.ObjectNumber, iref => true);
+                            .ToDictionary(kvp => kvp.Key.ObjectNumber, kvp => kvp.Value);
                     }
                 }
                 return _allReferences;

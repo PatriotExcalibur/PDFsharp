@@ -41,6 +41,8 @@ namespace PdfSharper.Pdf.Advanced
     /// </summary>
     public sealed class PdfContents : PdfArray
     {
+
+        public PdfContent FlattenedContents = null;
         /// <summary>
         /// Initializes a new instance of the <see cref="PdfContents"/> class.
         /// </summary>

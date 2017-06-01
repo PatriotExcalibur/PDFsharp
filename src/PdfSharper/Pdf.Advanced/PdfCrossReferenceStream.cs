@@ -83,7 +83,9 @@ namespace PdfSharper.Pdf.Advanced
 
                 base.AddReference(iref);
 
-                if (!(iref.Value is PdfFormXObject) && !(iref.Value is PdfContent))
+                if (!(iref.Value is PdfFormXObject) &&
+                    !(iref.Value is PdfContent) &&
+                    !(iref.Value is PdfObjectStream))
                 {
                     AddCompressedObject(iref);
                 }
@@ -115,14 +117,7 @@ namespace PdfSharper.Pdf.Advanced
                 viableStream = new PdfObjectStream(Owner);
                 viableStream.Elements.SetReference(Keys.Extends, newExtendsRef);
                 ObjectStreams.Add(viableStream);
-                Owner.Internals.AddObject(viableStream);
-                Entries.Add(new CrossReferenceStreamEntry
-                {
-                    Type = 1,
-                    Field2 = 0, //we use position from iref later
-                    Field3 = 0,
-                    ObjectNumber = viableStream.ObjectNumber
-                });
+                Owner.Internals.AddObject(viableStream);              
             }
 
             int index = viableStream.AddObject(iref);
@@ -238,9 +233,14 @@ namespace PdfSharper.Pdf.Advanced
 
             //get groupings and update index 
 
-            PdfReference[] irefs = XRefTable.AllReferences;
+            var irefs = XRefTable.AllReferences.ToList();
             int minObjectNumber = irefs.Min(ir => ir.ObjectNumber);
 
+            //TODO: Remove when renumbering is supported
+            if (minObjectNumber >= 1 && Prev == null)
+            {
+                irefs.Insert(0, new PdfReference(new PdfObjectID(), 0));
+            }
             var xrefGroupings = irefs.OrderBy(iref => iref.ObjectNumber).GroupWhile((prev, next) => prev.ObjectNumber + 1 == next.ObjectNumber)
                 .Select(anon => new
                 {

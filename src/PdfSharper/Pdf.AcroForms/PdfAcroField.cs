@@ -733,8 +733,8 @@ namespace PdfSharper.Pdf.AcroForms
         public virtual void Flatten()
         {
             PdfStructure structRoot = Owner.Catalog.StructTreeRoot;
-            bool canRemove = !(this is PdfGenericField);
-            if (structRoot != null)
+            bool canRemove = true;
+            if (structRoot != null && !(this is PdfGenericField))
             {
                 bool referencedByStructure = structRoot.AllReferences.ContainsKey(ObjectNumber);
                 if (referencedByStructure)
@@ -784,6 +784,18 @@ namespace PdfSharper.Pdf.AcroForms
                 Parent.Fields.Remove(this);
                 Elements.Remove(Keys.Parent);
             }
+            else
+            {
+                if (structRoot != null)
+                {
+                    canRemove = !structRoot.AllReferences.ContainsKey(ObjectNumber);
+                }
+                Owner.AcroForm.Fields.Remove(this);
+                if (canRemove)
+                {
+                    _document.Internals.RemoveObject(this);
+                }
+            }
         }
 
         /// <summary>
@@ -826,9 +838,19 @@ namespace PdfSharper.Pdf.AcroForms
             // Save and restore Graphics state
             content.Insert(0, OpCodes.OperatorFromName("q"));
             content.Add(OpCodes.OperatorFromName("Q"));
-            var appendedContent = Page.Contents.AppendContent();
+            var appendedContent = Page.Contents.FlattenedContents;
+            if (appendedContent == null)
+            {
+                appendedContent = Page.Contents.AppendContent();
+                Page.Contents.FlattenedContents = appendedContent;
+            }
+
             using (var ms = new MemoryStream())
             {
+                if (appendedContent.Stream != null)
+                {
+                    ms.Write(appendedContent.Stream.UnfilteredValue, 0, appendedContent.Stream.UnfilteredValue.Length);
+                }
                 var cw = new ContentWriter(ms);
                 foreach (var obj in content)
                     obj.WriteObject(cw);

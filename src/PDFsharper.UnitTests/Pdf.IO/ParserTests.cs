@@ -24,40 +24,6 @@ namespace PDFsharper.UnitTests.Pdf.IO
         }
 
         [TestMethod]
-        public void MFRI_Passthrough()
-        {
-            PdfDocument doc = PdfReader.Open(@"C:\Dev\PEX\Main\Source\Forms\memoforrecordinformational.pdf");
-            var b = doc.PageCount;
-            doc.Save(@"D:\mfri_passthrough.pdf");
-        }
-
-        [TestMethod]
-        public void MFRI_Passthrough_Read()
-        {
-            PdfDocument doc = PdfReader.Open(@"D:\mfri_passthrough.pdf");
-            var b = doc.PageCount;
-
-        }
-
-
-        [TestMethod]
-        public void AF4349_Passthrough()
-        {
-            PdfDocument doc = PdfReader.Open(@"C:\Dev\PEX\Main\Source\Forms\af4349.pdf");
-            var b = doc.PageCount;
-            doc.Save(@"D:\af4349_passthrough.pdf");
-        }
-
-
-
-        [TestMethod]
-        public void AF4349_Passthrough_readBack()
-        {
-            PdfDocument doc = PdfReader.Open(@"D:\af4349_passthrough.pdf");
-            var b = doc.PageCount;
-        }
-
-        [TestMethod]
         public void ACC134_Passthrough()
         {
             PassThrough("ACC134");
@@ -83,15 +49,15 @@ namespace PDFsharper.UnitTests.Pdf.IO
         }
 
         [TestMethod]
-        public void MFRE_Passthrough()
+        public void AF4023_PassthroughAndFill()
         {
-            PassThrough("MemoForRecordEndorsement");
+            PassThroughAndFill("AF4023");
         }
 
         [TestMethod]
-        public void AF3862_PassthroughFillFlat()
+        public void MFRI_PassthroughFillFlat()
         {
-            PassThroughFillAndFlatten("AF3862");
+            PassThroughFillAndFlatten("MemoForRecordInformational");
         }
 
 
@@ -139,19 +105,26 @@ namespace PDFsharper.UnitTests.Pdf.IO
             }
         }
 
-        private static void PassThroughAndFill(string formName)
+        private static void PassThroughAndFill(string formName, int fieldNumber = -1)
         {
             PdfDocument doc = PdfReader.Open(Path.Combine(@"C:\Dev\PEX\Main\Source\Forms", formName + ".pdf"));
             var b = doc.PageCount;
-
+            int i = 0;
             foreach (var field in doc.AcroForm.Fields.Cast<PdfAcroField>().SelectMany(gf => doc.AcroForm.WalkAllFields(gf)).OfType<PdfTextField>())
             {
+                if (fieldNumber != -1 && i != fieldNumber)
+                {
+                    i++;
+                    continue;
+                }
+
                 field.Text = field.Name;
+                i++;
             }
 
-            doc.Save(Path.Combine(@"D:\filled", formName + "_filled.pdf"));
+            doc.Save(Path.Combine(@"D:\filled", formName + (fieldNumber != -1 ? "_" + fieldNumber : string.Empty) + "_filled.pdf"));
 
-            PdfDocument passThroughDoc = PdfReader.Open(Path.Combine(@"D:\filled", formName + "_filled.pdf"));
+            PdfDocument passThroughDoc = PdfReader.Open(Path.Combine(@"D:\filled", formName + (fieldNumber != -1 ? "_" + fieldNumber : string.Empty) + "_filled.pdf"));
 
             foreach (var iref in doc._irefTable.AllReferences)
             {
@@ -159,25 +132,36 @@ namespace PDFsharper.UnitTests.Pdf.IO
             }
         }
 
-        private static void PassThroughFillAndFlatten(string formName)
+        private static void PassThroughFillAndFlatten(string formName, int fieldNumber = -1)
         {
-            PdfDocument doc = PdfReader.Open(Path.Combine(@"C:\Dev\PEX\Main\Source\Forms", formName + ".pdf"));
-            var b = doc.PageCount;
-
-            foreach (var field in doc.AcroForm.Fields.Cast<PdfAcroField>().SelectMany(gf => doc.AcroForm.WalkAllFields(gf)).OfType<PdfTextField>())
+            using (PdfDocument doc = PdfReader.Open(Path.Combine(@"C:\Dev\PEX\Main\Source\Forms", formName + ".pdf")))
             {
-                field.Text = field.Name;
-            }
+                var b = doc.PageCount;
+                int i = 0;
+                foreach (var field in doc.AcroForm.Fields.Cast<PdfAcroField>().SelectMany(gf => doc.AcroForm.WalkAllFields(gf)).OfType<PdfTextField>().ToList())
+                {
+                    if (fieldNumber != -1 && i != fieldNumber)
+                    {
+                        i++;
+                        continue;
+                    }
 
-            doc.AcroForm.Flatten();
+                    field.Text = field.Name;
+                    field.Flatten();
+                    i++;
+                }
 
-            doc.Save(Path.Combine(@"D:\filled", formName + "_filled.pdf"));
+                //doc.AcroForm.Flatten();
 
-            PdfDocument passThroughDoc = PdfReader.Open(Path.Combine(@"D:\filled", formName + "_filled.pdf"));
+                doc.Save(Path.Combine(@"D:\flattened", formName + (fieldNumber != -1 ? "_" + fieldNumber : string.Empty) + "_flat.pdf"));
 
-            foreach (var iref in doc._irefTable.AllReferences)
-            {
-                Assert.IsTrue(passThroughDoc._irefTable.Contains(iref.ObjectID), $"Pass through doc {formName} missing object {iref.ObjectNumber}.");
+                using (PdfDocument passThroughDoc = PdfReader.Open(Path.Combine(@"D:\flattened", formName + (fieldNumber != -1 ? "_" + fieldNumber : string.Empty) + "_flat.pdf")))
+                {
+                    foreach (var iref in doc._irefTable.AllReferences)
+                    {
+                        Assert.IsTrue(passThroughDoc._irefTable.Contains(iref.ObjectID), $"Pass through doc {formName} missing object {iref.ObjectNumber}.");
+                    }
+                }
             }
         }
 #endif

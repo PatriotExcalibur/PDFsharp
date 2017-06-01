@@ -195,10 +195,6 @@ namespace PdfSharper.Pdf.Advanced
 
         protected override void WriteObject(PdfWriter writer)
         {
-            // Delete /XRefStm entry, if any.
-            // HACK: 
-            _elements.Remove(Keys.XRefStm);
-
             // Don't encrypt myself
             PdfStandardSecurityHandler securityHandler = writer.SecurityHandler;
             writer.SecurityHandler = null;

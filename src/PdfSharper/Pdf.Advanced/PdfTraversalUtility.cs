@@ -13,16 +13,16 @@ namespace PdfSharper.Pdf.Advanced
         /// Calculates the transitive closure of the specified PdfObject with the specified depth, i.e. all indirect objects
         /// recursively reachable from the specified object in up to maximally depth steps.
         /// </summary>
-        internal static PdfReference[] TransitiveClosure(PdfObject pdfObject, HashSet<PdfItem> exclusions = null)
+        internal static KeyValuePair<PdfReference, int>[] TransitiveClosure(PdfObject pdfObject, HashSet<PdfItem> exclusions = null)
         {
             HashSet<PdfItem> overflow = new HashSet<PdfItem>();
-            HashSet<PdfItem> objectmap = new HashSet<PdfItem>();
+            Dictionary<PdfItem, int> objectmap = new Dictionary<PdfItem, int>();
 
             if (exclusions != null)
             {
                 foreach (PdfItem item in exclusions)
                 {
-                    objectmap.Add(item);
+                    objectmap.Add(item, 1);
                 }
             }
 
@@ -49,14 +49,11 @@ namespace PdfSharper.Pdf.Advanced
                     objectmap.Remove(item);
                 }
             }
-
-            PdfReference[] irefs = new PdfReference[objectmap.Count];
-            objectmap.CopyTo(irefs, 0);
-            return irefs;
+            return objectmap.Select(kvp => new KeyValuePair<PdfReference, int>((PdfReference)kvp.Key, kvp.Value)).ToArray();
         }
 
 
-        private static void TransitiveClosureImplementation(PdfObject pdfObject, HashSet<PdfItem> objectMap, HashSet<PdfItem> overflow, int nestingLevel)
+        private static void TransitiveClosureImplementation(PdfObject pdfObject, Dictionary<PdfItem, int> objectMap, HashSet<PdfItem> overflow, int nestingLevel)
         {
             try
             {
@@ -82,7 +79,7 @@ namespace PdfSharper.Pdf.Advanced
                         PdfReference iref = item as PdfReference;
                         if (iref != null)
                         {
-                            if (!objectMap.Contains(iref))
+                            if (!objectMap.ContainsKey(iref))
                             {
                                 PdfObject value = iref.Value;
 
@@ -96,10 +93,14 @@ namespace PdfSharper.Pdf.Advanced
                                         //Debug.Assert(iref.Value != null);
                                         //value = iref.Value;
                                     }
-                                    objectMap.Add(iref);
+                                    objectMap.Add(iref, 1);
                                     if (value is PdfArray || value is PdfDictionary)
                                         TransitiveClosureImplementation(value, objectMap, overflow, nestingLevel);
                                 }
+                            }
+                            else
+                            {
+                                objectMap[iref]++;
                             }
                         }
                         else
@@ -114,7 +115,7 @@ namespace PdfSharper.Pdf.Advanced
                 if (pdfObject is PdfCrossReferenceStream)
                 {
 
-                    objectMap.Add(pdfObject.Reference);
+                    objectMap.Add(pdfObject.Reference, 1);
 
                     PdfCrossReferenceStream xRefStream = pdfObject as PdfCrossReferenceStream;
                     foreach (var entry in xRefStream.Entries)
@@ -122,9 +123,14 @@ namespace PdfSharper.Pdf.Advanced
                         if (entry.Type == 2)
                         {
                             PdfReference iref = xRefStream.XRefTable.AllReferences.FirstOrDefault(ir => ir.ObjectNumber == entry.Field2);
-
-                            objectMap.Add(iref);
-
+                            if (!objectMap.ContainsKey(iref))
+                            {
+                                objectMap.Add(iref, 1);
+                            }
+                            else
+                            {
+                                objectMap[iref]++;
+                            }
                         }
 
                     }

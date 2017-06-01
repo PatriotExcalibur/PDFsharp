@@ -254,8 +254,18 @@ namespace PdfSharper.Pdf.Advanced
                 if (containingStream != null)
                 {
                     containingStream.RemoveObject(obj.Reference);
+                    if (containingStream.Number == 0)
+                    {
+                        RemoveObject(containingStream);
+                    }
                 }
 
+            }
+
+            var structRoot = _document.Catalog.StructTreeRoot;
+            if (structRoot != null)
+            {
+                structRoot.AllReferences.Remove(obj.ObjectNumber);
             }
         }
 
@@ -268,7 +278,7 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         public PdfObject[] GetClosure(PdfObject obj)
         {
-            PdfReference[] references = PdfTraversalUtility.TransitiveClosure(obj);
+            PdfReference[] references = PdfTraversalUtility.TransitiveClosure(obj).Select(kvp => kvp.Key).ToArray();
             int count = references.Length + 1;
             PdfObject[] objects = new PdfObject[count];
             objects[0] = obj;
