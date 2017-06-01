@@ -264,9 +264,19 @@ namespace PdfSharper.Drawing.Pdf
             if (pen != null && brush != null)
                 _content.Append("B\n");
             else if (pen != null)
-                _content.Append("S\n");
+                _content.Append("s\n");
             else
                 _content.Append("f\n");
+        }
+
+        public void DrawClippingRectange(double x, double y, double width, double height)
+        {
+            const string format = Config.SignificantFigures3;
+
+            _content.AppendFormat(CultureInfo.InvariantCulture, "{0:" + format + "} {1:" + format + "} {2:" + format + "} {3:" + format + "} re\n", x, y, width, height);
+            _content.AppendLine("W");
+            _content.AppendLine("n");
+            _content.AppendLine("0 G");
         }
 
         // ----- DrawRectangles -----------------------------------------------------------------------
@@ -616,7 +626,7 @@ namespace PdfSharper.Drawing.Pdf
                     else
                     {
                         AdjustTdOffset(ref pos, verticalOffset, false);
-                        AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} Td {2} Tj\n", pos.X, pos.Y, text);
+                        AppendFormatArgs("{0:" + format2 + "} {1:" + format2 + "} Td\n{2} Tj\n", pos.X, pos.Y, text);
                     }
                 }
             }
@@ -1647,7 +1657,7 @@ namespace PdfSharper.Drawing.Pdf
         /// Initializes the default view transformation, i.e. the transformation from the user page
         /// space to the PDF page space.
         /// </summary>
-        void BeginPage()
+        void BeginPage(bool saveState = true)
         {
             if (_gfxState.Level == GraphicsStackLevelInitial)
             {
@@ -1709,7 +1719,10 @@ namespace PdfSharper.Drawing.Pdf
                     }
 
                     // Save initial graphic state.
-                    SaveState();
+                    if (saveState)
+                    {
+                        SaveState();
+                    }
 
                     // Set default page transformation, if any.
                     if (!DefaultViewMatrix.IsIdentity)
@@ -1773,12 +1786,13 @@ namespace PdfSharper.Drawing.Pdf
             if (_streamMode == StreamMode.Text)
             {
                 _content.Append("ET\n");
+                while (_gfxStateStack.Count != 0)
+                    RestoreState();
                 _content.Append("EMC\n");
                 _streamMode = StreamMode.Graphic;
             }
 
-            while (_gfxStateStack.Count != 0)
-                RestoreState();
+
         }
 
         /// <summary>
@@ -1791,6 +1805,8 @@ namespace PdfSharper.Drawing.Pdf
                 if (_streamMode == StreamMode.Text)
                 {
                     _content.Append("ET\n");
+                    while (_gfxStateStack.Count != 0)
+                        RestoreState();
                     _content.Append("EMC\n");
                 }
 
@@ -1805,8 +1821,11 @@ namespace PdfSharper.Drawing.Pdf
         {
             if (_streamMode != StreamMode.Text)
             {
-                _streamMode = StreamMode.Text;
                 _content.Append("/Tx BMC\n");
+                SaveState();
+
+                DrawClippingRectange(1, 1, Size.Width, Size.Height);
+                _streamMode = StreamMode.Text;
                 _content.Append("BT\n");
                 // Text matrix is empty after BT
                 _gfxState.RealizedTextPosition = new XPoint();
@@ -1857,7 +1876,7 @@ namespace PdfSharper.Drawing.Pdf
         /// </summary>
         void Realize(XFont font, XBrush brush, int renderingMode)
         {
-            BeginPage();
+            BeginPage(false);
             //RealizeTransform();
             BeginTextMode();
             _gfxState.RealizeFont(font, brush, renderingMode);
@@ -2104,8 +2123,6 @@ namespace PdfSharper.Drawing.Pdf
         /// </summary>
         void RestoreState()
         {
-            Debug.Assert(_streamMode == StreamMode.Graphic, "Cannot restore state in text mode.");
-
             _gfxState = _gfxStateStack.Pop();
             Append("Q\n");
         }

@@ -8,7 +8,7 @@ using PdfSharper.Pdf.Annotations;
 namespace PDFsharper.UnitTests.Pdf.AcroForms
 {
     [TestClass]
-    public class PdfTextFieldTests 
+    public class PdfTextFieldTests
     {
         [TestMethod]
         public void RenderAppearance()
@@ -63,7 +63,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             field.PrepareForSave();
 
             Assert.IsTrue(field.Elements.ContainsKey(PdfAnnotation.Keys.AP), "Text Field should have rendered an appearance stream.");
-            
+
             Assert.IsNotNull(field.Elements.GetDictionary("/AP"), "AP Dictionary not Found");
             Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements, "AP Dictionary missing elements");
             Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N"), "Normal Dictionary not found");
@@ -95,13 +95,13 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
             PdfTextField field = PdfAcroFieldTestHelpers.CreateTextFieldForTest(testDoc);
 
             field.Text = "Some Test Text";
-            
+
             Assert.IsFalse(field.Elements.ContainsKey(PdfAnnotation.Keys.AP), "Text Field should have rendered an appearance stream prior to PrepareForSave.");
 
             field.PrepareForSave();
 
             Assert.IsTrue(field.Elements.ContainsKey(PdfAnnotation.Keys.AP), "Text Field should have rendered an appearance stream.");
-            
+
             Assert.IsNotNull(field.Elements.GetDictionary("/AP"), "AP Dictionary not Found");
             Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements, "AP Dictionary missing elements");
             Assert.IsNotNull(field.Elements.GetDictionary("/AP").Elements.GetDictionary("/N"), "Normal Dictionary not found");
@@ -123,7 +123,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
         public void Flatten()
         {
             string fieldValue = "Test";
-            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 w\n0 J\n0 j\n[]0 d\n1 1 1 RG\n/GS0 gs\n0 0 200 20 re\nS\nq\n/Tx BMC\nBT\n/" + PdfAcroFieldTestHelpers.FONT_NAME + " 10 Tf\n0 g\n2 6.6793 Td\n(" + fieldValue + ")Tj\nET\nEMC\nQ\nQ\n";
+            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 1 1 RG\n0.5 0.5 199 19 re\ns\n/Tx BMC\nq\n1 1 200 20 re\nW\nn\n0 G\nBT\n/" + PdfAcroFieldTestHelpers.FONT_NAME + " 10 Tf\n0 g\n2 6.6793 Td\n(" + fieldValue + ")Tj\nET\nQ\nEMC\nQ\n";
 
             PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
             PdfTextField field1 = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
@@ -162,7 +162,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
         public void Flatten_TextAndNewLines()
         {
             string fieldValue = "Test \n Test";
-            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 w\n0 J\n0 j\n[]0 d\n1 1 1 RG\n/GS0 gs\n0 0 200 20 re\nS\nq\n/Tx BMC\nBT\n/" + PdfAcroFieldTestHelpers.FONT_NAME + " 10 Tf\n0 g\n2 12.4593 Td\n(Test )Tj\n0 -11.56 Td\n( )Tj\n2.78 0 Td\n(Test)Tj\nET\nEMC\nQ\nQ\n";
+            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 1 1 RG\n0.5 0.5 199 19 re\ns\n/Tx BMC\nq\n1 1 200 20 re\nW\nn\n0 G\nBT\n/" + PdfAcroFieldTestHelpers.FONT_NAME + " 10 Tf\n0 g\n2 12.4593 Td\n(Test )Tj\n0 -11.56 Td\n( )Tj\n2.78 0 Td\n(Test)Tj\nET\nQ\nEMC\nQ\n";
 
             PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
             PdfTextField field1 = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
@@ -201,7 +201,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
         public void Flatten_TextAndWhiteSpace()
         {
             string fieldValue = "Test 1 2 3 4";
-            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 w\n0 J\n0 j\n[]0 d\n1 1 1 RG\n/GS0 gs\n0 0 200 20 re\nS\nq\n/Tx BMC\nBT\n/" + PdfAcroFieldTestHelpers.FONT_NAME + " 10 Tf\n0 g\n2 6.6793 Td\n(Test )Tj\n22.23 0 Td\n(1 )Tj\n8.34 0 Td\n(2 )Tj\n8.34 0 Td\n(3 )Tj\n8.34 0 Td\n(4)Tj\nET\nEMC\nQ\nQ\n";
+            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 1 1 RG\n0.5 0.5 199 19 re\ns\n/Tx BMC\nq\n1 1 200 20 re\nW\nn\n0 G\nBT\n/" + PdfAcroFieldTestHelpers.FONT_NAME + " 10 Tf\n0 g\n2 6.6793 Td\n(Test )Tj\n22.23 0 Td\n(1 )Tj\n8.34 0 Td\n(2 )Tj\n8.34 0 Td\n(3 )Tj\n8.34 0 Td\n(4)Tj\nET\nQ\nEMC\nQ\n";
 
             PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
             PdfTextField field1 = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
@@ -240,7 +240,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
         public void Flatten_WhiteSpace()
         {
             string fieldValue = "";
-            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 w\n0 J\n0 j\n[]0 d\n1 1 1 RG\n/GS0 gs\n0 0 200 20 re\nS\nQ\n";
+            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 1 1 RG\n0.5 0.5 199 19 re\ns\nQ\n";
 
             PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
             PdfTextField field1 = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
@@ -279,7 +279,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
         public void Flatten_NoText()
         {
             string fieldValue = "";
-            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 w\n0 J\n0 j\n[]0 d\n1 1 1 RG\n/GS0 gs\n0 0 200 20 re\nS\nQ\n";
+            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 1 1 RG\n0.5 0.5 199 19 re\ns\nQ\n";
 
             PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
             PdfTextField field1 = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);

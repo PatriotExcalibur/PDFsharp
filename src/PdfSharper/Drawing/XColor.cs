@@ -182,6 +182,10 @@ namespace PdfSharper.Drawing
         /// </summary>
         public static XColor FromArgb(float red, float green, float blue)
         {
+            if (red == green && green == blue)
+            {
+                return new XColor(red / 255d);
+            }
             return new XColor(255, red, green, blue);
         }
 

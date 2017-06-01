@@ -37,250 +37,250 @@ using System.Collections.Generic;
 
 namespace PdfSharper.Pdf.AcroForms
 {
-	/// <summary>
-	/// Represents the text field.
-	/// </summary>
-	public sealed class PdfTextField : PdfAcroField
-	{
-		/// <summary>
-		/// Initializes a new instance of PdfTextField.
-		/// </summary>
-		public PdfTextField(PdfDocument document, bool needsAppearance = false)
-			: base(document, needsAppearance)
-		{
-			Elements.SetName(Keys.FT, PdfAcroFieldTypes.Text);
-			Elements.SetString(Keys.TU, string.Empty);
-			Elements.SetInteger(Keys.Ff, 0);
+    /// <summary>
+    /// Represents the text field.
+    /// </summary>
+    public sealed class PdfTextField : PdfAcroField
+    {
+        /// <summary>
+        /// Initializes a new instance of PdfTextField.
+        /// </summary>
+        public PdfTextField(PdfDocument document, bool needsAppearance = false)
+            : base(document, needsAppearance)
+        {
+            Elements.SetName(Keys.FT, PdfAcroFieldTypes.Text);
+            Elements.SetString(Keys.TU, string.Empty);
+            Elements.SetInteger(Keys.Ff, 0);
 
-			//annotation elements            
-			Elements.SetInteger(PdfAnnotation.Keys.F, (int)PdfAnnotationFlags.Print);
-			Elements.Add(PdfWidgetAnnotation.Keys.MK, new PdfDictionary(document));
-			Elements.SetName(PdfAnnotation.Keys.Subtype, "/Widget");
-			Elements.SetName(PdfAnnotation.Keys.Type, "/Annot");
+            //annotation elements            
+            Elements.SetInteger(PdfAnnotation.Keys.F, (int)PdfAnnotationFlags.Print);
+            Elements.Add(PdfWidgetAnnotation.Keys.MK, new PdfDictionary(document));
+            Elements.SetName(PdfAnnotation.Keys.Subtype, "/Widget");
+            Elements.SetName(PdfAnnotation.Keys.Type, "/Annot");
 
-			SetDefaultMargins();
-		}
+            SetDefaultMargins();
+        }
 
-		public PdfTextField(PdfDictionary dict)
-			: base(dict)
-		{
-			SetDefaultMargins();
-		}
+        public PdfTextField(PdfDictionary dict)
+            : base(dict)
+        {
+            SetDefaultMargins();
+        }
 
-		/// <summary>
-		/// Gets or sets the text value of the text field.
-		/// </summary>
-		public string Text
-		{
-			get { return Elements.GetString(Keys.V); }
-			set
-			{
-				bool wasDirty = IsDirty;
-				Elements.SetString(Keys.V, value);
-				if (wasDirty != IsDirty || _document._trailers.Count == 1)
-				{
-					_needsAppearances = true;
-				}
-			}
-		}
+        /// <summary>
+        /// Gets or sets the text value of the text field.
+        /// </summary>
+        public string Text
+        {
+            get { return Elements.GetString(Keys.V); }
+            set
+            {
+                bool wasDirty = IsDirty;
+                Elements.SetString(Keys.V, value);
+                if (wasDirty != IsDirty || _document._trailers.Count == 1)
+                {
+                    _needsAppearances = true;
+                }
+            }
+        }
 
-		public XStringFormat Alignment
-		{
-			get
-			{
-				XStringFormat _alignment;
-				if (MultiLine)
-				{
-					_alignment = XStringFormats.TopLeft;
+        public XStringFormat Alignment
+        {
+            get
+            {
+                XStringFormat _alignment;
+                if (MultiLine)
+                {
+                    _alignment = XStringFormats.TopLeft;
 
-					switch (Elements.GetInteger(Keys.Q))
-					{
-						case 0:
-							_alignment = XStringFormats.TopLeft;
-							break;
-						case 1:
-							_alignment = XStringFormats.TopCenter;
-							break;
-						case 2:
-							_alignment = XStringFormats.TopRight;
-							break;
-						default:
-							break;
-					}
-				}
-				else
-				{
-					_alignment = XStringFormats.CenterLeft;
-					switch (Elements.GetInteger(Keys.Q))
-					{
-						case 0:
-							_alignment = XStringFormats.CenterLeft;
-							break;
-						case 1:
-							_alignment = XStringFormats.Center;
-							break;
-						case 2:
-							_alignment = XStringFormats.CenterRight;
-							break;
-						default:
-							break;
-					}
-				}
-				return _alignment;
-			}
-			set
-			{
+                    switch (Elements.GetInteger(Keys.Q))
+                    {
+                        case 0:
+                            _alignment = XStringFormats.TopLeft;
+                            break;
+                        case 1:
+                            _alignment = XStringFormats.TopCenter;
+                            break;
+                        case 2:
+                            _alignment = XStringFormats.TopRight;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                {
+                    _alignment = XStringFormats.CenterLeft;
+                    switch (Elements.GetInteger(Keys.Q))
+                    {
+                        case 0:
+                            _alignment = XStringFormats.CenterLeft;
+                            break;
+                        case 1:
+                            _alignment = XStringFormats.Center;
+                            break;
+                        case 2:
+                            _alignment = XStringFormats.CenterRight;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                return _alignment;
+            }
+            set
+            {
 
-				if (XStringFormats.Equals(value, XStringFormats.CenterLeft) || XStringFormats.Equals(value, XStringFormats.BottomLeft) || XStringFormats.Equals(value, XStringFormats.TopLeft))
-				{
-					Elements.SetInteger(Keys.Q, 0);
-				}
-				else if (XStringFormats.Equals(value, XStringFormats.Center) || XStringFormats.Equals(value, XStringFormats.TopCenter) || XStringFormats.Equals(value, XStringFormats.BottomCenter))
-				{
-					Elements.SetInteger(Keys.Q, 1);
-				}
-				else if (XStringFormats.Equals(value, XStringFormats.CenterRight) || XStringFormats.Equals(value, XStringFormats.TopRight) || XStringFormats.Equals(value, XStringFormats.BottomRight))
-				{
-					Elements.SetInteger(Keys.Q, 2);
-				}
-			}
-		}
+                if (XStringFormats.Equals(value, XStringFormats.CenterLeft) || XStringFormats.Equals(value, XStringFormats.BottomLeft) || XStringFormats.Equals(value, XStringFormats.TopLeft))
+                {
+                    Elements.SetInteger(Keys.Q, 0);
+                }
+                else if (XStringFormats.Equals(value, XStringFormats.Center) || XStringFormats.Equals(value, XStringFormats.TopCenter) || XStringFormats.Equals(value, XStringFormats.BottomCenter))
+                {
+                    Elements.SetInteger(Keys.Q, 1);
+                }
+                else if (XStringFormats.Equals(value, XStringFormats.CenterRight) || XStringFormats.Equals(value, XStringFormats.TopRight) || XStringFormats.Equals(value, XStringFormats.BottomRight))
+                {
+                    Elements.SetInteger(Keys.Q, 2);
+                }
+            }
+        }
 
-		public double TopMargin
-		{
-			get { return _topMargin; }
-			set { _topMargin = value; }
-		}
-		double _topMargin = 0;
+        public double TopMargin
+        {
+            get { return _topMargin; }
+            set { _topMargin = value; }
+        }
+        double _topMargin = 0;
 
-		public double BottomMargin
-		{
-			get { return _bottomMargin; }
-			set { _bottomMargin = value; }
-		}
-		double _bottomMargin = 0;
+        public double BottomMargin
+        {
+            get { return _bottomMargin; }
+            set { _bottomMargin = value; }
+        }
+        double _bottomMargin = 0;
 
-		public double LeftMargin
-		{
-			get { return _leftMargin; }
-			set { _leftMargin = value; }
-		}
-		double _leftMargin = 0;
+        public double LeftMargin
+        {
+            get { return _leftMargin; }
+            set { _leftMargin = value; }
+        }
+        double _leftMargin = 0;
 
-		public double RightMargin
-		{
-			get { return _rightMargin; }
-			set { _rightMargin = value; }
-		}
-		double _rightMargin = 0;
+        public double RightMargin
+        {
+            get { return _rightMargin; }
+            set { _rightMargin = value; }
+        }
+        double _rightMargin = 0;
 
-		/// <summary>
-		/// Gets or sets the maximum length of the field.
-		/// </summary>
-		/// <value>The length of the max.</value>
-		public int MaxLength
-		{
-			get { return Elements.GetInteger(Keys.MaxLen); }
-			set { Elements.SetInteger(Keys.MaxLen, value); }
-		}
+        /// <summary>
+        /// Gets or sets the maximum length of the field.
+        /// </summary>
+        /// <value>The length of the max.</value>
+        public int MaxLength
+        {
+            get { return Elements.GetInteger(Keys.MaxLen); }
+            set { Elements.SetInteger(Keys.MaxLen, value); }
+        }
 
-		/// <summary>
-		/// Gets or sets a value indicating whether the field has multiple lines.
-		/// </summary>
-		public bool MultiLine
-		{
-			get { return (FieldFlags & PdfAcroFieldFlags.Multiline) != 0; }
-			set
-			{
-				if (value)
-					SetFlags |= PdfAcroFieldFlags.Multiline;
-				else
-					SetFlags &= ~PdfAcroFieldFlags.Multiline;
+        /// <summary>
+        /// Gets or sets a value indicating whether the field has multiple lines.
+        /// </summary>
+        public bool MultiLine
+        {
+            get { return (FieldFlags & PdfAcroFieldFlags.Multiline) != 0; }
+            set
+            {
+                if (value)
+                    SetFlags |= PdfAcroFieldFlags.Multiline;
+                else
+                    SetFlags &= ~PdfAcroFieldFlags.Multiline;
 
-				SetDefaultMargins();
-			}
-		}
+                SetDefaultMargins();
+            }
+        }
 
-		/// <summary>
-		/// Gets or sets a value indicating whether the field allows rich text.
-		/// </summary>
-		public bool RichText
-		{
-			get { return (FieldFlags & PdfAcroFieldFlags.RichText) != 0; }
-			set
-			{
-				if (value)
-				{
-					SetFlags |= PdfAcroFieldFlags.RichText;
-					_needsAppearances = false;
-				}
-				else
-				{
-					SetFlags &= ~PdfAcroFieldFlags.RichText;
-				}
-			}
-		}
+        /// <summary>
+        /// Gets or sets a value indicating whether the field allows rich text.
+        /// </summary>
+        public bool RichText
+        {
+            get { return (FieldFlags & PdfAcroFieldFlags.RichText) != 0; }
+            set
+            {
+                if (value)
+                {
+                    SetFlags |= PdfAcroFieldFlags.RichText;
+                    _needsAppearances = false;
+                }
+                else
+                {
+                    SetFlags &= ~PdfAcroFieldFlags.RichText;
+                }
+            }
+        }
 
-		/// <summary>
-		/// Gets or sets a value indicating whether this field is used for passwords.
-		/// </summary>
-		public bool Password
-		{
-			get { return (FieldFlags & PdfAcroFieldFlags.Password) != 0; }
-			set
-			{
-				if (value)
-					SetFlags |= PdfAcroFieldFlags.Password;
-				else
-					SetFlags &= ~PdfAcroFieldFlags.Password;
-			}
-		}
+        /// <summary>
+        /// Gets or sets a value indicating whether this field is used for passwords.
+        /// </summary>
+        public bool Password
+        {
+            get { return (FieldFlags & PdfAcroFieldFlags.Password) != 0; }
+            set
+            {
+                if (value)
+                    SetFlags |= PdfAcroFieldFlags.Password;
+                else
+                    SetFlags &= ~PdfAcroFieldFlags.Password;
+            }
+        }
 
-		/// <summary>
-		/// Gets or sets a value indicating whether this field is a combined field.
-		/// A combined field is a text field made up of multiple "combs" of equal width. The number of combs is determined by <see cref="MaxLength"/>.
-		/// </summary>
-		public bool Combined
-		{
-			get { return (FieldFlags & PdfAcroFieldFlags.Comb) != 0; }
-			set
-			{
-				if (value)
-					SetFlags |= PdfAcroFieldFlags.Comb;
-				else
-					SetFlags &= ~PdfAcroFieldFlags.Comb;
-			}
-		}
+        /// <summary>
+        /// Gets or sets a value indicating whether this field is a combined field.
+        /// A combined field is a text field made up of multiple "combs" of equal width. The number of combs is determined by <see cref="MaxLength"/>.
+        /// </summary>
+        public bool Combined
+        {
+            get { return (FieldFlags & PdfAcroFieldFlags.Comb) != 0; }
+            set
+            {
+                if (value)
+                    SetFlags |= PdfAcroFieldFlags.Comb;
+                else
+                    SetFlags &= ~PdfAcroFieldFlags.Comb;
+            }
+        }
 
-		/// <summary>
-		/// Sets the default margins for the PdfTextField
-		/// </summary>
-		public void SetDefaultMargins()
-		{
-			if (MultiLine == true)
-			{
-				TopMargin = 4;
-				BottomMargin = 4;
-				RightMargin = 2;
-			}
-			else
-			{
-				TopMargin = 0;
-				BottomMargin = 0;
-				RightMargin = 1;
-			}
+        /// <summary>
+        /// Sets the default margins for the PdfTextField
+        /// </summary>
+        public void SetDefaultMargins()
+        {
+            if (MultiLine == true)
+            {
+                TopMargin = 4;
+                BottomMargin = 4;
+                RightMargin = 2;
+            }
+            else
+            {
+                TopMargin = 0;
+                BottomMargin = 0;
+                RightMargin = 1;
+            }
 
-			LeftMargin = 2;
-		}
+            LeftMargin = 2;
+        }
 
-		/// <summary>
-		/// Creates the normal appearance form X object for the annotation that represents
-		/// this acro form text field.
-		/// </summary>
-		protected override void RenderAppearance()
-		{
-			//NOTE: We can't render RichText correctly. An external HTML/RFT renderer must create the /AP entry
-			if (RichText) return;
+        /// <summary>
+        /// Creates the normal appearance form X object for the annotation that represents
+        /// this acro form text field.
+        /// </summary>
+        protected override void RenderAppearance()
+        {
+            //NOTE: We can't render RichText correctly. An external HTML/RFT renderer must create the /AP entry
+            if (RichText) return;
 #if true_
             PdfFormXObject xobj = new PdfFormXObject(Owner);
             Owner.Internals.AddObject(xobj);
@@ -381,212 +381,216 @@ namespace PdfSharper.Pdf.AcroForms
 
 
 #else
-			if (GetIsVisible())
-			{
-				PdfRectangle rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
-				XRect xrect = GetXRectFromRectangleAndPageRotation(rect);
-				XForm form = new XForm(_document, xrect.Size);
-				XGraphics gfx = XGraphics.FromForm(form);
+            if (GetIsVisible())
+            {
+                PdfRectangle rect = Elements.GetRectangle(PdfAnnotation.Keys.Rect);
+                XRect xrect = GetXRectFromRectangleAndPageRotation(rect);
+                XForm form = new XForm(_document, xrect.Size);
+                XGraphics gfx = XGraphics.FromForm(form);
 
 
-				if (BackColor != XColor.Empty)
-					gfx.DrawRectangle(new XSolidBrush(BackColor), xrect);
-				// Draw Border
-				if (!BorderColor.IsEmpty)
-					gfx.DrawRectangle(new XPen(BorderColor), xrect);
+                if (!BackColor.IsEmpty)
+                    gfx.DrawRectangle(new XSolidBrush(BackColor), xrect);
+                // Draw Border
+                if (!BorderColor.IsEmpty)
+                {
+                    float borderWidth = 1;
+                    XRect borderRect = new XRect(xrect.X + (borderWidth / 2), xrect.Y + (borderWidth / 2), xrect.Width - borderWidth, xrect.Height - borderWidth);
+                    gfx.DrawRectangle(new XPen(BorderColor), borderRect);
+                }
 
 
-				xrect = ApplyMarginsToXRectangle(xrect);
+                xrect = ApplyMarginsToXRectangle(xrect);
 
-				XTextFormatter formatter = new XTextFormatter(gfx);
-				formatter.DrawString(Text, MultiLine, FieldFlags.HasFlag(PdfAcroFieldFlags.Comb), MaxLength, Font, new XSolidBrush(ForeColor), xrect, Alignment);
+                XTextFormatter formatter = new XTextFormatter(gfx);
+                formatter.DrawString(Text, MultiLine, FieldFlags.HasFlag(PdfAcroFieldFlags.Comb), MaxLength, Font, new XSolidBrush(ForeColor), xrect, Alignment);
 
-				form.DrawingFinished();
-				AssignAppearanceStream(form);
+                form.DrawingFinished();
+                AssignAppearanceStream(form);
 
-				if (Page.Orientation == PageOrientation.Landscape)
-				{
-					var normalStateDict = Elements.GetDictionary(Keys.AP).Elements.GetDictionary("/N");
-					PdfArray matrixArray = GetLandscapeAppearanceMatrix(xrect);
-					normalStateDict.Elements.SetObject("/Matrix", matrixArray);
+                if (Page.Orientation == PageOrientation.Landscape)
+                {
+                    var normalStateDict = Elements.GetDictionary(Keys.AP).Elements.GetDictionary("/N");
+                    PdfArray matrixArray = GetLandscapeAppearanceMatrix(xrect);
+                    normalStateDict.Elements.SetObject("/Matrix", matrixArray);
 
-					PdfRectangle rotatedBox = GetLandscapeAppearanceBBox(xrect);
-					normalStateDict.Elements.SetRectangle("/BBox", rotatedBox);
-				}
-			}
+                    PdfRectangle rotatedBox = GetLandscapeAppearanceBBox(xrect);
+                    normalStateDict.Elements.SetRectangle("/BBox", rotatedBox);
+                }
+            }
 #endif
-		}
+        }
 
-		private PdfArray GetLandscapeAppearanceMatrix(XRect xrect)
-		{
-			//This method is necessary so that PDF knows the matrix transformation
-			PdfArray matrixArray = new PdfArray(Owner);
-			matrixArray.Elements.Add(new PdfReal(0));
-			matrixArray.Elements.Add(new PdfReal(1));
-			matrixArray.Elements.Add(new PdfReal(-1));
-			matrixArray.Elements.Add(new PdfReal(0));
-			matrixArray.Elements.Add(new PdfReal(xrect.Height));
-			matrixArray.Elements.Add(new PdfReal(0));
+        private PdfArray GetLandscapeAppearanceMatrix(XRect xrect)
+        {
+            //This method is necessary so that PDF knows the matrix transformation
+            PdfArray matrixArray = new PdfArray(Owner);
+            matrixArray.Elements.Add(new PdfReal(0));
+            matrixArray.Elements.Add(new PdfReal(1));
+            matrixArray.Elements.Add(new PdfReal(-1));
+            matrixArray.Elements.Add(new PdfReal(0));
+            matrixArray.Elements.Add(new PdfReal(xrect.Height));
+            matrixArray.Elements.Add(new PdfReal(0));
 
-			return matrixArray;
-		}
+            return matrixArray;
+        }
 
-		private PdfRectangle GetLandscapeAppearanceBBox(XRect xrect)
-		{
-			//This method is necessary for documents that are Rotated so that PDF knows the BoundingBox for the rotated Text.
-			PdfRectangle rotatedBox = new PdfRectangle(0, 0, xrect.Width, xrect.Height);
+        private PdfRectangle GetLandscapeAppearanceBBox(XRect xrect)
+        {
+            //This method is necessary for documents that are Rotated so that PDF knows the BoundingBox for the rotated Text.
+            PdfRectangle rotatedBox = new PdfRectangle(0, 0, xrect.Width, xrect.Height);
 
-			return rotatedBox;
-		}
+            return rotatedBox;
+        }
 
-		private XRect GetXRectFromRectangleAndPageRotation(PdfRectangle rect)
-		{
-			XRect xrect;
+        private XRect GetXRectFromRectangleAndPageRotation(PdfRectangle rect)
+        {
+            XRect xrect;
 
-			if (Page.Orientation == PageOrientation.Landscape)
-			{
-				xrect = new XRect(0, 0, rect.Height, rect.Width);
-			}
-			else
-			{
-				xrect = (rect.ToXRect() - rect.Location);
-			}
+            if (Page.Orientation == PageOrientation.Landscape)
+            {
+                xrect = new XRect(0, 0, rect.Height, rect.Width);
+            }
+            else
+            {
+                xrect = (rect.ToXRect() - rect.Location);
+            }
 
-			//TODO: Account for rotation other than 90deg
+            //TODO: Account for rotation other than 90deg
 
-			return xrect;
-		}
+            return xrect;
+        }
 
-		public XRect ApplyMarginsToXRectangle(XRect xrect)
-		{
-			if (xrect != null)
-			{
-				double newHeight = xrect.Height - (BottomMargin + TopMargin);
-				if (newHeight > 0)
-				{
-					xrect.Y = xrect.Y + TopMargin;
-					xrect.Height = newHeight;
-				}
+        public XRect ApplyMarginsToXRectangle(XRect xrect)
+        {
+            if (xrect != null)
+            {
+                double newHeight = xrect.Height - (BottomMargin + TopMargin);
+                if (newHeight > 0)
+                {
+                    xrect.Y = xrect.Y + TopMargin;
+                    xrect.Height = newHeight;
+                }
 
-				double newWidth = xrect.Width - (RightMargin + LeftMargin);
-				if (newWidth > 0)
-				{
-					xrect.X = xrect.X + LeftMargin;
-					xrect.Width = newWidth;
-				}
-			}
+                double newWidth = xrect.Width - (RightMargin + LeftMargin);
+                if (newWidth > 0)
+                {
+                    xrect.X = xrect.X + LeftMargin;
+                    xrect.Width = newWidth;
+                }
+            }
 
-			return xrect;
-		}
+            return xrect;
+        }
 
-		public override void Flatten()
-		{
-			if (_needsAppearances)
-			{
-				RenderAppearance();
-			}
+        public override void Flatten()
+        {
+            if (_needsAppearances)
+            {
+                RenderAppearance();
+            }
 
-			base.Flatten();
+            base.Flatten();
 
-			if (!HasKids)
-			{
-				var appearance = Elements.GetDictionary(PdfAnnotation.Keys.AP);
-				if (appearance != null)
-				{
-					var apps = appearance.Elements.GetDictionary("/N");
-					if (apps != null)
-					{
-						RenderContentStream(apps.Stream);
-					}
-				}
-			}
-		}
+            if (!HasKids)
+            {
+                var appearance = Elements.GetDictionary(PdfAnnotation.Keys.AP);
+                if (appearance != null)
+                {
+                    var apps = appearance.Elements.GetDictionary("/N");
+                    if (apps != null)
+                    {
+                        RenderContentStream(apps.Stream);
+                    }
+                }
+            }
+        }
 
-		internal XFont GetFontFromElement(PdfAcroField element)
-		{
-			string[] name = element.Font.FamilyName.Split(',');
-			double size = element.Font.Size;
-			XFontStyle style;
+        internal XFont GetFontFromElement(PdfAcroField element)
+        {
+            string[] name = element.Font.FamilyName.Split(',');
+            double size = element.Font.Size;
+            XFontStyle style;
 
-			if (name.Length > 1)
-			{
-				switch (name[1])
-				{
-					case "Bold":
-						style = XFontStyle.Bold;
-						break;
-					case "Italic":
-						style = XFontStyle.Italic;
-						break;
-					case "BoldItalic":
-						style = XFontStyle.BoldItalic;
-						break;
-					default:
-						style = XFontStyle.Regular;
-						break;
-				}
-			}
-			else
-			{
-				style = XFontStyle.Regular;
-			}
+            if (name.Length > 1)
+            {
+                switch (name[1])
+                {
+                    case "Bold":
+                        style = XFontStyle.Bold;
+                        break;
+                    case "Italic":
+                        style = XFontStyle.Italic;
+                        break;
+                    case "BoldItalic":
+                        style = XFontStyle.BoldItalic;
+                        break;
+                    default:
+                        style = XFontStyle.Regular;
+                        break;
+                }
+            }
+            else
+            {
+                style = XFontStyle.Regular;
+            }
 
-			return new XFont(name[0], size, style);
-		}
+            return new XFont(name[0], size, style);
+        }
 
-		internal XStringFormat GetAlignment(DictionaryElements dict)
-		{
-			PdfItem item = dict.GetValue("/Q");
-			if (item != null)
-			{
-				int alignment = Int32.Parse(item.ToString());
+        internal XStringFormat GetAlignment(DictionaryElements dict)
+        {
+            PdfItem item = dict.GetValue("/Q");
+            if (item != null)
+            {
+                int alignment = Int32.Parse(item.ToString());
 
-				switch (alignment)
-				{
-					case 0:
-						return XStringFormats.TopLeft;
-					case 1:
-						return XStringFormats.TopCenter;
-					case 2:
-						return XStringFormats.TopRight;
-					default:
-						return XStringFormats.TopLeft;
-				}
-			}
-			else
-			{
-				return XStringFormats.TopLeft;
-			}
-		}
+                switch (alignment)
+                {
+                    case 0:
+                        return XStringFormats.TopLeft;
+                    case 1:
+                        return XStringFormats.TopCenter;
+                    case 2:
+                        return XStringFormats.TopRight;
+                    default:
+                        return XStringFormats.TopLeft;
+                }
+            }
+            else
+            {
+                return XStringFormats.TopLeft;
+            }
+        }
 
-		/// <summary>
-		/// Predefined keys of this dictionary. 
-		/// The description comes from PDF 1.4 Reference.
-		/// </summary>
-		public new class Keys : PdfAcroField.Keys
-		{
-			/// <summary>
-			/// (Optional; inheritable) The maximum length of the field�s text, in characters.
-			/// </summary>
-			[KeyInfo(KeyType.Integer | KeyType.Optional)]
-			public const string MaxLen = "/MaxLen";
+        /// <summary>
+        /// Predefined keys of this dictionary. 
+        /// The description comes from PDF 1.4 Reference.
+        /// </summary>
+        public new class Keys : PdfAcroField.Keys
+        {
+            /// <summary>
+            /// (Optional; inheritable) The maximum length of the field�s text, in characters.
+            /// </summary>
+            [KeyInfo(KeyType.Integer | KeyType.Optional)]
+            public const string MaxLen = "/MaxLen";
 
-			/// <summary>
-			/// Gets the KeysMeta for these keys.
-			/// </summary>
-			internal static new DictionaryMeta Meta
-			{
-				get { return _meta ?? (_meta = CreateMeta(typeof(Keys))); }
-			}
-			static DictionaryMeta _meta;
-		}
+            /// <summary>
+            /// Gets the KeysMeta for these keys.
+            /// </summary>
+            internal static new DictionaryMeta Meta
+            {
+                get { return _meta ?? (_meta = CreateMeta(typeof(Keys))); }
+            }
+            static DictionaryMeta _meta;
+        }
 
-		/// <summary>
-		/// Gets the KeysMeta of this dictionary type.
-		/// </summary>
-		internal override DictionaryMeta Meta
-		{
-			get { return Keys.Meta; }
-		}
-	}
+        /// <summary>
+        /// Gets the KeysMeta of this dictionary type.
+        /// </summary>
+        internal override DictionaryMeta Meta
+        {
+            get { return Keys.Meta; }
+        }
+    }
 }

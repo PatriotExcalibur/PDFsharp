@@ -89,11 +89,12 @@ namespace PdfSharper.Drawing.Pdf
 
         #region Stroke
 
-        double _realizedLineWith = -1;
-        int _realizedLineCap = -1;
-        int _realizedLineJoin = -1;
-        double _realizedMiterLimit = -1;
-        XDashStyle _realizedDashStyle = (XDashStyle)(-1);
+
+        double _realizedLineWith = 1;
+        int _realizedLineCap = 0;
+        int _realizedLineJoin = 0;
+        double _realizedMiterLimit = 0;
+        XDashStyle _realizedDashStyle = XDashStyle.Solid;
         string _realizedDashPattern;
         XColor _realizedStrokeColor = XColor.Empty;
         bool _realizedStrokeOverPrint;
@@ -197,35 +198,7 @@ namespace PdfSharper.Drawing.Pdf
                 _realizedDashStyle = dashStyle;
             }
 
-            if (colorMode != PdfColorMode.Cmyk)
-            {
-                if (_realizedStrokeColor.Rgb != color.Rgb)
-                {
-                    _renderer.Append(PdfEncoders.ToString(color, PdfColorMode.Rgb));
-                    _renderer.Append(" RG\n");
-                }
-            }
-            else
-            {
-                if (!ColorSpaceHelper.IsEqualCmyk(_realizedStrokeColor, color))
-                {
-                    _renderer.Append(PdfEncoders.ToString(color, PdfColorMode.Cmyk));
-                    _renderer.Append(" K\n");
-                }
-            }
-
-            if (_renderer.Owner.Version >= 14 && (_realizedStrokeColor.A != color.A || _realizedStrokeOverPrint != overPrint))
-            {
-                PdfExtGState extGState = _renderer.Owner.ExtGStateTable.GetExtGStateStroke(color.A, overPrint);
-                string gs = _renderer.Resources.AddExtGState(extGState);
-                _renderer.AppendFormatString("{0} gs\n", gs);
-
-                // Must create transparency group.
-                if (_renderer._page != null && color.A < 1)
-                    _renderer._page.TransparencyUsed = true;
-            }
-            _realizedStrokeColor = color;
-            _realizedStrokeOverPrint = overPrint;
+            RealizeStrokeColor(color, overPrint, colorMode);
         }
 
         #endregion
@@ -281,6 +254,53 @@ namespace PdfSharper.Drawing.Pdf
                     _realizedFillColor = XColor.Empty;
                 }
             }
+        }
+
+        private void RealizeStrokeColor(XColor color, bool overPrint, PdfColorMode colorMode)
+        {
+            color = ColorSpaceHelper.EnsureColorMode(colorMode, color);
+
+            switch (color.ColorSpace)
+            {
+                case XColorSpace.Rgb:
+                    if (_realizedStrokeColor.IsEmpty || _realizedStrokeColor.Rgb != color.Rgb)
+                    {
+                        _renderer.Append(PdfEncoders.ToString(color, PdfColorMode.Rgb));
+                        _renderer.Append(" RG\n");
+                    }
+                    break;
+                case XColorSpace.Cmyk:
+                    if (_realizedStrokeColor.IsEmpty || !ColorSpaceHelper.IsEqualCmyk(_realizedStrokeColor, color))
+                    {
+                        _renderer.Append(PdfEncoders.ToString(color, PdfColorMode.Cmyk));
+                        _renderer.Append(" K\n");
+                    }
+                    break;
+                case XColorSpace.GrayScale:
+                    if (_realizedStrokeColor.IsEmpty || _realizedStrokeColor.GS != color.GS)
+                    {
+                        _renderer.Append(PdfEncoders.ToString(color, PdfColorMode.Undefined));
+                        _renderer.Append(" G\n");
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            if (_renderer.Owner.Version >= 14 && color.ColorSpace != XColorSpace.GrayScale && (_realizedStrokeColor.A != color.A || _realizedStrokeOverPrint != overPrint))
+            {
+                // Must create transparency group.
+                if (_renderer._page != null && color.A < 1)
+                {
+                    PdfExtGState extGState = _renderer.Owner.ExtGStateTable.GetExtGStateNonStroke(color.A, overPrint);
+                    string gs = _renderer.Resources.AddExtGState(extGState);
+                    _renderer.AppendFormatString("{0} gs\n", gs);
+
+                    _renderer._page.TransparencyUsed = true;
+                }
+            }
+            _realizedStrokeColor = color;
+            _realizedStrokeOverPrint = overPrint;
         }
 
         private void RealizeFillColor(XColor color, bool overPrint, PdfColorMode colorMode)
