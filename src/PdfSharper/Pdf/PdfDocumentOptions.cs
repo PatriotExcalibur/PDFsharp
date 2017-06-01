@@ -50,7 +50,7 @@ namespace PdfSharper.Pdf
             get { return _colorMode; }
             set { _colorMode = value; }
         }
-        PdfColorMode _colorMode = PdfColorMode.Rgb;
+        PdfColorMode _colorMode = PdfColorMode.Undefined;
 
         /// <summary>
         /// Gets or sets a value indicating whether to compress content streams of PDF pages.
