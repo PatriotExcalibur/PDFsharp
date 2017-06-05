@@ -1820,8 +1820,6 @@ namespace PdfSharper.Drawing.Pdf
             if (_streamMode != StreamMode.Text)
             {
                 _content.Append("/Tx BMC\n");
-                SaveState();
-
                 DrawClippingRectange(1, 1, Size.Width, Size.Height);
                 _streamMode = StreamMode.Text;
                 _content.Append("BT\n");
