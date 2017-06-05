@@ -212,34 +212,10 @@ namespace PdfSharper.Pdf.IO
         /// </summary>
         public byte[] ReadStream(int length)
         {
-            byte[] bytes = new byte[length];
-
             // Skip illegal blanks behind �stream�.            
             MoveToNonSpace();
 
-            int pos = _idxChar - _bufferOffset;
-            int read = 0;
-            do
-            {
-                int available = Math.Min(length - read, _bufferLength - pos);
-                Buffer.BlockCopy(_byteBuffer, pos, bytes, read, available);
-                read += available;
-
-                if (read < length)
-                {
-                    _pdfStream.Position = _bufferOffset + _bufferLength;
-                    _bufferOffset = (int)_pdfStream.Position;
-                    _bufferLength = _pdfStream.Read(_byteBuffer, 0, _byteBuffer.Length);
-                    _buffer = Encoding.Default.GetChars(_byteBuffer, 0, _bufferLength);
-                    pos = 0;
-                }
-            } while (read < length);
-
-
-            _idxChar += length;
-            Position = _idxChar;
-
-            return bytes;
+            return ReadBytesFromStream(length);
         }
 
         /// <summary>
@@ -248,8 +224,15 @@ namespace PdfSharper.Pdf.IO
         public String ReadRawString(int position, int length)
         {
             Position = position;
-            byte[] bytes = new byte[length];
 
+            byte[] bytes = ReadBytesFromStream(length);
+
+            return Encoding.Default.GetString(bytes);
+        }
+
+        private byte[] ReadBytesFromStream(int length)
+        {
+            byte[] bytes = new byte[length];
             int pos = _idxChar - _bufferOffset;
             int read = 0;
             do
@@ -257,6 +240,11 @@ namespace PdfSharper.Pdf.IO
                 int available = Math.Min(length - read, _bufferLength - pos);
                 Buffer.BlockCopy(_byteBuffer, pos, bytes, read, available);
                 read += available;
+
+                if (_bufferLength == 0 && read < length)
+                {
+                    throw new ArgumentException("Unexpected end of stream.");
+                }
 
                 if (read < length)
                 {
@@ -268,11 +256,10 @@ namespace PdfSharper.Pdf.IO
                 }
             } while (read < length);
 
-            string result = Encoding.Default.GetString(bytes);
-
             _idxChar += length;
             Position = _idxChar;
-            return result;
+
+            return bytes;
         }
 
         /// <summary>
