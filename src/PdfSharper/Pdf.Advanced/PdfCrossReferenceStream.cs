@@ -44,7 +44,7 @@ namespace PdfSharper.Pdf.Advanced
         /// <summary>
         /// Initializes a new instance of the <see cref="PdfCrossReferenceStream"/> class.
         /// </summary>
-        public PdfCrossReferenceStream(PdfDocument document)
+        public PdfCrossReferenceStream(PdfDocument document, bool initialize = false)
             : base(document)
         {
 #if DEBUG && CORE
@@ -53,6 +53,34 @@ namespace PdfSharper.Pdf.Advanced
                 Debug.WriteLine("PdfCrossReferenceStream created.");
             }
 #endif
+
+            if (initialize)
+            {
+                Initialize();
+            }
+        }
+
+        private void Initialize()
+        {
+            Owner.UnderConstruction = true;
+            try
+            {
+                PdfDictionary decodeParams = new PdfDictionary(Owner);
+                decodeParams.IsCompact = true;
+                decodeParams.Elements.SetInteger("/Columns", 3);
+                decodeParams.Elements.SetInteger("/Predictor", 12);
+
+                Elements.SetObject(PdfDictionary.PdfStream.Keys.DecodeParms, decodeParams);
+                Elements.SetName(Keys.Type, "XRef");
+                PdfArray widthesArray = new PdfArray(Owner, new PdfInteger(1), new PdfInteger(1), new PdfInteger(1));
+                Elements.SetObject(Keys.W, widthesArray);
+
+                Stream = new PdfStream(this);
+            }
+            finally
+            {
+                Owner.UnderConstruction = false;
+            }
         }
 
         public List<CrossReferenceStreamEntry> Entries { get; private set; } = new List<CrossReferenceStreamEntry>();
@@ -106,18 +134,26 @@ namespace PdfSharper.Pdf.Advanced
         {
             //find an objectstream with room
             var viableStream = ObjectStreams.FirstOrDefault(os => !ObjectStreams.Any(osi => osi.Elements.GetReference(Keys.Extends)?.ObjectNumber == os.ObjectNumber));
-            if (viableStream.Reference == iref)
+            if (viableStream?.Reference == iref)
             {
                 return;
             }
 
-            if (viableStream.Number >= 100)
+            if (viableStream == null || viableStream.Number >= 100)
             {
-                PdfReference newExtendsRef = viableStream.Elements.GetReference(Keys.Extends) ?? viableStream.Reference;
+                PdfReference newExtendsRef = null;
+                if (viableStream != null)
+                {
+                    newExtendsRef = viableStream.Elements.GetReference(Keys.Extends) ?? viableStream.Reference;
+                }
                 viableStream = new PdfObjectStream(Owner);
-                viableStream.Elements.SetReference(Keys.Extends, newExtendsRef);
+
+                if (newExtendsRef != null)
+                {
+                    viableStream.Elements.SetReference(Keys.Extends, newExtendsRef);
+                }
                 ObjectStreams.Add(viableStream);
-                Owner.Internals.AddObject(viableStream);              
+                Owner.Internals.AddObject(viableStream);
             }
 
             int index = viableStream.AddObject(iref);

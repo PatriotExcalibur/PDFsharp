@@ -48,7 +48,22 @@ namespace PdfSharper.Pdf.Advanced
 
         internal int StartXRef { get; set; } = -1;
 
-        internal PdfTrailer Prev { get; set; }
+        PdfTrailer _prev;
+        internal PdfTrailer Prev
+        {
+            get
+            {
+                return _prev;
+            }
+            set
+            {
+                if (value != null)
+                {
+                    Elements.SetInteger(Keys.Prev, value.StartXRef);
+                }
+                _prev = value;
+            }
+        }
 
         internal PdfTrailer Next { get; set; }
 

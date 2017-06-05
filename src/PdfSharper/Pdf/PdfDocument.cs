@@ -606,17 +606,13 @@ namespace PdfSharper.Pdf
         }
         internal PdfTrailer MakeNewTrailer()
         {
-            PdfTrailer endingTrailer = new PdfTrailer(this);
+            PdfTrailer endingTrailer = Options.CompressContentStreams ? new PdfCrossReferenceStream(this, true) : new PdfTrailer(this);
+
+            if (Options.CompressContentStreams)
+            {
+                endingTrailer.IsCompact = true;
+            }
             endingTrailer.XRefTable = new PdfCrossReferenceTable(this);
-
-            PdfDictionary trailerInfo = Info.Clone();
-            trailerInfo.Document = this;
-            PdfReference infoReference = new PdfReference(Info.ObjectID, -1);
-            infoReference.Value = trailerInfo;
-
-            endingTrailer.XRefTable.Add(infoReference);
-
-            endingTrailer.Elements.SetReference(PdfTrailer.Keys.Info, infoReference);
 
             //TODO: Document trailer root ok?
             endingTrailer.Elements.SetReference(PdfTrailer.Keys.Root, _trailer.Root);
@@ -629,6 +625,21 @@ namespace PdfSharper.Pdf
             mostRecent.Next = endingTrailer;
 
             _trailers.Insert(0, endingTrailer);
+
+            if (endingTrailer is PdfCrossReferenceStream)
+            {
+                Internals.AddObject(endingTrailer);
+            }
+
+
+            PdfDictionary trailerInfo = Info.Clone();
+            trailerInfo.Document = this;
+            PdfReference infoReference = new PdfReference(Info.ObjectID, -1);
+            infoReference.Value = trailerInfo;
+
+            endingTrailer.AddReference(infoReference);
+
+            endingTrailer.Elements.SetReference(PdfTrailer.Keys.Info, infoReference);
 
             return endingTrailer;
         }
