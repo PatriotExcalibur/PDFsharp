@@ -15,7 +15,7 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
         public void Flatten()
         {
             string fieldValue = "Test";
-            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 1 1 RG\n0.5 0.5 199 19 re\ns\n/Tx BMC\nq\n1 1 200 20 re\nW\nn\n0 G\nBT\n/" + PdfAcroFieldTestHelpers.FONT_NAME + " 10 Tf\n0 g\n2 6.6793 Td\n(" + fieldValue + ")Tj\nET\nQ\nEMC\nQ\n";
+            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n1 1 1 RG\n0.5 0.5 199 19 re\ns\n/Tx BMC\n1 1 200 20 re\nW\nn\n0 G\nBT\n/" + PdfAcroFieldTestHelpers.FONT_NAME + " 10 Tf\n0 g\n2 6.6793 Td\n(" + fieldValue + ")Tj\nET\nEMC\nQ\n";
 
             PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
             PdfTextField field1 = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
