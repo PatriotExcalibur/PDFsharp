@@ -73,7 +73,7 @@ namespace PdfSharper.Pdf.Advanced
                 throw new InvalidOperationException("Object already in table.");
 
             ObjectTable.Add(iref.ObjectID, iref);
-
+            _allReferences = null;
             _maxObjectNumber = Math.Max(_maxObjectNumber, iref.ObjectNumber);
         }
 

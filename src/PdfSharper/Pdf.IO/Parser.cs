@@ -1291,11 +1291,6 @@ namespace PdfSharper.Pdf.IO
                 Value = xrefStream
             };
             xrefTable.Add(iref);
-
-            if (!xrefTable.Contains(iref.ObjectID))
-            {
-                xrefTable.Add(iref);
-            }
             trailerTable.Add(iref);
 
             Debug.Assert(xrefStream.Stream != null);

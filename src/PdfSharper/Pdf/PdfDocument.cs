@@ -799,6 +799,9 @@ namespace PdfSharper.Pdf
 
             var firstPageObjects = PdfTraversalUtility.TransitiveClosure(Pages[0], exclusions).Select(kvp => kvp.Key).ToList();
 
+            //sometimes the transitiveclosure does not include the root element
+            firstPageObjects.Add(Pages[0].Reference);
+
             var fieldsWithKids = firstPageObjects.Select(iref => iref.Value)
                                                  .OfType<PdfAcroField>()
                                                  .Where(af => af.HasKids)
