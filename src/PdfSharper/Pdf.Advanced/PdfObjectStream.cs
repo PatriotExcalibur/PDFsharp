@@ -41,8 +41,10 @@ namespace PdfSharper.Pdf.Advanced
     /// Represents an object stream that contains compressed objects.
     /// PDF 1.5.
     /// </summary>
-    public class PdfObjectStream : PdfDictionary
+    public class PdfObjectStream : PdfDictionary, IDisposable
     {
+        Parser _parser;
+        MemoryStream _readStream;
         // Reference: 3.4.6  Object Streams / Page 100
 
         /// <summary>
@@ -73,8 +75,10 @@ namespace PdfSharper.Pdf.Advanced
             int first = Elements.GetInteger(Keys.First);
             Stream.TryUnfilter();
 
-            Parser parser = new Parser(null, new MemoryStream(Stream.Value));
-            _header = parser.ReadObjectStreamHeader(n, first);
+            _readStream = new MemoryStream(Stream.Value);
+            _parser = new Parser(Owner, _readStream);
+
+            _header = _parser.ReadObjectStreamHeader(n, first);
 
 #if DEBUG && CORE
             if (Internal.PdfDiagnostics.TraceObjectStreams)
@@ -122,10 +126,9 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         internal PdfReference ReadCompressedObject(int index, PdfCrossReferenceTable xRefTable)
         {
-            Parser parser = new Parser(_document, new MemoryStream(Stream.Value));
             int objectNumber = _header[index].ObjectNumber;
             int offset = _header[index].Offset;
-            return parser.ReadCompressedObject(objectNumber, offset, xRefTable);
+            return _parser.ReadCompressedObject(objectNumber, offset, xRefTable);
         }
 
         /// <summary>
@@ -208,6 +211,20 @@ namespace PdfSharper.Pdf.Advanced
             base.WriteObject(writer);
         }
 
+        public void Dispose()
+        {
+            if (_parser != null)
+            {
+                _parser = null;
+            }
+
+            if (_readStream != null)
+            {
+                _readStream.Dispose();
+                _readStream = null;
+            }
+        }
+
         /// <summary>
         /// Predefined keys common to all font dictionaries.
         /// </summary>
@@ -244,7 +261,6 @@ namespace PdfSharper.Pdf.Advanced
             [KeyInfo(KeyType.Stream | KeyType.Optional)]
             public const string Extends = "/Extends";
         }
-
 
     }
 

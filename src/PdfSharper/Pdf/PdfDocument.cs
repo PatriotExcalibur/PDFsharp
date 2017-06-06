@@ -186,6 +186,13 @@ namespace PdfSharper.Pdf
                     // Dispose managed resources.
                 }
                 //PdfDocument.Gob.DetatchDocument(Handle);
+                foreach (PdfTrailer trailer in _trailers)
+                {
+                    foreach (var objStream in trailer.ObjectStreams)
+                    {
+                        objStream.Dispose();
+                    }
+                }
             }
             _state = DocumentState.Disposed;
         }
@@ -634,9 +641,10 @@ namespace PdfSharper.Pdf
 
             PdfDictionary trailerInfo = Info.Clone();
             trailerInfo.Document = this;
-            PdfReference infoReference = new PdfReference(Info.ObjectID, -1);
-            infoReference.Value = trailerInfo;
-
+            PdfReference infoReference = new PdfReference(Info.ObjectID, -1)
+            {
+                Value = trailerInfo
+            };
             endingTrailer.AddReference(infoReference);
 
             endingTrailer.Elements.SetReference(PdfTrailer.Keys.Info, infoReference);

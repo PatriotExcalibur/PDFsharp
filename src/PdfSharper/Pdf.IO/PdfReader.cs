@@ -364,7 +364,7 @@ namespace PdfSharper.Pdf.IO
 
                 foreach (var trailer in document._trailers)
                 {
-                    DecompressObjects(document, parser, trailer.XRefTable);
+                    DecompressObjects(parser, trailer.XRefTable);
                 }
 
                 //only case where we want to read most recent first
@@ -464,6 +464,15 @@ namespace PdfSharper.Pdf.IO
                     }
                 }
 
+                //everything is parsed, cleanup memory
+                foreach (PdfTrailer trailer in document._trailers)
+                {
+                    foreach (var objStream in trailer.ObjectStreams)
+                    {
+                        objStream.Dispose();
+                    }
+                }
+
                 document.UnderConstruction = false;
             }
             catch (Exception ex)
@@ -474,7 +483,7 @@ namespace PdfSharper.Pdf.IO
             return document;
         }
 
-        private static void DecompressObjects(PdfDocument document, Parser parser, PdfCrossReferenceTable xRefTable)
+        private static void DecompressObjects(Parser parser, PdfCrossReferenceTable xRefTable)
         {
             PdfReference[] irefs2 = xRefTable.AllReferences;
 
