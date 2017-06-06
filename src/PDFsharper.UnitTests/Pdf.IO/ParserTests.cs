@@ -7,6 +7,8 @@ using System.Linq;
 using System.IO.Compression;
 using System.IO;
 using PdfSharper.Pdf.AcroForms;
+using PdfSharper.Pdf.Internal;
+using System.Diagnostics;
 
 namespace PDFsharper.UnitTests.Pdf.IO
 {
@@ -14,7 +16,7 @@ namespace PDFsharper.UnitTests.Pdf.IO
     public class ParserTests
     {
 
-#if DEBUG
+#if DEBUG && PEX
         [TestMethod]
         public void Debug_FileRead()
         {
@@ -49,15 +51,42 @@ namespace PDFsharper.UnitTests.Pdf.IO
         }
 
         [TestMethod]
-        public void AF4023_PassthroughAndFill()
+        public void AF4327_PassthroughAndFill()
         {
-            PassThroughAndFill("AF4023");
+            PassThroughAndFill("AF4327");
         }
 
         [TestMethod]
         public void MFRI_PassthroughFillFlat()
         {
             PassThroughFillAndFlatten("MemoForRecordInformational");
+        }
+
+        [TestMethod]
+        public void AF4024_LoadTest()
+        {
+            PdfDiagnostics.TraceXrefStreams = false;
+            PdfDiagnostics.TraceObjectStreams = false;
+            PdfDiagnostics.TraceCompressedObjects = false;
+            using (MemoryStream ms = new MemoryStream(File.ReadAllBytes(@"D:\af4024_large.pdf")))
+            {
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                for (int i = 0; i < 5; i++)
+                {
+                    ms.Seek(0, SeekOrigin.Begin);
+                    var woo = PdfReader.Open(ms);
+                }
+                sw.Stop();
+
+                Console.WriteLine($"Average read time { sw.ElapsedMilliseconds / 5}");
+            }
+        }
+
+        [TestMethod]
+        public void Unlocked_form8()
+        {
+            var doc = PdfReader.Open(@"D:\unlocked_form8.pdf");
         }
 
 
@@ -89,6 +118,24 @@ namespace PDFsharper.UnitTests.Pdf.IO
             {
                 PassThroughFillAndFlatten(Path.GetFileNameWithoutExtension(file));
             }
+        }
+
+        [TestMethod]
+        public void MFRI_ModifySigned()
+        {
+            PdfDocument doc = PdfReader.Open(@"D:\signed\memoforrecordinformational_signed.pdf");
+            var pc = doc.PageCount;
+
+            var page1 = doc.AcroForm.Fields["Page1"];
+
+            PdfTextField mfrSigBlockTitle_1 = (PdfTextField)page1.Fields["mfrSigBlockTitle_1"];
+
+            mfrSigBlockTitle_1.Text = "test a change";
+
+            doc.Save(@"D:\signed\memoforrecordinformational_signed_modified.pdf");
+
+
+            PdfDocument doc2 = PdfReader.Open(@"D:\signed\memoforrecordinformational_signed_modified.pdf");
         }
 
         private static void PassThrough(string formName)
