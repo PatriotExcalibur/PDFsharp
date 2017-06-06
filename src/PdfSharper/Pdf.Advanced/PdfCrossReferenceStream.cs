@@ -41,6 +41,9 @@ namespace PdfSharper.Pdf.Advanced
     /// </summary>
     internal sealed class PdfCrossReferenceStream : PdfTrailer  // Reference: 3.4.7  Cross-Reference Streams / Page 106
     {
+        private PdfObjectStream _viableStream = null;
+        private PdfObjectStream _rootStream = null;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PdfCrossReferenceStream"/> class.
         /// </summary>
@@ -65,8 +68,11 @@ namespace PdfSharper.Pdf.Advanced
             Owner.UnderConstruction = true;
             try
             {
-                PdfDictionary decodeParams = new PdfDictionary(Owner);
-                decodeParams.IsCompact = true;
+                PdfDictionary decodeParams = new PdfDictionary(Owner)
+                {
+                    IsCompact = true
+                };
+
                 decodeParams.Elements.SetInteger("/Columns", 3);
                 decodeParams.Elements.SetInteger("/Predictor", 12);
 
@@ -132,8 +138,8 @@ namespace PdfSharper.Pdf.Advanced
 
         private void AddCompressedObject(PdfReference iref)
         {
-            //find an objectstream with room
-            var viableStream = ObjectStreams.FirstOrDefault(os => !ObjectStreams.Any(osi => osi.Elements.GetReference(Keys.Extends)?.ObjectNumber == os.ObjectNumber));
+            var viableStream = GetViableStreamCandidate();
+            //find an objectstream with room            
             if (viableStream?.Reference == iref)
             {
                 return;
@@ -147,12 +153,12 @@ namespace PdfSharper.Pdf.Advanced
                     newExtendsRef = viableStream.Elements.GetReference(Keys.Extends) ?? viableStream.Reference;
                 }
                 viableStream = new PdfObjectStream(Owner);
-
+                _viableStream = viableStream;
                 if (newExtendsRef != null)
                 {
                     viableStream.Elements.SetReference(Keys.Extends, newExtendsRef);
                 }
-                ObjectStreams.Add(viableStream);
+                ObjectStreams.Insert(0, viableStream);
                 Owner.Internals.AddObject(viableStream);
             }
 
@@ -170,6 +176,22 @@ namespace PdfSharper.Pdf.Advanced
 
         }
 
+        private PdfObjectStream GetViableStreamCandidate()
+        {
+            if (_rootStream == null)
+            {
+                _rootStream = ObjectStreams.FirstOrDefault(os => !ObjectStreams.Any(osi => osi.Elements.GetReference(Keys.Extends)?.ObjectNumber == os.ObjectNumber));
+            }
+
+            var viableStream = _viableStream ?? _rootStream;
+
+            if (_viableStream == null)
+            {
+                _viableStream = viableStream;
+            }
+
+            return viableStream;
+        }
 
         private void AddObject(PdfReference iref)
         {
@@ -219,24 +241,23 @@ namespace PdfSharper.Pdf.Advanced
 
             //do we need to increase width?
             uint maxPosition = (uint)Entries.Where(e => e.Type == 1).Select(e => XRefTable[new PdfObjectID(e.ObjectNumber)].Position).Max();
-            if (maxPosition > 255 && maxPosition <= ushort.MaxValue && field2Width == 1)
+            if (maxPosition > 255 && maxPosition <= ushort.MaxValue && field2Width != 2)
             {
                 field2Width = 2;
                 widthsArray.Elements[1] = new PdfInteger(2);
-                Stream.DecodeColumns++;
             }
-            else if (maxPosition > ushort.MaxValue && maxPosition <= 16777215 && field2Width == 2)
+            else if (maxPosition > ushort.MaxValue && maxPosition <= 16777215 && field2Width != 3)
             {
                 field2Width = 3;
                 widthsArray.Elements[1] = new PdfInteger(3);
-                Stream.DecodeColumns++;
             }
-            else if (maxPosition > 16777215 && maxPosition <= uint.MaxValue && field2Width == 3) //larger than 2GB files?!
+            else if (maxPosition > 16777215 && maxPosition <= uint.MaxValue && field2Width != 4) //larger than 2GB files?!
             {
                 field2Width = 4;
                 widthsArray.Elements[1] = new PdfInteger(4);
-                Stream.DecodeColumns++;
             }
+            field2Width = widthsArray.Elements.GetInteger(1);
+            Stream.DecodeColumns = typeWidth + field2Width + field3Width;
 
             using (MemoryStream ms = new MemoryStream())
             using (BinaryWriter bw = new BinaryWriter(ms))
