@@ -52,6 +52,7 @@ namespace PdfSharper.Pdf.Advanced
         /// Represents the relation between PdfObjectID and PdfReference for a PdfDocument.
         /// </summary>
         public Dictionary<PdfObjectID, PdfReference> ObjectTable = new Dictionary<PdfObjectID, PdfReference>();
+        private PdfReference[] _allReferences;
 
         internal bool IsUnderConstruction
         {
@@ -105,6 +106,7 @@ namespace PdfSharper.Pdf.Advanced
         public void Remove(PdfReference iref)
         {
             ObjectTable.Remove(iref.ObjectID);
+            _allReferences = null;
         }
 
         /// <summary>
@@ -115,8 +117,7 @@ namespace PdfSharper.Pdf.Advanced
         {
             get
             {
-                PdfReference iref;
-                ObjectTable.TryGetValue(objectID, out iref);
+                ObjectTable.TryGetValue(objectID, out PdfReference iref);
                 return iref;
             }
         }
@@ -128,20 +129,6 @@ namespace PdfSharper.Pdf.Advanced
         {
             return ObjectTable.ContainsKey(objectID);
         }
-
-        //public PdfObject GetObject(PdfObjectID objectID)
-        //{
-        //  return this[objectID].Value;
-        //}
-
-        //    /// <summary>
-        //    /// Gets the entry for the specified object, or null, if the object is not in
-        //    /// this XRef table.
-        //    /// </summary>
-        //    internal PdfReference GetEntry(PdfObjectID objectID)
-        //    {
-        //      return this[objectID];
-        //    }
 
         /// <summary>
         /// Returns the next free object number.
@@ -222,12 +209,12 @@ namespace PdfSharper.Pdf.Advanced
         {
             get
             {
-                Dictionary<PdfObjectID, PdfReference>.ValueCollection collection = ObjectTable.Values;
-                List<PdfReference> list = new List<PdfReference>(collection);
-                list.Sort(PdfReference.Comparer);
-                PdfReference[] irefs = new PdfReference[collection.Count];
-                list.CopyTo(irefs, 0);
-                return irefs;
+                if (_allReferences == null)
+                {
+                    _allReferences = ObjectTable.Values.OrderBy(v => v, PdfReference.Comparer).ToArray();
+                }
+
+                return _allReferences;
             }
         }
 
