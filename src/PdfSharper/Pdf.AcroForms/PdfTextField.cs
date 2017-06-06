@@ -210,9 +210,14 @@ namespace PdfSharper.Pdf.AcroForms
             set
             {
                 if (value)
+                {
                     SetFlags |= PdfAcroFieldFlags.RichText;
+                    _needsAppearances = false;
+                }
                 else
+                {
                     SetFlags &= ~PdfAcroFieldFlags.RichText;
+                }
             }
         }
 
@@ -274,7 +279,8 @@ namespace PdfSharper.Pdf.AcroForms
         /// </summary>
         protected override void RenderAppearance()
         {
-
+            //NOTE: We can't render RichText correctly. An external HTML/RFT renderer must create the /AP entry
+            if (RichText) return;
 #if true_
             PdfFormXObject xobj = new PdfFormXObject(Owner);
             Owner.Internals.AddObject(xobj);
@@ -383,11 +389,15 @@ namespace PdfSharper.Pdf.AcroForms
                 XGraphics gfx = XGraphics.FromForm(form);
 
 
-                if (BackColor != XColor.Empty)
+                if (!BackColor.IsEmpty)
                     gfx.DrawRectangle(new XSolidBrush(BackColor), xrect);
                 // Draw Border
                 if (!BorderColor.IsEmpty)
-                    gfx.DrawRectangle(new XPen(BorderColor), xrect);
+                {
+                    float borderWidth = 1;
+                    XRect borderRect = new XRect(xrect.X + (borderWidth / 2), xrect.Y + (borderWidth / 2), xrect.Width - borderWidth, xrect.Height - borderWidth);
+                    gfx.DrawRectangle(new XPen(BorderColor), borderRect);
+                }
 
 
                 xrect = ApplyMarginsToXRectangle(xrect);

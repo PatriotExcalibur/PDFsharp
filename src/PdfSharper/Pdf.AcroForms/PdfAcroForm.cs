@@ -27,7 +27,10 @@
 // DEALINGS IN THE SOFTWARE.
 #endregion
 
+using PdfSharper.Drawing;
+using PdfSharper.Pdf.Advanced;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace PdfSharper.Pdf.AcroForms
@@ -118,7 +121,7 @@ namespace PdfSharper.Pdf.AcroForms
                     yield return current;
                     yield break;
                 }
-                
+
                 foreach (var child in current.Fields)
                 {
                     var subchildren = WalkAllFields(child);
@@ -128,6 +131,35 @@ namespace PdfSharper.Pdf.AcroForms
                     }
                 }
             }
+        }
+
+        private XFont _defaultFont;
+
+        internal XFont GetDefaultFont()
+        {
+            lock (this)
+            {
+                if (_defaultFont == null)
+                {
+                    var defaultFormResources = Elements.GetDictionary(PdfAcroForm.Keys.DR);
+                    if (defaultFormResources != null && defaultFormResources.Elements.ContainsKey(PdfResources.Keys.Font))
+                    {
+                        var fontResourceItem = XForm.GetFontResourceItem("Arial", defaultFormResources);
+                        if (string.IsNullOrEmpty(fontResourceItem.Key))
+                        {
+                            fontResourceItem = XForm.GetFontResourceItem("Helvetica", defaultFormResources);
+                            _defaultFont = new XFont("Helvetica", 10);
+                        }
+                        else
+                            _defaultFont = new XFont("Arial", 10);
+
+                        Debug.Assert(!string.IsNullOrEmpty(fontResourceItem.Key), "Unable to find a default font");
+
+                    }
+                }
+            }
+
+            return _defaultFont;
         }
 
         /// <summary>

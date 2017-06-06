@@ -64,8 +64,11 @@ namespace PdfSharper.Pdf.Annotations
         void Initialize()
         {
             Elements.SetName(Keys.Type, "/Annot");
-            Elements.SetString(Keys.NM, Guid.NewGuid().ToString("D"));
-            Elements.SetDateTime(Keys.M, DateTime.Now);
+            if (!(this is PdfWidgetAnnotation))
+            {
+                Elements.SetString(Keys.NM, Guid.NewGuid().ToString("D"));
+                Elements.SetDateTime(Keys.M, DateTime.Now);
+            }
         }
 
         /// <summary>

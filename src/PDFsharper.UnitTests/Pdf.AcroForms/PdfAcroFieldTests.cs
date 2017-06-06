@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PdfSharper.Drawing;
 using PdfSharper.Pdf;
 using PdfSharper.Pdf.AcroForms;
 using PdfSharper.Pdf.Advanced;
@@ -8,7 +9,7 @@ using System.Linq;
 namespace PDFsharper.UnitTests.Pdf.AcroForms
 {
     [TestClass]
-    public class PdfAcroFieldTests 
+    public class PdfAcroFieldTests
     {
         [TestMethod]
         public void DefaultFonts()
@@ -155,6 +156,39 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
 
             PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
             PdfTextField field = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
+
+            field.Page.Rotate = 0;
+            field.Page.Orientation = PdfSharper.PageOrientation.Portrait;
+
+            field.Text = "Test";
+
+            document.AcroForm.Flatten();    //This method triggers RenderContentStream for each Field
+
+            Assert.IsNotNull(document, "document should not be null");
+            Assert.IsNotNull(document.Pages, "document Pages should not be null");
+            Assert.IsTrue(document.Pages.Count == 1, "document Pages count is not correct");
+            Assert.IsNotNull(document.Pages[0].Contents, "document Pages contents should not be null");
+            Assert.IsNotNull(document.Pages[0].Contents.Elements, "Page Elements should not be null");
+            Assert.IsTrue(document.Pages[0].Contents.Elements.Count == 1, "Page Elements count is incorrect");
+            Assert.IsTrue((document.Pages[0].Contents.Elements.Items[0] as PdfReference) != null, "Page Element should be a PdfReference");
+            Assert.IsTrue(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary) != null, "PdfReference Value should be a PdfDictionary");
+            Assert.IsTrue(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary).Stream != null, "PdfDictionary Stream should not be null");
+            Assert.IsNotNull(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary).Stream.Value, "PdfDictionary Stream Value should not be null");
+
+            string stringRepresentationOfStream = System.Text.Encoding.UTF8.GetString(((document.Pages[0].Contents.Elements.Items[0] as PdfReference).Value as PdfDictionary).Stream.Value);
+
+            Assert.IsNotNull(stringRepresentationOfStream, "stringRepresentationOfStream should not be null");
+            Assert.IsTrue(stringRepresentationOfStream.StartsWith(targetStreamValue), "Stream value is not correct");
+        }
+
+        [TestMethod]
+        public void RenderContentStream_WithBorder()
+        {
+            string targetStreamValue = "q\n1.0 0.0 0.0 1.0 0.0 0.0 cm\n0 G\n";   //Check for color space going to greyscale
+
+            PdfDocument document = PdfAcroFieldTestHelpers.SetupDocumentForTest();
+            PdfTextField field = PdfAcroFieldTestHelpers.CreateTextFieldForTest(document);
+            field.BorderColor = XColor.FromArgb(0, 0, 0);
 
             field.Page.Rotate = 0;
             field.Page.Orientation = PdfSharper.PageOrientation.Portrait;
