@@ -34,6 +34,7 @@ using System.Text;
 using System.IO;
 using PdfSharper.Internal;
 using PdfSharper.Pdf.Internal;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable 1591
 
@@ -82,21 +83,21 @@ namespace PdfSharper.Pdf.IO
 
         private int _bufferOffset = 0;
         private int _bufferLength = 0;
-        private char[] _buffer = new char[8192];
-        private byte[] _byteBuffer = new byte[8192];
+        private char[] _buffer = new char[16384];
+        private byte[] _byteBuffer = new byte[16384];
 
         private void ReadChar()
         {
-            int bufferPosition = _idxChar - _bufferOffset;
             if (_idxChar == _pdfLength)
             {
                 _nextChar = Chars.EOF;
                 return;
             }
 
+            int bufferPosition = _idxChar - _bufferOffset;
             _nextChar = _buffer[bufferPosition];
             _idxChar++;
-            if (_idxChar - _bufferOffset >= _bufferLength && _idxChar < _pdfLength)
+            if (bufferPosition + 1 >= _bufferLength && _idxChar < _pdfLength)
             {
                 _pdfStream.Position = _idxChar;
                 FillBuffer();
@@ -185,17 +186,13 @@ namespace PdfSharper.Pdf.IO
                 case '.':
                     return _symbol = ScanNumber();
             }
-            if (char.IsDigit(ch))
-#if true_
-                return ScanNumberOrReference();
-#else
-                if (PeekReference())
-                    return _symbol = ScanNumber();
-                else
-                    return _symbol = ScanNumber();
-#endif
+            if (ch >= '0' && ch <= '9')
+            {
+                return _symbol = ScanNumber();
+            }
 
-            if (char.IsLetter(ch))
+
+            if (IsEnglishLetter(ch))
                 return _symbol = ScanKeyword();
 
             if (ch == Chars.EOF)
@@ -332,7 +329,7 @@ namespace PdfSharper.Pdf.IO
             }
             while (true)
             {
-                if (char.IsDigit(ch))
+                if (ch >= '0' && ch <= '9')
                 {
                     _token.Append(ch);
                 }
@@ -384,7 +381,7 @@ namespace PdfSharper.Pdf.IO
             // Scan token
             while (true)
             {
-                if (char.IsLetter(ch))
+                if (IsEnglishLetter(ch))
                     _token.Append(ch);
                 else
                     break;
@@ -512,21 +509,21 @@ namespace PdfSharper.Pdf.IO
                                     ch = ScanNextChar(false);
                                     continue;
                                 default:
-                                    if (char.IsDigit(ch))  // First octal character.
+                                    if (ch >= '0' && ch <= '9')  // First octal character.
                                     {
                                         // Octal character code.
                                         if (ch >= '8')
                                             ParserDiagnostics.HandleUnexpectedCharacter(ch);
 
                                         int n = ch - '0';
-                                        if (char.IsDigit(_nextChar))  // Second octal character.
+                                        if (ch >= '0' && ch <= '9')  // Second octal character.
                                         {
                                             ch = ScanNextChar(false);
                                             if (ch >= '8')
                                                 ParserDiagnostics.HandleUnexpectedCharacter(ch);
 
                                             n = n * 8 + ch - '0';
-                                            if (char.IsDigit(_nextChar))  // Third octal character.
+                                            if (ch >= '0' && ch <= '9')  // Third octal character.
                                             {
                                                 ch = ScanNextChar(false);
                                                 if (ch >= '8')
@@ -668,66 +665,6 @@ namespace PdfSharper.Pdf.IO
             }
 
             return _currChar;
-        }
-
-        ///// <summary>
-        ///// Resets the current token to the empty string.
-        ///// </summary>
-        //void ClearToken()
-        //{
-        //    _token.Length = 0;
-        //}
-
-        bool PeekReference()
-        {
-            // A Reference has the form "nnn mmm R". The implementation of the the parser used a
-            // reduce/shift algorithm in the first place. But this case is the only one we need to
-            // look ahead 3 tokens. 
-            int position = _idxChar - 2;
-
-            // Skip digits.
-            while (char.IsDigit(_currChar))
-                ScanNextChar(true);
-
-            // Space expected.
-            if (_currChar != Chars.SP)
-                goto False;
-
-            // Skip spaces.
-            while (_currChar == Chars.SP)
-                ScanNextChar(true);
-
-            // Digit expected.
-            if (!char.IsDigit(_currChar))
-                goto False;
-
-            // Skip digits.
-            while (char.IsDigit(_currChar))
-                ScanNextChar(true);
-
-            // Space expected.
-            if (_currChar != Chars.SP)
-                goto False;
-
-            // Skip spaces.
-            while (_currChar == Chars.SP)
-                ScanNextChar(true);
-
-            // "R" expected.
-            // We can ignore _nextChar because there is no other valid token that starts with an 'R'.
-            if (_currChar != 'R')
-                goto False;
-
-            Position = position;
-            ScanNextChar(false);
-            ScanNextChar(false);
-            return true;
-
-            False:
-            Position = position;
-            ScanNextChar(false);
-            ScanNextChar(false);
-            return false;
         }
 
         /// <summary>
@@ -924,9 +861,16 @@ namespace PdfSharper.Pdf.IO
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsEnglishLetter(char ch)
+        {
+            return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
+        }
+
         /// <summary>
         /// Indicates whether the specified character is a PDF white-space character.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsWhiteSpace(char ch)
         {
             switch (ch)
@@ -945,6 +889,7 @@ namespace PdfSharper.Pdf.IO
         /// <summary>
         /// Indicates whether the specified character is a PDF delimiter character.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsDelimiter(char ch)
         {
             switch (ch)
