@@ -128,7 +128,7 @@ namespace PdfSharper.Pdf.Advanced
             PdfFormXObjectTable table = _document.FormTable;
             PdfImportedObjectTable iot = table.GetImportedObjectTable(externalObject.Owner);
             PdfReference reference = iot[externalObject.ObjectID];
-            return reference == null ? null : reference.Value;
+            return reference?.Value;
         }
 
         /// <summary>
@@ -294,8 +294,10 @@ namespace PdfSharper.Pdf.Advanced
         public void WriteObject(Stream stream, PdfItem item)
         {
             // Never write an encrypted object
-            PdfWriter writer = new PdfWriter(stream, null);
-            writer.Options = PdfWriterOptions.OmitStream;
+            PdfWriter writer = new PdfWriter(stream, null)
+            {
+                Options = PdfWriterOptions.OmitStream
+            };
             item.Write(writer);
         }
 

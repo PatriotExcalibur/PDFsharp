@@ -553,8 +553,10 @@ namespace PdfSharper.Pdf.IO
                                 {
                                     // XRefTable not complete when trailer is read. Create temporary irefs that are
                                     // removed later in PdfTrailer.FixXRefs.
-                                    iref = new PdfReference(objectID, -1);
-                                    iref.Document = _document;
+                                    iref = new PdfReference(objectID, -1)
+                                    {
+                                        Document = _document
+                                    };
                                     _stack.Reduce(iref, 2);
                                     break;
                                 }
@@ -1178,8 +1180,10 @@ namespace PdfSharper.Pdf.IO
         {
             Debug.Assert(xrefTable != null);
 
-            PdfCrossReferenceTable trailerTable = new PdfCrossReferenceTable(_document);
-            trailerTable.IsUnderConstruction = true;
+            PdfCrossReferenceTable trailerTable = new PdfCrossReferenceTable(_document)
+            {
+                IsUnderConstruction = true
+            };
 
             Symbol symbol = ScanNextToken();
 
@@ -1229,8 +1233,10 @@ namespace PdfSharper.Pdf.IO
                     {
                         trailerTable.IsUnderConstruction = false;
                         ReadSymbol(Symbol.BeginDictionary);
-                        PdfTrailer trailer = new PdfTrailer(_document);
-                        trailer.XRefTable = trailerTable;
+                        PdfTrailer trailer = new PdfTrailer(_document)
+                        {
+                            XRefTable = trailerTable
+                        };
                         ReadDictionary(trailer, false, trailerTable);
                         return trailer;
                     }
@@ -1268,18 +1274,22 @@ namespace PdfSharper.Pdf.IO
             ReadSymbol(Symbol.BeginDictionary);
             PdfObjectID objectID = new PdfObjectID(number, generation);
 
-            PdfCrossReferenceStream xrefStream = new PdfCrossReferenceStream(_document);
-            xrefStream.XRefTable = trailerTable;
+            PdfCrossReferenceStream xrefStream = new PdfCrossReferenceStream(_document)
+            {
+                XRefTable = trailerTable
+            };
             trailerTable.IsUnderConstruction = true;
             ReadDictionary(xrefStream, false, xrefTable);
             ReadSymbol(Symbol.BeginStream);
             ReadStream(xrefStream);
 
 
-            PdfReference iref = new PdfReference(xrefStream);
-            iref.Document = _document;
-            iref.ObjectID = objectID;
-            iref.Value = xrefStream;
+            PdfReference iref = new PdfReference(xrefStream)
+            {
+                Document = _document,
+                ObjectID = objectID,
+                Value = xrefStream
+            };
             xrefTable.Add(iref);
 
             if (!xrefTable.Contains(iref.ObjectID))
@@ -1388,12 +1398,14 @@ namespace PdfSharper.Pdf.IO
                     index2++;
 
                     PdfCrossReferenceStream.CrossReferenceStreamEntry item =
-                        new PdfCrossReferenceStream.CrossReferenceStreamEntry();
+                        new PdfCrossReferenceStream.CrossReferenceStreamEntry()
+                        {
+                            Type = StreamHelper.ReadBytes(bytes, index2 * wsum, wsize[0]),
+                            Field2 = StreamHelper.ReadBytes(bytes, index2 * wsum + wsize[0], wsize[1]),
+                            Field3 = StreamHelper.ReadBytes(bytes, index2 * wsum + wsize[0] + wsize[1], wsize[2]),
+                            ObjectNumber = subsections[ssc][0] + idx
+                        };
 
-                    item.Type = StreamHelper.ReadBytes(bytes, index2 * wsum, wsize[0]);
-                    item.Field2 = StreamHelper.ReadBytes(bytes, index2 * wsum + wsize[0], wsize[1]);
-                    item.Field3 = StreamHelper.ReadBytes(bytes, index2 * wsum + wsize[0] + wsize[1], wsize[2]);
-                    item.ObjectNumber = subsections[ssc][0] + idx;
                     xrefStream.Entries.Add(item);
 
                     switch (item.Type)
@@ -1403,8 +1415,8 @@ namespace PdfSharper.Pdf.IO
                             break;
 
                         case 1: // offset / generation number
-                            //// Even it is restricted, an object can exists in more than one subsection.
-                            //// (PDF Reference Implementation Notes 15).
+                                //// Even it is restricted, an object can exists in more than one subsection.
+                                //// (PDF Reference Implementation Notes 15).
 
                             int position = (int)item.Field2;
                             objectID = ReadObjectNumber(position);
@@ -1817,10 +1829,11 @@ namespace PdfSharper.Pdf.IO
 
         private ParserState SaveState()
         {
-            ParserState state = new ParserState();
-            state.Position = _lexer.Position;
-            state.Symbol = _lexer.Symbol;
-            return state;
+            return new ParserState()
+            {
+                Position = _lexer.Position,
+                Symbol = _lexer.Symbol
+            };
         }
 
         private void RestoreState(ParserState state)

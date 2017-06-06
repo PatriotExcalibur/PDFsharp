@@ -184,8 +184,10 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         internal PdfArray CreateNewDocumentIDs()
         {
-            PdfArray array = new PdfArray(_document);
-            array.IsCompact = true;
+            PdfArray array = new PdfArray(_document)
+            {
+                IsCompact = true
+            };
             byte[] docID = Guid.NewGuid().ToByteArray();
             string id = PdfEncoders.RawEncoding.GetString(docID, 0, docID.Length);
             array.Elements.Add(new PdfString(id, PdfStringFlags.HexLiteral));
