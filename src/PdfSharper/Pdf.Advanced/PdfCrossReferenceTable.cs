@@ -117,7 +117,8 @@ namespace PdfSharper.Pdf.Advanced
         {
             get
             {
-                ObjectTable.TryGetValue(objectID, out PdfReference iref);
+                PdfReference iref;
+                ObjectTable.TryGetValue(objectID, out iref);
                 return iref;
             }
         }
