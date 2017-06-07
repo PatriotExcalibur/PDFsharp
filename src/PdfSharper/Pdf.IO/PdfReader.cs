@@ -400,21 +400,11 @@ namespace PdfSharper.Pdf.IO
                 }
                 else if (!signaturePresent && document._trailers.Count == 1)
                 {
-                    int removed = document._irefTable.Compact();
-                    if (removed != 0)
-                        Debug.WriteLine("Number of deleted unreachable objects: " + removed);
-
-
                     document._trailer.XRefTable = document._irefTable;
 
                     PdfPages pages = document.Pages;
                     Debug.Assert(pages != null);
-
-                    //TODO: Renumber does not go and remap references to the existing object, how has this ever worked?
-                    //document._irefTable.CheckConsistence();
-                    //document._irefTable.Renumber();
-                    //document._irefTable.CheckConsistence();
-
+                 
                     document._trailer.Prev = null;
                     document._trailer.Next = null;
                 }
