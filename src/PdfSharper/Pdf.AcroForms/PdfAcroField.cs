@@ -766,7 +766,7 @@ namespace PdfSharper.Pdf.AcroForms
 
                 if (Page.Annotations.Count == 0)
                 {
-                    if (canRemove)
+                    if (canRemove && Page.Annotations.IsIndirect)
                     {
                         _document.Internals.RemoveObject(Page.Annotations);
                     }
