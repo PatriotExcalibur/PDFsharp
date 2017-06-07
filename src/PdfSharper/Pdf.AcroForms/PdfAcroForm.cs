@@ -76,9 +76,10 @@ namespace PdfSharper.Pdf.AcroForms
         /// </summary>
         public void Flatten()
         {
-            for (var i = 0; i < Fields.Elements.Count; i++)
+            Queue<PdfAcroField> fieldsToRemove = new Queue<PdfAcroField>(Fields);
+            while (fieldsToRemove.Count > 0)
             {
-                var field = Fields[i];
+                var field = fieldsToRemove.Dequeue();
                 field.Flatten();
             }
 
