@@ -18,6 +18,9 @@ namespace PdfSharper.Fonts.AFM
         private static readonly string TIMESBOLDITALIC = "PdfSharper.Fonts.AFM.Files.Times-BoldItalic.afm";
         private static readonly string TIMESITALIC = "PdfSharper.Fonts.AFM.Files.Times-Italic.afm";
         private static readonly string TIMESNEWROMAN = "PdfSharper.Fonts.AFM.Files.Times-New-Roman.afm";
+        private static readonly string TIMESNEWROMANBOLD = "PdfSharper.Fonts.AFM.Files.Times-New-Roman-Bold.afm";
+        private static readonly string TIMESNEWROMANITALIC = "PdfSharper.Fonts.AFM.Files.Times-New-Roman-Italic.afm";
+        private static readonly string TIMESNEWROMANBOLDITALIC = "PdfSharper.Fonts.AFM.Files.Times-New-Roman-BoldItalic.afm";
         private static readonly string TIMESROMAN = "PdfSharper.Fonts.AFM.Files.Times-Roman.afm";
         private static readonly string ZAPFDINGBATS = "PdfSharper.Fonts.AFM.Files.ZapfDingbats.afm";
         private static readonly string SEGOEUI = "PdfSharper.Fonts.AFM.Files.segoeui.afm";
@@ -59,9 +62,12 @@ namespace PdfSharper.Fonts.AFM
 
 
             //Times New Roman Family
-            { "Times New Roman", new string[] { TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN } },
+            { "Times New Roman", new string[] { TIMESNEWROMAN, TIMESNEWROMANBOLD, TIMESNEWROMANITALIC, TIMESNEWROMANBOLDITALIC } },
             { "TimesNewRoman", new string[] { TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN } },
-            { "TimesNewRomanPSMT", new string[] { TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN, TIMESNEWROMAN } },
+            { "TimesNewRomanPSMT", new string[] { TIMESNEWROMAN, TIMESNEWROMANBOLD, TIMESNEWROMANITALIC, TIMESNEWROMANBOLDITALIC } },
+            { "TimesNewRomanPS-BoldMT", new string[] { TIMESNEWROMANBOLD, TIMESNEWROMANBOLD, TIMESNEWROMANBOLD, TIMESNEWROMANBOLD } },
+            { "TimesNewRomanPS-ItalicMT", new string[] { TIMESNEWROMANITALIC, TIMESNEWROMANITALIC, TIMESNEWROMANITALIC, TIMESNEWROMANITALIC } },
+            { "TimesNewRomanPS-BoldItalicMT", new string[] { TIMESNEWROMANBOLDITALIC, TIMESNEWROMANBOLDITALIC, TIMESNEWROMANBOLDITALIC, TIMESNEWROMANBOLDITALIC } },
             
             
             //Symbol family

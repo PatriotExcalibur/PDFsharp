@@ -559,7 +559,14 @@ namespace PdfSharper.Drawing
                 case "Times-BoldItalic":
                     return "TiBI";
                 case "Times New Roman":
-                    return "TimesNewRomanPSMT";
+                    if (!isBold && !isItalic)
+                        return "TimesNewRomanPSMT";
+                    else if (isBold && !isItalic)
+                        return "TimesNewRomanPS-BoldMT";
+                    else if (isItalic && !isBold)
+                        return "TimesNewRomanPS-ItalicMT";
+                    else
+                        return "TimesNewRomanPS-BoldItalicMT";
                 case "Symbol":
                     return "Symb";
                 case "ZapfDingbats":
