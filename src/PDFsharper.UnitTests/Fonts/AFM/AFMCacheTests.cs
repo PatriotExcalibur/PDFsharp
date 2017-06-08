@@ -454,17 +454,17 @@ namespace PDFsharper.UnitTests.Fonts.AFM
             AFMDetails details = AFMCache.Instance.GetFontMetricsByNameAndAttributes("TimesNewRomanPSMT", true, false);
 
             Assert.IsNotNull(details, "AFM Details should not be null");
-            Assert.IsTrue(details.FontName == "TimesNewRomanPSMT", "FontName is not correct");
-            Assert.IsTrue(details.Ascender == 891, "Ascender is not correct");
-            Assert.IsTrue(details.BBoxLLX == -568, "BBoxLLX is not correct");
-            Assert.IsTrue(details.BBoxLLY == -307, "BBoxLLY is not correct");
-            Assert.IsTrue(details.BBoxURX == 2028, "BBoxURX is not correct");
-            Assert.IsTrue(details.BBoxURY == 1007, "BBoxURY is not correct");
-            Assert.IsTrue(details.CapHeight == 0, "CapHeight is not correct");
+            Assert.IsTrue(details.FontName == "TimesNewRomanPS-BoldMT", "FontName is not correct");
+            Assert.IsTrue(details.Ascender == 662, "Ascender is not correct");
+            Assert.IsTrue(details.BBoxLLX == -558, "BBoxLLX is not correct");
+            Assert.IsTrue(details.BBoxLLY == -328, "BBoxLLY is not correct");
+            Assert.IsTrue(details.BBoxURX == 2000, "BBoxURX is not correct");
+            Assert.IsTrue(details.BBoxURY == 1056, "BBoxURY is not correct");
+            Assert.IsTrue(details.CapHeight == 662, "CapHeight is not correct");
             Assert.IsNotNull(details.CharacterWidths, "CharacterWidths should not be null");
-            Assert.IsTrue(details.CharacterWidths.Count == 255, "CharacterWidths count is not correct");
-            Assert.IsTrue(details.Descender == -216, "Descender is not correct");
-            Assert.IsTrue(details.EncodingScheme == "FontSpecific", "EncodingScheme is not correct");
+            Assert.IsTrue(details.CharacterWidths.Count == 191, "CharacterWidths count is not correct");
+            Assert.IsTrue(details.Descender == -214, "Descender is not correct");
+            Assert.IsTrue(details.EncodingScheme == "ISO10646-1", "EncodingScheme is not correct");
         }
 
         [TestMethod]
@@ -473,17 +473,17 @@ namespace PDFsharper.UnitTests.Fonts.AFM
             AFMDetails details = AFMCache.Instance.GetFontMetricsByNameAndAttributes("TimesNewRomanPSMT", false, true);
 
             Assert.IsNotNull(details, "AFM Details should not be null");
-            Assert.IsTrue(details.FontName == "TimesNewRomanPSMT", "FontName is not correct");
-            Assert.IsTrue(details.Ascender == 891, "Ascender is not correct");
-            Assert.IsTrue(details.BBoxLLX == -568, "BBoxLLX is not correct");
+            Assert.IsTrue(details.FontName == "TimesNewRomanPS-ItalicMT", "FontName is not correct");
+            Assert.IsTrue(details.Ascender == 694, "Ascender is not correct");
+            Assert.IsTrue(details.BBoxLLX == -498, "BBoxLLX is not correct");
             Assert.IsTrue(details.BBoxLLY == -307, "BBoxLLY is not correct");
-            Assert.IsTrue(details.BBoxURX == 2028, "BBoxURX is not correct");
-            Assert.IsTrue(details.BBoxURY == 1007, "BBoxURY is not correct");
-            Assert.IsTrue(details.CapHeight == 0, "CapHeight is not correct");
+            Assert.IsTrue(details.BBoxURX == 1334, "BBoxURX is not correct");
+            Assert.IsTrue(details.BBoxURY == 1024, "BBoxURY is not correct");
+            Assert.IsTrue(details.CapHeight == 662, "CapHeight is not correct");
             Assert.IsNotNull(details.CharacterWidths, "CharacterWidths should not be null");
-            Assert.IsTrue(details.CharacterWidths.Count == 255, "CharacterWidths count is not correct");
-            Assert.IsTrue(details.Descender == -216, "Descender is not correct");
-            Assert.IsTrue(details.EncodingScheme == "FontSpecific", "EncodingScheme is not correct");
+            Assert.IsTrue(details.CharacterWidths.Count == 191, "CharacterWidths count is not correct");
+            Assert.IsTrue(details.Descender == -214, "Descender is not correct");
+            Assert.IsTrue(details.EncodingScheme == "ISO10646-1", "EncodingScheme is not correct");
         }
 
         [TestMethod]
@@ -492,17 +492,17 @@ namespace PDFsharper.UnitTests.Fonts.AFM
             AFMDetails details = AFMCache.Instance.GetFontMetricsByNameAndAttributes("TimesNewRomanPSMT", true, true);
 
             Assert.IsNotNull(details, "AFM Details should not be null");
-            Assert.IsTrue(details.FontName == "TimesNewRomanPSMT", "FontName is not correct");
-            Assert.IsTrue(details.Ascender == 891, "Ascender is not correct");
-            Assert.IsTrue(details.BBoxLLX == -568, "BBoxLLX is not correct");
+            Assert.IsTrue(details.FontName == "TimesNewRomanPS-BoldItalicMT", "FontName is not correct");
+            Assert.IsTrue(details.Ascender == 677, "Ascender is not correct");
+            Assert.IsTrue(details.BBoxLLX == -548, "BBoxLLX is not correct");
             Assert.IsTrue(details.BBoxLLY == -307, "BBoxLLY is not correct");
-            Assert.IsTrue(details.BBoxURX == 2028, "BBoxURX is not correct");
-            Assert.IsTrue(details.BBoxURY == 1007, "BBoxURY is not correct");
-            Assert.IsTrue(details.CapHeight == 0, "CapHeight is not correct");
+            Assert.IsTrue(details.BBoxURX == 1401, "BBoxURX is not correct");
+            Assert.IsTrue(details.BBoxURY == 1033, "BBoxURY is not correct");
+            Assert.IsTrue(details.CapHeight == 662, "CapHeight is not correct");
             Assert.IsNotNull(details.CharacterWidths, "CharacterWidths should not be null");
-            Assert.IsTrue(details.CharacterWidths.Count == 255, "CharacterWidths count is not correct");
-            Assert.IsTrue(details.Descender == -216, "Descender is not correct");
-            Assert.IsTrue(details.EncodingScheme == "FontSpecific", "EncodingScheme is not correct");
+            Assert.IsTrue(details.CharacterWidths.Count == 191, "CharacterWidths count is not correct");
+            Assert.IsTrue(details.Descender == -214, "Descender is not correct");
+            Assert.IsTrue(details.EncodingScheme == "ISO10646-1", "EncodingScheme is not correct");
         }
 
         [TestMethod]
