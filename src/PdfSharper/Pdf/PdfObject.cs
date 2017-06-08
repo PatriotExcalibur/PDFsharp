@@ -236,16 +236,12 @@ namespace PdfSharper.Pdf
 
         public virtual void FlagAsDirty()
         {
-            if (IsDirty || _document._trailers.Count == 1)
+            if (IsDirty || _document._trailers.All(t => t.IsReadOnly == false))
             {
                 return; //we have already cloned ourselves for modification  or the document is not incrementally updated
             }
 
-            PdfTrailer writableTrailer = _document._trailers.SingleOrDefault(t => t.IsReadOnly == false);
-            if (writableTrailer == null)
-            {
-                writableTrailer = _document.MakeNewTrailer();
-            }
+            PdfTrailer writableTrailer = _document.GetWritableTrailer(ObjectID);
 
             if (IsIndirect)
             {
@@ -253,6 +249,7 @@ namespace PdfSharper.Pdf
                 //Gather all references to this object
 
                 PdfObjectID objID = this.ObjectID;
+                //TODO: Compressed object? 
                 PdfReference cloneReference = new PdfReference(Reference.ObjectID, Reference.Position);
                 cloneReference.Document = _document;
                 Reference = null;
@@ -276,7 +273,7 @@ namespace PdfSharper.Pdf
 
                 if (!writableTrailer.XRefTable.Contains(ObjectID))
                 {
-                    writableTrailer.XRefTable.Add(this);
+                    writableTrailer.AddReference(this.Reference);
                 }
                 IsDirty = true;
             }

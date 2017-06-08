@@ -88,6 +88,13 @@ namespace PdfSharper.Pdf.Advanced
 #endif
         }
 
+        internal PdfReference(PdfObjectID objectID, PdfObjectID containingStreamID, int streamIndex)
+        {
+            _objectID = objectID;
+            _containingStreamID = containingStreamID;
+            _containingStreamIndex = streamIndex;
+        }
+
         /// <summary>
         /// Writes the object in PDF iref table format.
         /// </summary>
@@ -159,12 +166,21 @@ namespace PdfSharper.Pdf.Advanced
         }
         int _position;  // I know it should be long, but I have never seen a 2GB PDF file.
 
-        //public bool InUse
-        //{
-        //  get {return inUse;}
-        //  set {inUse = value;}
-        //}
-        //bool inUse;
+        public PdfObjectID ContainingStreamID
+        {
+            get { return _containingStreamID; }
+            internal set { _containingStreamID = value; }
+        }
+        PdfObjectID _containingStreamID;
+
+        public int ContainingStreamIndex
+        {
+            get { return _containingStreamIndex; }
+            internal set { _containingStreamIndex = value; }
+        }
+
+        int _containingStreamIndex;
+
 
         /// <summary>
         /// Gets or sets the referenced PdfObject.

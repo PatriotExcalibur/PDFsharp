@@ -177,7 +177,9 @@ namespace PdfSharper.Pdf.Advanced
                 else
                 {
                     if (AcroForm != null && AcroForm.Reference != null)
-                        _document._irefTable.Remove(AcroForm.Reference);
+                    {
+                        _document.Internals.RemoveObject(AcroForm);
+                    }
 
                     Elements.Remove(Keys.AcroForm);
                 }
@@ -199,6 +201,12 @@ namespace PdfSharper.Pdf.Advanced
                     Elements.SetString(Keys.Lang, value);
             }
         }
+
+        public PdfStructure StructTreeRoot
+        {
+            get { return (PdfStructure)Elements.GetValue(Keys.StructTreeRoot, VCF.None); }
+        }
+
 
         /// <summary>
         /// Dispatches PrepareForSave to the objects that need it.
@@ -369,7 +377,7 @@ namespace PdfSharper.Pdf.Advanced
             /// <summary>
             /// (Optional; PDF 1.3) The document�s structure tree root dictionary.
             /// </summary>
-            [KeyInfo("1.3", KeyType.Dictionary | KeyType.Optional)]
+            [KeyInfo("1.3", KeyType.Dictionary | KeyType.Optional, typeof(PdfStructure))]
             public const string StructTreeRoot = "/StructTreeRoot";
 
             /// <summary>

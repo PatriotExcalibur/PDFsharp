@@ -31,6 +31,9 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using PdfSharper.Pdf.IO;
+using System.Linq;
+using PdfSharper.Pdf.Internal;
+using System.Collections.Generic;
 
 namespace PdfSharper.Pdf.Advanced
 {
@@ -38,8 +41,10 @@ namespace PdfSharper.Pdf.Advanced
     /// Represents an object stream that contains compressed objects.
     /// PDF 1.5.
     /// </summary>
-    public class PdfObjectStream : PdfDictionary
+    public class PdfObjectStream : PdfDictionary, IDisposable
     {
+        Parser _parser;
+        MemoryStream _readStream;
         // Reference: 3.4.6  Object Streams / Page 100
 
         /// <summary>
@@ -54,6 +59,10 @@ namespace PdfSharper.Pdf.Advanced
                 Debug.WriteLine("PdfObjectStream(document) created.");
             }
 #endif
+
+            Elements.SetName(Keys.Type, "ObjStm");
+            Number = 0;
+
         }
 
         /// <summary>
@@ -66,13 +75,15 @@ namespace PdfSharper.Pdf.Advanced
             int first = Elements.GetInteger(Keys.First);
             Stream.TryUnfilter();
 
-            Parser parser = new Parser(null, new MemoryStream(Stream.Value));
-            _header = parser.ReadObjectStreamHeader(n, first);
+            _readStream = new MemoryStream(Stream.Value);
+            _parser = new Parser(Owner, _readStream);
+
+            _header = _parser.ReadObjectStreamHeader(n, first);
 
 #if DEBUG && CORE
             if (Internal.PdfDiagnostics.TraceObjectStreams)
             {
-                Debug.WriteLine(String.Format("PdfObjectStream(document) created. Header item count: {0}", _header.GetLength(0)));
+                Debug.WriteLine(String.Format("PdfObjectStream(document) created. Header item count: {0}", _header.Count));
             }
 #endif
         }
@@ -84,17 +95,14 @@ namespace PdfSharper.Pdf.Advanced
         {
             ////// Create parser for stream.
             ////Parser parser = new Parser(_document, new MemoryStream(Stream.Value));
-            for (int idx = 0; idx < _header.Length; idx++)
+            for (int idx = 0; idx < _header.Count; idx++)
             {
-                int objectNumber = _header[idx][0];
-                int offset = _header[idx][1];
+                int objectNumber = _header[idx].ObjectNumber;
+                int offset = _header[idx].Offset;
 
                 PdfObjectID objectID = new PdfObjectID(objectNumber);
 
-                // HACK: -1 indicates compressed object.
-                PdfReference iref = new PdfReference(objectID, -1);
-                ////iref.ObjectID = objectID;
-                ////iref.Value = xrefStream;
+                PdfReference iref = new PdfReference(objectID, this.ObjectID, idx);
                 if (!xrefTable.Contains(iref.ObjectID))
                 {
                     xrefTable.Add(iref);
@@ -118,10 +126,9 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         internal PdfReference ReadCompressedObject(int index, PdfCrossReferenceTable xRefTable)
         {
-            Parser parser = new Parser(_document, new MemoryStream(Stream.Value));
-            int objectNumber = _header[index][0];
-            int offset = _header[index][1];
-            return parser.ReadCompressedObject(objectNumber, offset, xRefTable);
+            int objectNumber = _header[index].ObjectNumber;
+            int offset = _header[index].Offset;
+            return _parser.ReadCompressedObject(objectNumber, offset, xRefTable);
         }
 
         /// <summary>
@@ -130,7 +137,93 @@ namespace PdfSharper.Pdf.Advanced
         /// The second integer represents the absolute offset of that object in the decoded stream,
         /// i.e. the byte offset plus First entry.
         /// </summary>
-        private readonly int[][] _header;  // Reference: Page 102
+        internal List<PdfObjectStreamHeader> _header = new List<PdfObjectStreamHeader>();  // Reference: Page 102
+
+        public int Number
+        {
+            get
+            {
+                return Elements.GetInteger(Keys.N);
+            }
+            private set
+            {
+                Elements.SetInteger(Keys.N, value);
+            }
+        }
+
+        internal int AddObject(PdfReference iref)
+        {
+            lock (_header)
+            {
+                _header.Add(new PdfObjectStreamHeader { ObjectNumber = iref.ObjectNumber, Offset = 0 });
+                Number++;
+                return _header.Count - 1;
+            }
+        }
+
+        internal void RemoveObject(PdfReference iref)
+        {
+            lock (_header)
+            {
+                var toRemove = _header.FirstOrDefault(he => he.ObjectNumber == iref.ObjectNumber);
+                if (toRemove != null)
+                {
+                    _header.Remove(toRemove);
+                    iref.ContainingStreamID = PdfObjectID.Empty;
+                    iref.ContainingStreamIndex = 0;
+                    Number--;
+                }
+            }
+        }
+
+        protected override void WriteObject(PdfWriter writer)
+        {
+            //setup our stream             
+            using (MemoryStream msObjects = new MemoryStream())
+            using (MemoryStream fullOutput = new MemoryStream())
+            {
+                PdfWriter objStreamWriter = new PdfWriter(msObjects, _document.SecurityHandler, true);
+                for (int i = 0; i < _header.Count; i++)
+                {
+                    PdfObjectStreamHeader objHeader = _header[i];
+                    //non-offset position 
+                    objHeader.Offset = objStreamWriter.Position;
+
+                    //TODO: get the object from the correct trailer, it's not always the most recent version that
+                    //should be written here
+                    _document._irefTable[new PdfObjectID(objHeader.ObjectNumber)].Value.Write(objStreamWriter);
+                }
+
+                string objectStreamHeader = string.Join(" ", _header.Select(h => $"{h.ObjectNumber} {h.Offset}")) + " ";
+
+
+                Elements.SetInteger(Keys.First, objectStreamHeader.Length);
+
+                var rawHeader = new RawEncoding().GetBytes(objectStreamHeader);
+                fullOutput.Write(rawHeader, 0, rawHeader.Length);
+
+                msObjects.Seek(0, SeekOrigin.Begin);
+                msObjects.CopyTo(fullOutput);
+
+                Stream = new PdfStream(fullOutput.ToArray(), this, Stream?.Trailer);
+                Stream.Zip();
+            }
+            base.WriteObject(writer);
+        }
+
+        public void Dispose()
+        {
+            if (_parser != null)
+            {
+                _parser = null;
+            }
+
+            if (_readStream != null)
+            {
+                _readStream.Dispose();
+                _readStream = null;
+            }
+        }
 
         /// <summary>
         /// Predefined keys common to all font dictionaries.
@@ -168,6 +261,7 @@ namespace PdfSharper.Pdf.Advanced
             [KeyInfo(KeyType.Stream | KeyType.Optional)]
             public const string Extends = "/Extends";
         }
+
     }
 
 #if DEBUG && CORE

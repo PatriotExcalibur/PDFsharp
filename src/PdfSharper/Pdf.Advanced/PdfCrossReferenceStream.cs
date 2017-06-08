@@ -29,6 +29,10 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using PdfSharper.Pdf.IO;
+using System.IO;
+using System;
+using System.Linq;
 
 namespace PdfSharper.Pdf.Advanced
 {
@@ -37,10 +41,13 @@ namespace PdfSharper.Pdf.Advanced
     /// </summary>
     internal sealed class PdfCrossReferenceStream : PdfTrailer  // Reference: 3.4.7  Cross-Reference Streams / Page 106
     {
+        private PdfObjectStream _viableStream = null;
+        private PdfObjectStream _rootStream = null;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PdfCrossReferenceStream"/> class.
         /// </summary>
-        public PdfCrossReferenceStream(PdfDocument document)
+        public PdfCrossReferenceStream(PdfDocument document, bool initialize = false)
             : base(document)
         {
 #if DEBUG && CORE
@@ -49,11 +56,42 @@ namespace PdfSharper.Pdf.Advanced
                 Debug.WriteLine("PdfCrossReferenceStream created.");
             }
 #endif
+
+            if (initialize)
+            {
+                Initialize();
+            }
         }
 
-        public readonly List<CrossReferenceStreamEntry> Entries = new List<CrossReferenceStreamEntry>();
+        private void Initialize()
+        {
+            Owner.UnderConstruction = true;
+            try
+            {
+                PdfDictionary decodeParams = new PdfDictionary(Owner)
+                {
+                    IsCompact = true
+                };
 
-        public struct CrossReferenceStreamEntry
+                decodeParams.Elements.SetInteger("/Columns", 3);
+                decodeParams.Elements.SetInteger("/Predictor", 12);
+
+                Elements.SetObject(PdfDictionary.PdfStream.Keys.DecodeParms, decodeParams);
+                Elements.SetName(Keys.Type, "XRef");
+                PdfArray widthesArray = new PdfArray(Owner, new PdfInteger(1), new PdfInteger(1), new PdfInteger(1));
+                Elements.SetObject(Keys.W, widthesArray);
+
+                Stream = new PdfStream(this);
+            }
+            finally
+            {
+                Owner.UnderConstruction = false;
+            }
+        }
+
+        public List<CrossReferenceStreamEntry> Entries { get; private set; } = new List<CrossReferenceStreamEntry>();
+
+        public class CrossReferenceStreamEntry
         {
             // Reference: TABLE 3.16  Entries in a cross-refernece stream / Page 109
 
@@ -62,6 +100,254 @@ namespace PdfSharper.Pdf.Advanced
             public uint Field2;
 
             public uint Field3;
+
+            public int ObjectNumber;
+        }
+
+
+
+        internal override void AddReference(PdfReference iref)
+        {
+            lock (this)
+            {
+                if (iref == Reference)
+                {
+                    return;
+                }
+
+                base.AddReference(iref);
+
+                if (!(iref.Value is PdfFormXObject) &&
+                    !(iref.Value is PdfContent) &&
+                    !(iref.Value is PdfObjectStream))
+                {
+                    AddCompressedObject(iref);
+                }
+                else
+                {
+                    AddObject(iref);
+                }
+
+                PdfArray indexArray = Elements.GetArray(Keys.Index);
+                if (indexArray != null)
+                {
+                    indexArray.Elements[1] = new PdfInteger(Size - indexArray.Elements.GetInteger(0));
+                }
+            }
+        }
+
+        private void AddCompressedObject(PdfReference iref)
+        {
+            var viableStream = GetViableStreamCandidate();
+            //find an objectstream with room            
+            if (viableStream?.Reference == iref)
+            {
+                return;
+            }
+
+            if (viableStream == null || viableStream.Number >= 100)
+            {
+                PdfReference newExtendsRef = null;
+                if (viableStream != null)
+                {
+                    newExtendsRef = viableStream.Elements.GetReference(Keys.Extends) ?? viableStream.Reference;
+                }
+                viableStream = new PdfObjectStream(Owner);
+                _viableStream = viableStream;
+                if (newExtendsRef != null)
+                {
+                    viableStream.Elements.SetReference(Keys.Extends, newExtendsRef);
+                }
+                ObjectStreams.Insert(0, viableStream);
+                Owner.Internals.AddObject(viableStream);
+            }
+
+            int index = viableStream.AddObject(iref);
+            Entries.Add(new CrossReferenceStreamEntry
+            {
+                Type = 2,
+                Field2 = (uint)viableStream.ObjectNumber, //we use position from iref later
+                Field3 = (uint)index,
+                ObjectNumber = iref.ObjectNumber
+            });
+
+            iref.ContainingStreamID = viableStream.ObjectID;
+            iref.ContainingStreamIndex = index;
+
+        }
+
+        private PdfObjectStream GetViableStreamCandidate()
+        {
+            if (_rootStream == null)
+            {
+                _rootStream = ObjectStreams.FirstOrDefault(os => !ObjectStreams.Any(osi => osi.Elements.GetReference(Keys.Extends)?.ObjectNumber == os.ObjectNumber));
+            }
+
+            var viableStream = _viableStream ?? _rootStream;
+
+            if (_viableStream == null)
+            {
+                _viableStream = viableStream;
+            }
+
+            return viableStream;
+        }
+
+        private void AddObject(PdfReference iref)
+        {
+            Entries.Add(new CrossReferenceStreamEntry
+            {
+                Type = 1,
+                Field2 = 0, //we use position from iref later
+                Field3 = 0,
+                ObjectNumber = iref.ObjectNumber
+            });
+        }
+
+        internal override void RemoveReference(PdfReference iref)
+        {
+            base.RemoveReference(iref);
+            PdfCrossReferenceStream.CrossReferenceStreamEntry entry = Entries.FirstOrDefault(e => e.ObjectNumber == iref.ObjectNumber);
+            if (entry != null)
+            {
+                Entries.Remove(entry);
+            }
+        }
+
+        protected override void WriteObject(PdfWriter writer)
+        {
+            //update object stream positions in case they have changed
+            Entries = Entries.OrderBy(e => e.ObjectNumber).ToList();
+            var compressedObjectReferenceLookup = Entries.ToDictionary(e => e.ObjectNumber);
+
+            foreach (PdfObjectStream objStream in ObjectStreams)
+            {
+                PdfObjectStreamHeader header;
+                for (int i = 0; i < objStream._header.Count; i++)
+                {
+                    header = objStream._header[i];
+
+                    compressedObjectReferenceLookup[header.ObjectNumber].Field3 = (uint)i;
+
+                }
+            }
+
+
+            //setup new entries stream
+            PdfArray widthsArray = Elements.GetArray(Keys.W);
+            int typeWidth = widthsArray.Elements.GetInteger(0);
+            int field2Width = widthsArray.Elements.GetInteger(1);
+            int field3Width = widthsArray.Elements.GetInteger(2);
+
+            //do we need to increase width?
+            uint maxPosition = (uint)Entries.Where(e => e.Type == 1).Select(e => XRefTable[new PdfObjectID(e.ObjectNumber)].Position).Max();
+            if (maxPosition > 255 && maxPosition <= ushort.MaxValue && field2Width != 2)
+            {
+                field2Width = 2;
+                widthsArray.Elements[1] = new PdfInteger(2);
+            }
+            else if (maxPosition > ushort.MaxValue && maxPosition <= 16777215 && field2Width != 3)
+            {
+                field2Width = 3;
+                widthsArray.Elements[1] = new PdfInteger(3);
+            }
+            else if (maxPosition > 16777215 && maxPosition <= uint.MaxValue && field2Width != 4) //larger than 2GB files?!
+            {
+                field2Width = 4;
+                widthsArray.Elements[1] = new PdfInteger(4);
+            }
+            field2Width = widthsArray.Elements.GetInteger(1);
+            Stream.DecodeColumns = typeWidth + field2Width + field3Width;
+
+            using (MemoryStream ms = new MemoryStream())
+            using (BinaryWriter bw = new BinaryWriter(ms))
+            {
+                for (int i = 0; i < Entries.Count; i++)
+                {
+                    CrossReferenceStreamEntry entry = Entries[i];
+                    WriteEntryValue(bw, typeWidth, entry.Type);
+
+                    if (entry.Type == 1)
+                    {
+                        uint position = (uint)XRefTable[new PdfObjectID(entry.ObjectNumber)].Position;
+
+                        WriteEntryValue(bw, field2Width, position);
+                    }
+                    else
+                    {
+                        WriteEntryValue(bw, field2Width, entry.Field2);
+                    }
+                    WriteEntryValue(bw, field3Width, entry.Field3);
+                }
+
+                bw.Flush();
+
+                Stream = new PdfStream(ms.ToArray(), this, Stream.Trailer);
+                //make sure filter is reapplied
+                Elements.Remove(PdfObjectStream.Keys.Filter);
+                Stream.Zip();
+            }
+
+            //get groupings and update index 
+
+            var irefs = XRefTable.AllReferences.ToList();
+            int minObjectNumber = irefs.Min(ir => ir.ObjectNumber);
+
+            //TODO: Remove when renumbering is supported
+            if (minObjectNumber >= 1 && Prev == null)
+            {
+                irefs.Insert(0, new PdfReference(new PdfObjectID(), 0));
+            }
+            var xrefGroupings = irefs.OrderBy(iref => iref.ObjectNumber).GroupWhile((prev, next) => prev.ObjectNumber + 1 == next.ObjectNumber)
+                .Select(anon => new
+                {
+                    Count = anon.FirstOrDefault().ObjectNumber == 1 ? anon.Count() + 1 : anon.Count(),
+                    Irefs = anon.ToList()
+                }).ToList();
+
+            if (minObjectNumber > 1 || xrefGroupings.Count > 1)
+            {
+                PdfArray indexArray = new PdfArray(Owner);
+                foreach (var grouping in xrefGroupings)
+                {
+                    indexArray.Elements.Add(new PdfInteger(grouping.Irefs.Min(ir => ir.ObjectNumber)));
+                    indexArray.Elements.Add(new PdfInteger(grouping.Count));
+                }
+
+                Elements.SetObject(Keys.Index, indexArray);
+            }
+
+
+            Size = XRefTable._maxObjectNumber + 1;
+
+            base.WriteObject(writer);
+        }
+
+        private void WriteEntryValue(BinaryWriter bw, int width, uint value)
+        {
+            switch (width)
+            {
+                case 1:
+                    bw.Write((byte)value);
+                    break;
+                case 2:
+                    bw.Write((byte)(value >> 8));
+                    bw.Write((byte)(value));
+                    break;
+                case 3:
+                    bw.Write((byte)(value >> 16));
+                    bw.Write((byte)(value >> 8));
+                    bw.Write((byte)(value));
+                    break;
+                case 4:
+                    bw.Write((byte)(value >> 24));
+                    bw.Write((byte)(value >> 16));
+                    bw.Write((byte)(value >> 8));
+                    bw.Write((byte)(value));
+                    break;
+                default:
+                    throw new NotSupportedException($"Unknown cross reference width {width}");
+            }
         }
 
         /// <summary>
@@ -135,6 +421,10 @@ namespace PdfSharper.Pdf.Advanced
             /// </summary>
             [KeyInfo(KeyType.Array | KeyType.Required)]
             public const string W = "/W";
+
+
+            [KeyInfo(KeyType.MustBeIndirect)]
+            public const string Extends = "/Extends";
 
             /// <summary>
             /// Gets the KeysMeta for these keys.

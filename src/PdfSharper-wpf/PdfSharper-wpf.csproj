@@ -652,11 +652,17 @@
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfInternals.cs">
       <Link>Pdf.Advanced\PdfInternals.cs</Link>
     </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfLinearizationParameters.cs">
+      <Link>Pdf.Advanced\PdfLinearizationParameters.cs</Link>
+    </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfObjectInternals.cs">
       <Link>Pdf.Advanced\PdfObjectInternals.cs</Link>
     </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfObjectStream.cs">
       <Link>Pdf.Advanced\PdfObjectStream.cs</Link>
+    </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfObjectStreamHeader.cs">
+      <Link>Pdf.Advanced\PdfObjectStreamHeader.cs</Link>
     </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfPageInheritableObjects.cs">
       <Link>Pdf.Advanced\PdfPageInheritableObjects.cs</Link>
@@ -682,6 +688,9 @@
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfSoftMask.cs">
       <Link>Pdf.Advanced\PdfSoftMask.cs</Link>
     </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfStructure.cs">
+      <Link>Pdf.Advanced\PdfStructure.cs</Link>
+    </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTilingPattern.cs">
       <Link>Pdf.Advanced\PdfTilingPattern.cs</Link>
     </Compile>
@@ -693,6 +702,9 @@
     </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTransparencyGroupAttributes.cs">
       <Link>Pdf.Advanced\PdfTransparencyGroupAttributes.cs</Link>
+    </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTraversalUtility.cs">
+      <Link>Pdf.Advanced\PdfTraversalUtility.cs</Link>
     </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTrueTypeFont.cs">
       <Link>Pdf.Advanced\PdfTrueTypeFont.cs</Link>
@@ -1029,9 +1041,6 @@
     </Compile>
     <Compile Include="..\PdfSharper\Pdf\PdfRectangle.cs">
       <Link>Pdf\PdfRectangle.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\Pdf\PdfReferenceTable.cs">
-      <Link>Pdf\PdfReferenceTable.cs</Link>
     </Compile>
     <Compile Include="..\PdfSharper\Pdf\PdfString.cs">
       <Link>Pdf\PdfString.cs</Link>
