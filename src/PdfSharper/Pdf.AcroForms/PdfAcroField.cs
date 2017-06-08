@@ -50,7 +50,7 @@ namespace PdfSharper.Pdf.AcroForms
     public abstract class PdfAcroField : PdfWidgetAnnotation
     {
         protected bool _needsAppearances = false;
-        private static readonly Regex _realizeFontRegex = new Regex("/([\\w+]+) [\\d]{1,2} Tf");
+        private static readonly Regex _realizeFontRegex = new Regex("/([\\w-]+) [\\d]{1,2} Tf");
         /// <summary>
         /// Initializes a new instance of PdfAcroField.
         /// </summary>
