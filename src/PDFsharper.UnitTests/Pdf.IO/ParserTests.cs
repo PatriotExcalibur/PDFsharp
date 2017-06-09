@@ -103,6 +103,9 @@ namespace PDFsharper.UnitTests.Pdf.IO
         [TestMethod]
         public void PassthroughAndFillAll()
         {
+            PdfDiagnostics.TraceCompressedObjects = false;
+            PdfDiagnostics.TraceObjectStreams = false;
+            PdfDiagnostics.TraceXrefStreams = false;
             string[] files = Directory.GetFiles(@"c:\dev\pex\main\source\forms", "*.pdf");
             foreach (string file in files)
             {
@@ -166,6 +169,30 @@ namespace PDFsharper.UnitTests.Pdf.IO
                 }
 
                 field.Text = field.Name;
+                i++;
+            }
+
+            foreach (var field in doc.AcroForm.Fields.Cast<PdfAcroField>().SelectMany(gf => doc.AcroForm.WalkAllFields(gf)).OfType<PdfCheckBoxField>())
+            {
+                if (fieldNumber != -1 && i != fieldNumber)
+                {
+                    i++;
+                    continue;
+                }
+
+                field.Checked = true;
+                i++;
+            }
+
+            foreach (var field in doc.AcroForm.Fields.Cast<PdfAcroField>().SelectMany(gf => doc.AcroForm.WalkAllFields(gf)).OfType<PdfRadioButtonField>())
+            {
+                if (fieldNumber != -1 && i != fieldNumber)
+                {
+                    i++;
+                    continue;
+                }
+
+                
                 i++;
             }
 
