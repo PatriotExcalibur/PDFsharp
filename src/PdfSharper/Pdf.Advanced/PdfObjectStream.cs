@@ -205,6 +205,7 @@ namespace PdfSharper.Pdf.Advanced
                 msObjects.Seek(0, SeekOrigin.Begin);
                 msObjects.CopyTo(fullOutput);
 
+                Elements.Remove(Keys.Filter);
                 Stream = new PdfStream(fullOutput.ToArray(), this, Stream?.Trailer);
                 Stream.Zip();
             }
