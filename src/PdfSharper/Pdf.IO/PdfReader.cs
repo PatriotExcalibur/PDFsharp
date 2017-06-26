@@ -404,13 +404,62 @@ namespace PdfSharper.Pdf.IO
 
                     PdfPages pages = document.Pages;
                     Debug.Assert(pages != null);
-                 
+
                     document._trailer.Prev = null;
                     document._trailer.Next = null;
                 }
                 else if (document._trailers.All(t => t is PdfCrossReferenceStream) && signaturePresent) //cannot flatten, leave it
                 {
                     document._trailers.ForEach(t => t.IsReadOnly = true);
+                }
+                else if (document._trailers.All(t => t is PdfCrossReferenceStream) && document._trailers.Count > 2 && !signaturePresent && document.IsLinearized) //adobe applied an incremental update to a linear document, we can still flatten
+                {
+                    var incrementalTrailer = document._trailers.FirstOrDefault(t => t.Next == null);
+                    document._trailers.Remove(incrementalTrailer);
+                    incrementalTrailer.Prev.Next = null; //remove link to this trailer
+
+                    foreach (var iref in incrementalTrailer.XRefTable.AllReferences)
+                    {
+                        if (iref.Value == incrementalTrailer)
+                        {
+                            continue;
+                        }
+
+                        bool found = false;
+                        foreach (var t in document._trailers)
+                        {
+                            if (t.XRefTable.Contains(iref.ObjectID))
+                            {
+                                found = true;
+                                t.RemoveReference(iref);
+                                t.AddReference(iref);
+                            }
+                        }
+
+                        if (!found)
+                        {
+                            incrementalTrailer.Prev.AddReference(iref);
+                        }
+                    }
+
+                    foreach (var os in incrementalTrailer.ObjectStreams)
+                    {
+                        document.Internals.RemoveObject(os);
+                    }
+                    document._irefTable.Remove(incrementalTrailer.Reference);
+                    if (incrementalTrailer.Reference.ContainingStreamID.IsEmpty == false)
+                    {
+                        PdfObjectStream containingStream = document._irefTable[incrementalTrailer.Reference.ContainingStreamID].Value as PdfObjectStream;
+                        if (containingStream != null)
+                        {
+                            containingStream.RemoveObject(incrementalTrailer.Reference);
+                            if (containingStream.Number == 0)
+                            {
+                                document.Internals.RemoveObject(containingStream);
+                            }
+                        }
+
+                    }
                 }
 
                 // Encrypt all objects.
@@ -561,15 +610,22 @@ namespace PdfSharper.Pdf.IO
 
                         iref.Value = pdfObject;
 
-
-                        if (document.LinearizationParamaters == null && pdfObject is PdfDictionary)
+                        if (pdfObject is PdfDictionary)
                         {
                             PdfDictionary objDictionary = pdfObject as PdfDictionary;
-                            if (objDictionary.Elements.ContainsKey(PdfLinearizationParameters.Keys.Linearized))
+                            if (document.LinearizationParamaters == null)
                             {
-                                document.LinearizationParamaters = new PdfLinearizationParameters(objDictionary);
-                                int hintStreamPosition = document.LinearizationParamaters.Elements.GetArray(PdfLinearizationParameters.Keys.Hint).Elements.GetInteger(0);
-                                hintStreamReference = trailer.XRefTable.AllReferences.SingleOrDefault(href => href.Position == hintStreamPosition);
+                                if (objDictionary.Elements.ContainsKey(PdfLinearizationParameters.Keys.Linearized))
+                                {
+                                    document.LinearizationParamaters = new PdfLinearizationParameters(objDictionary);
+                                    int hintStreamPosition = document.LinearizationParamaters.Elements.GetArray(PdfLinearizationParameters.Keys.Hint).Elements.GetInteger(0);
+                                    hintStreamReference = trailer.XRefTable.AllReferences.SingleOrDefault(href => href.Position == hintStreamPosition);
+                                }
+                            }
+
+                            if (objDictionary.Elements.GetName(PdfFormXObject.Keys.Type) == "/XObject")
+                            {
+                                iref.Value = new PdfFormXObject(objDictionary);
                             }
                         }
                     }

@@ -63,6 +63,8 @@ namespace PdfSharper.Pdf.Advanced
             //{ }
         }
 
+        internal PdfFormXObject(PdfDictionary dict) : base(dict) { }
+
         internal double DpiX
         {
             get { return _dpiX; }

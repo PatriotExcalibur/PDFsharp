@@ -43,6 +43,14 @@ namespace PdfSharper.Pdf.Advanced
         { }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="PdfXObject"/> class.
+        /// </summary>
+        ///<param name="dict">Existing Dictionary object</param>
+        protected PdfXObject(PdfDictionary dict)
+          : base(dict)
+        { }
+
+        /// <summary>
         /// Predefined keys of this dictionary.
         /// </summary>
         public class Keys : PdfStream.Keys

@@ -277,7 +277,11 @@ namespace PdfSharper.Pdf.Advanced
                     {
                         WriteEntryValue(bw, field2Width, entry.Field2);
                     }
-                    WriteEntryValue(bw, field3Width, entry.Field3);
+
+                    if (field3Width > 0)
+                    {
+                        WriteEntryValue(bw, field3Width, entry.Field3);
+                    }
                 }
 
                 bw.Flush();
