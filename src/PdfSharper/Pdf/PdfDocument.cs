@@ -599,6 +599,11 @@ namespace PdfSharper.Pdf
                     }
                 }
 
+                if (_trailers.All(t => t.XRefTable._maxObjectNumber + 1 < forObjectID.ObjectNumber))
+                {//incremental update applied to a linear document and we are removing
+                    return _trailers.FirstOrDefault(t => t.Next == null);
+                }
+
                 return MakeNewTrailer();
 
 

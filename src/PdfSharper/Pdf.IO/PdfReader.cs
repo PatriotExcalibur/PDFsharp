@@ -431,8 +431,7 @@ namespace PdfSharper.Pdf.IO
                             if (t.XRefTable.Contains(iref.ObjectID))
                             {
                                 found = true;
-                                t.RemoveReference(iref);
-                                t.AddReference(iref);
+                                t.XRefTable[iref.ObjectID].SetObject(iref.Value);
                             }
                         }
 
