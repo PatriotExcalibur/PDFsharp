@@ -52,6 +52,7 @@ namespace PdfSharper.Pdf.Advanced
         /// Represents the relation between PdfObjectID and PdfReference for a PdfDocument.
         /// </summary>
         public Dictionary<PdfObjectID, PdfReference> ObjectTable = new Dictionary<PdfObjectID, PdfReference>();
+        private PdfReference[] _allReferences;
 
         internal bool IsUnderConstruction
         {
@@ -72,7 +73,7 @@ namespace PdfSharper.Pdf.Advanced
                 throw new InvalidOperationException("Object already in table.");
 
             ObjectTable.Add(iref.ObjectID, iref);
-
+            _allReferences = null;
             _maxObjectNumber = Math.Max(_maxObjectNumber, iref.ObjectNumber);
         }
 
@@ -89,10 +90,10 @@ namespace PdfSharper.Pdf.Advanced
             if (value.ObjectID.IsEmpty)
             {
                 value.SetObjectID(GetNewObjectNumber(), 0);
-                var writeableTrailer = _document._trailers.SingleOrDefault(t => t.IsReadOnly == false);
+                var writeableTrailer = _document.GetWritableTrailer(value.ObjectID);
                 if (writeableTrailer != null && !ReferenceEquals(writeableTrailer.XRefTable, _document._irefTable) && !writeableTrailer.XRefTable.Contains(value.ObjectID))
                 {
-                    writeableTrailer.XRefTable.Add(value.Reference);
+                    writeableTrailer.AddReference(value.Reference);
                 }
             }
 
@@ -105,6 +106,7 @@ namespace PdfSharper.Pdf.Advanced
         public void Remove(PdfReference iref)
         {
             ObjectTable.Remove(iref.ObjectID);
+            _allReferences = null;
         }
 
         /// <summary>
@@ -129,20 +131,6 @@ namespace PdfSharper.Pdf.Advanced
             return ObjectTable.ContainsKey(objectID);
         }
 
-        //public PdfObject GetObject(PdfObjectID objectID)
-        //{
-        //  return this[objectID].Value;
-        //}
-
-        //    /// <summary>
-        //    /// Gets the entry for the specified object, or null, if the object is not in
-        //    /// this XRef table.
-        //    /// </summary>
-        //    internal PdfReference GetEntry(PdfObjectID objectID)
-        //    {
-        //      return this[objectID];
-        //    }
-
         /// <summary>
         /// Returns the next free object number.
         /// </summary>
@@ -163,7 +151,7 @@ namespace PdfSharper.Pdf.Advanced
 
             PdfReference[] irefs = AllReferences;
 
-            var xrefGroupings = irefs.GroupWhile((prev, next) => prev.ObjectNumber + 1 == next.ObjectNumber)
+            var xrefGroupings = irefs.OrderBy(iref => iref.ObjectNumber).GroupWhile((prev, next) => prev.ObjectNumber + 1 == next.ObjectNumber)
                 .Select(anon => new
                 {
                     Count = anon.Count(),
@@ -222,12 +210,12 @@ namespace PdfSharper.Pdf.Advanced
         {
             get
             {
-                Dictionary<PdfObjectID, PdfReference>.ValueCollection collection = ObjectTable.Values;
-                List<PdfReference> list = new List<PdfReference>(collection);
-                list.Sort(PdfReference.Comparer);
-                PdfReference[] irefs = new PdfReference[collection.Count];
-                list.CopyTo(irefs, 0);
-                return irefs;
+                if (_allReferences == null)
+                {
+                    _allReferences = ObjectTable.Values.OrderBy(v => v, PdfReference.Comparer).ToArray();
+                }
+
+                return _allReferences;
             }
         }
 
@@ -244,7 +232,7 @@ namespace PdfSharper.Pdf.Advanced
             int removed = ObjectTable.Count;
             //CheckConsistence();
             // We can only compact the last trailer, if at all
-            PdfReference[] irefs = TransitiveClosure(_document._trailer);
+            PdfReference[] irefs = PdfTraversalUtility.TransitiveClosure(_document._trailer).Select(kvp => kvp.Key).ToArray();
 
 #if DEBUG
             // Have any two objects the same ID?
@@ -392,176 +380,7 @@ namespace PdfSharper.Pdf.Advanced
         //    TransitiveClosure(objects, _xrefTable.document.trailer);
         //  }
 
-        /// <summary>
-        /// Calculates the transitive closure of the specified PdfObject, i.e. all indirect objects
-        /// recursively reachable from the specified object.
-        /// </summary>
-        public PdfReference[] TransitiveClosure(PdfObject pdfObject)
-        {
-            return TransitiveClosure(pdfObject, short.MaxValue);
-        }
 
-        /// <summary>
-        /// Calculates the transitive closure of the specified PdfObject with the specified depth, i.e. all indirect objects
-        /// recursively reachable from the specified object in up to maximally depth steps.
-        /// </summary>
-        public PdfReference[] TransitiveClosure(PdfObject pdfObject, int depth)
-        {
-            CheckConsistence();
-            Dictionary<PdfItem, object> objects = new Dictionary<PdfItem, object>();
-            _overflow = new Dictionary<PdfItem, object>();
-            TransitiveClosureImplementation(objects, pdfObject);
-            TryAgain:
-            if (_overflow.Count > 0)
-            {
-                PdfObject[] array = new PdfObject[_overflow.Count];
-                _overflow.Keys.CopyTo(array, 0);
-                _overflow = new Dictionary<PdfItem, object>();
-                for (int idx = 0; idx < array.Length; idx++)
-                {
-                    PdfObject obj = array[idx];
-                    TransitiveClosureImplementation(objects, obj);
-                }
-                goto TryAgain;
-            }
-
-            CheckConsistence();
-
-            ICollection collection = objects.Keys;
-            int count = collection.Count;
-            PdfReference[] irefs = new PdfReference[count];
-            collection.CopyTo(irefs, 0);
-
-#if true_
-            for (int i = 0; i < count; i++)
-                for (int j = 0; j < count; j++)
-                    if (i != j)
-                    {
-                        Debug.Assert(ReferenceEquals(irefs[i].Document, _document));
-                        Debug.Assert(irefs[i] != irefs[j]);
-                        Debug.Assert(!ReferenceEquals(irefs[i], irefs[j]));
-                        Debug.Assert(!ReferenceEquals(irefs[i].Value, irefs[j].Value));
-                        Debug.Assert(!Equals(irefs[i].ObjectID, irefs[j].Value.ObjectID));
-                        Debug.Assert(irefs[i].ObjectNumber != irefs[j].Value.ObjectNumber);
-                        Debug.Assert(ReferenceEquals(irefs[i].Document, irefs[j].Document));
-                        GetType();
-                    }
-#endif
-            return irefs;
-        }
-
-        static int _nestingLevel;
-        Dictionary<PdfItem, object> _overflow = new Dictionary<PdfItem, object>();
-
-        void TransitiveClosureImplementation(Dictionary<PdfItem, object> objects, PdfObject pdfObject/*, ref int depth*/)
-        {
-            try
-            {
-                _nestingLevel++;
-                if (_nestingLevel >= 1000)
-                {
-                    if (!_overflow.ContainsKey(pdfObject))
-                        _overflow.Add(pdfObject, null);
-                    return;
-                }
-#if DEBUG_
-                //enterCount++;
-                if (enterCount == 5400)
-                    GetType();
-                //if (!Object.ReferenceEquals(pdfObject.Owner, _document))
-                //  GetType();
-                //////Debug.Assert(Object.ReferenceEquals(pdfObject27.Document, _document));
-                //      if (item is PdfObject && ((PdfObject)item).ObjectID.ObjectNumber == 5)
-                //        Debug.WriteLine("items: " + ((PdfObject)item).ObjectID.ToString());
-                //if (pdfObject.ObjectNumber == 5)
-                //  GetType();
-#endif
-
-                IEnumerable enumerable = null; //(IEnumerator)pdfObject;
-                PdfDictionary dict;
-                PdfArray array;
-                if ((dict = pdfObject as PdfDictionary) != null)
-                    enumerable = dict.Elements.Values;
-                else if ((array = pdfObject as PdfArray) != null)
-                    enumerable = array.Elements;
-                else
-                    Debug.Assert(false, "Should not come here.");
-
-                if (enumerable != null)
-                {
-                    foreach (PdfItem item in enumerable)
-                    {
-                        PdfReference iref = item as PdfReference;
-                        if (iref != null)
-                        {
-                            // Is this an indirect reference to an object that does not exist?
-                            //if (iref.Document == null)
-                            //{
-                            //    Debug.WriteLine("Dead object detected: " + iref.ObjectID.ToString());
-                            //    PdfReference dead = DeadObject;
-                            //    iref.ObjectID = dead.ObjectID;
-                            //    iref.Document = _document;
-                            //    iref.SetObject(dead.Value);
-                            //    PdfDictionary dict = (PdfDictionary)dead.Value;
-
-                            //    dict.Elements["/DeadObjectCount"] =
-                            //      new PdfInteger(dict.Elements.GetInteger("/DeadObjectCount") + 1);
-
-                            //    iref = dead;
-                            //}
-
-                            if (!ReferenceEquals(iref.Document, _document))
-                            {
-                                GetType();
-                                Debug.WriteLine(String.Format("Bad iref: {0}", iref.ObjectID.ToString()));
-                            }
-                            Debug.Assert(ReferenceEquals(iref.Document, _document) || iref.Document == null, "External object detected!");
-#if DEBUG_
-                            if (iref.ObjectID.ObjectNumber == 23)
-                                GetType();
-#endif
-                            if (!objects.ContainsKey(iref))
-                            {
-                                PdfObject value = iref.Value;
-
-                                // Ignore unreachable objets.
-                                if (iref.Document != null)
-                                {
-                                    // ... from trailer hack
-                                    if (value == null)
-                                    {
-                                        iref = ObjectTable[iref.ObjectID];
-                                        Debug.Assert(iref.Value != null);
-                                        value = iref.Value;
-                                    }
-                                    Debug.Assert(ReferenceEquals(iref.Document, _document));
-                                    objects.Add(iref, null);
-                                    //Debug.WriteLine(String.Format("objects.Add('{0}', null);", iref.ObjectID.ToString()));
-                                    if (value is PdfArray || value is PdfDictionary)
-                                        TransitiveClosureImplementation(objects, value /*, ref depth*/);
-                                }
-                                //else
-                                //{
-                                //  objects2.Add(this[iref.ObjectID], null);
-                                //}
-                            }
-                        }
-                        else
-                        {
-                            PdfObject pdfObject28 = item as PdfObject;
-                            //if (pdfObject28 != null)
-                            //  Debug.Assert(Object.ReferenceEquals(pdfObject28.Document, _document));
-                            if (pdfObject28 != null && (pdfObject28 is PdfDictionary || pdfObject28 is PdfArray))
-                                TransitiveClosureImplementation(objects, pdfObject28 /*, ref depth*/);
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                _nestingLevel--;
-            }
-        }
 
         /// <summary>
         /// Gets the cross reference to an objects used for undefined indirect references.

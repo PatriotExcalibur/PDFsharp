@@ -42,7 +42,7 @@ using System.Windows.Markup;
 #if DEBUG
 [assembly: AssemblyProduct(PdfSharper.ProductVersionInfo.Product + " (Debug Build)")]
 #else
-  [assembly: AssemblyProduct(PdfSharper.ProductVersionInfo.Product)]
+[assembly: AssemblyProduct(PdfSharper.ProductVersionInfo.Product)]
 #endif
 [assembly: AssemblyCopyright(PdfSharper.VersionInfo.Copyright)]
 [assembly: AssemblyTrademark(PdfSharper.VersionInfo.Trademark)]
@@ -66,5 +66,11 @@ using System.Windows.Markup;
 [assembly: InternalsVisibleTo("ConsoleApplication-WPF, PublicKey=00240000048000009400000006020000002400005253413100040000010001008794e803e566eccc3c9181f52c4f7044e5442cc2ce3cbba9fc11bc4186ba2e446cd31deea20c1a8f499e978417fad2bc74143a4f8398f7cf5c5c0271b0f7fe907c537cff28b9d582da41289d1dae90168a3da2a5ed1115210a18fdae832479d3e639ca4003286ba8b98dc9144615c040ed838981ac816112df3b5a9e7cab4fbb")]
 
 [assembly: InternalsVisibleTo("PDFsharper.UnitTests, PublicKey=0024000004800000940000000602000000240000525341310004000001000100795e36cfeab7c1387a43288851b66c214b96692342e87f47494ea80eb20a3d24f658a60a108bbbfe9be21a992b98b673849780ba51a6d189c06ef35262e98a9f8241a0bf509c2e7a4bf9c7c64958807f0c828c125d363d4dcb492b175ff09b4e04fddf86ed4a0168570f9bab0a178388606f930e0f783a78a565c953e265d7d9")]
+[assembly: InternalsVisibleTo("PDFsharper.UnitTests, PublicKey=002400000480000094000000060200000024000052534131000400000100010013e209f5eed64fb1622db9c38392c7eb40f2c351135ac642664ac299fe56a937534057995b2d6d39222337679899e89a6848e53ef3dae491910c34ecc9dba891ca63a2cc550fddf8e2b6df1f242dbb1c48de1946d88b5261d169a696ef597aba26c28a41855bf433ee505b6976cc8a34d6644f79ed5ef8f4ebbe2fd94ecde798")]
 
 [assembly: ComVisible(false)]
+#if TESTKEY
+[assembly: AssemblyKeyFile("..\\..\\..\\..\\DummyKey.snk")]
+#else
+ [assembly:  AssemblyKeyFile("..\\..\\..\\PEX.snk")]
+#endif

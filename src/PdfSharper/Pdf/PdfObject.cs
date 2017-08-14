@@ -236,16 +236,12 @@ namespace PdfSharper.Pdf
 
         public virtual void FlagAsDirty()
         {
-            if (IsDirty || _document._trailers.Count == 1)
+            if (IsDirty || _document._trailers.All(t => t.IsReadOnly == false))
             {
                 return; //we have already cloned ourselves for modification  or the document is not incrementally updated
             }
 
-            PdfTrailer writableTrailer = _document._trailers.SingleOrDefault(t => t.IsReadOnly == false);
-            if (writableTrailer == null)
-            {
-                writableTrailer = _document.MakeNewTrailer();
-            }
+            PdfTrailer writableTrailer = _document.GetWritableTrailer(ObjectID);
 
             if (IsIndirect)
             {
@@ -253,6 +249,7 @@ namespace PdfSharper.Pdf
                 //Gather all references to this object
 
                 PdfObjectID objID = this.ObjectID;
+                //TODO: Compressed object? 
                 PdfReference cloneReference = new PdfReference(Reference.ObjectID, Reference.Position);
                 cloneReference.Document = _document;
                 Reference = null;
@@ -276,7 +273,7 @@ namespace PdfSharper.Pdf
 
                 if (!writableTrailer.XRefTable.Contains(ObjectID))
                 {
-                    writableTrailer.XRefTable.Add(this);
+                    writableTrailer.AddReference(this.Reference);
                 }
                 IsDirty = true;
             }
@@ -352,7 +349,7 @@ namespace PdfSharper.Pdf
             {
                 PdfObject obj = elements[idx];
                 Debug.Assert(obj.Owner == owner);
-                FixUpObject(iot, owner, obj);
+                FixUpObject(iot, owner, obj, true);
             }
 
             // Return the clone of the former root object.
@@ -446,7 +443,7 @@ namespace PdfSharper.Pdf
             {
                 PdfObject obj = elements[idx];
                 Debug.Assert(owner != null);
-                FixUpObject(importedObjectTable, importedObjectTable.Owner, obj);
+                FixUpObject(importedObjectTable, importedObjectTable.Owner, obj, false);
             }
 
             // Return the imported root object.
@@ -457,7 +454,7 @@ namespace PdfSharper.Pdf
         /// Replace all indirect references to external objects by their cloned counterparts
         /// owned by the importer document.
         /// </summary>
-        static void FixUpObject(PdfImportedObjectTable iot, PdfDocument owner, PdfObject value)
+        static void FixUpObject(PdfImportedObjectTable iot, PdfDocument owner, PdfObject value, bool deepCopy)
         {
             Debug.Assert(ReferenceEquals(iot.Owner, owner));
 
@@ -491,7 +488,7 @@ namespace PdfSharper.Pdf
                     {
                         // Case: The item is a reference.
                         // Does the iref already belongs to the new owner?
-                        if (iref.Document == owner)
+                        if (iref.Document == owner && !deepCopy)
                         {
                             // Yes: fine. Happens when an already cloned object is reused.
                             continue;
@@ -512,7 +509,7 @@ namespace PdfSharper.Pdf
                         if (pdfObject != null)
                         {
                             // Fix up inner objects, i.e. recursively walk down the object tree.
-                            FixUpObject(iot, owner, pdfObject);
+                            FixUpObject(iot, owner, pdfObject, deepCopy);
                         }
                         else
                         {
@@ -553,7 +550,7 @@ namespace PdfSharper.Pdf
                     {
                         // Case: The item is a reference.
                         // Does the iref already belongs to the owner?
-                        if (iref.Document == owner)
+                        if (iref.Document == owner && !deepCopy)
                         {
                             // Yes: fine. Happens when an already cloned object is reused.
                             continue;
@@ -574,7 +571,7 @@ namespace PdfSharper.Pdf
                         if (pdfObject != null)
                         {
                             // Fix up inner objects, i.e. recursively walk down the object tree.
-                            FixUpObject(iot, owner, pdfObject);
+                            FixUpObject(iot, owner, pdfObject, deepCopy);
                         }
                         else
                         {

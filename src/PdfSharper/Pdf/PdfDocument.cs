@@ -186,6 +186,13 @@ namespace PdfSharper.Pdf
                     // Dispose managed resources.
                 }
                 //PdfDocument.Gob.DetatchDocument(Handle);
+                foreach (PdfTrailer trailer in _trailers)
+                {
+                    foreach (var objStream in trailer.ObjectStreams)
+                    {
+                        objStream.Dispose();
+                    }
+                }
             }
             _state = DocumentState.Disposed;
         }
@@ -230,6 +237,10 @@ namespace PdfSharper.Pdf
             //get {return _state == DocumentState.Created || _state == DocumentState.Modifyable;}
             get { return true; }
         }
+
+        public PdfLinearizationParameters LinearizationParamaters { get; internal set; }
+
+        public bool IsLinearized { get { return LinearizationParamaters != null; } }
 
         /// <summary>
         /// Closes this instance.
@@ -401,14 +412,11 @@ namespace PdfSharper.Pdf
 
                 PrepareForSave();
 
-                PdfTrailer writeableTrailer = _trailers.SingleOrDefault(t => t.IsReadOnly == false);
+                PdfTrailer writeableTrailer = _trailers.SingleOrDefault(t => t.IsReadOnly == false && t.Next == null);
                 if (writeableTrailer != null)
                 {
                     writeableTrailer.Info.ModificationDate = DateTime.Now;
-
                 }
-
-
 
                 if (encrypt)
                     _securitySettings.SecurityHandler.PrepareEncryption();
@@ -429,11 +437,119 @@ namespace PdfSharper.Pdf
                 }
                 else
                 {
-                    var trailer = _trailers.SingleOrDefault(t => t.Prev == null);
-                    while (trailer != null)
+                    if (IsLinearized) //write out objects in their original order
                     {
-                        WriteTrailer(writer, trailer);
-                        trailer = trailer.Next;
+                        Linearize(); //update object placement 
+                        var firstPageCrossReferenceTable = _trailers.OfType<PdfCrossReferenceStream>()
+                                                    .OrderBy(t => t.StartXRef)
+                                                    .FirstOrDefault();
+
+                        LinearizationParamaters.Reference.Position = writer.Position;
+                        LinearizationParamaters.Write(writer);
+                        writer.WriteRaw(new string(' ', 19));
+                        writer.WriteRaw("\r\n");
+
+                        firstPageCrossReferenceTable.StartXRef = writer.Position;
+                        firstPageCrossReferenceTable.Reference.Position = firstPageCrossReferenceTable.StartXRef;
+                        firstPageCrossReferenceTable.Write(writer);
+
+
+                        writer.WriteEof(this, 0); //the first linear xref always starts at 0
+                                                  //padding for when the stream is updated with the object positions
+                        int firstPageCrossRefTableLength = writer.Position - firstPageCrossReferenceTable.StartXRef;
+                        writer.WriteRaw(new string(' ', _irefTable._maxObjectNumber));
+
+                        writer.WriteRaw("\r\n");
+
+                        PdfObject viewerPrefs = Catalog.Elements.GetObject(PdfCatalog.Keys.ViewerPreferences);
+                        WriteOptionalObject(writer, viewerPrefs);
+
+                        if (Catalog.PageMode != PdfPageMode.UseNone) //ok now what?
+                        {
+                        }
+
+                        PdfObject threads = Catalog.Elements.GetObject(PdfCatalog.Keys.Threads);
+                        if (threads != null)
+                        {
+                            throw new NotSupportedException("Linearized Documents with threads are not supported yet.");
+                        }
+
+                        PdfObject openAction = Catalog.Elements.GetObject(PdfCatalog.Keys.OpenAction);
+                        WriteOptionalObject(writer, openAction);
+
+                        int writerStartPosition = writer.Position;
+                        LinearizationParamaters.Elements.GetArray(PdfLinearizationParameters.Keys.Hint).Elements[0] = new PdfInteger(writer.Position);
+
+                        LinearizationParamaters.HintStream.Reference.Position = writer.Position;
+                        LinearizationParamaters.HintStream.Write(writer);
+
+                        LinearizationParamaters.Elements.GetArray(PdfLinearizationParameters.Keys.Hint).Elements[1] = new PdfInteger(writer.Position - writerStartPosition);
+
+                        Catalog.Reference.Position = writer.Position;
+                        Catalog.Write(writer);
+
+                        if (firstPageCrossReferenceTable.Elements.ContainsKey(PdfCrossReferenceStream.Keys.Encrypt))
+                        {
+                            throw new NotSupportedException("Encrypted linearized documents not supported");
+                        }
+
+                        foreach (PdfReference iref in firstPageCrossReferenceTable.XRefTable.AllReferences)
+                        {
+                            if (iref == LinearizationParamaters.Reference ||
+                                iref == firstPageCrossReferenceTable.Reference ||
+                                iref == viewerPrefs?.Reference ||
+                                iref == openAction?.Reference ||
+                                iref == LinearizationParamaters.HintStream.Reference ||
+                                iref == Catalog.Reference ||
+                                !iref.ContainingStreamID.IsEmpty)
+                            {
+                                continue;
+                            }
+
+                            iref.Position = writer.Position;
+                            iref.Value.Write(writer);
+                        }
+
+                        //write the object streams?
+
+                        LinearizationParamaters.EndOfFirstPage = writer.Position;
+
+                        var trailer = firstPageCrossReferenceTable.Prev;
+                        while (trailer != null)
+                        {
+                            if (trailer != firstPageCrossReferenceTable)
+                            {
+                                WriteTrailer(writer, trailer, firstPageCrossReferenceTable);
+                            }
+                            trailer = trailer.Next;
+                        }
+
+                        LinearizationParamaters.Length = writer.Position;
+                        writer.Stream.Seek(LinearizationParamaters.Reference.Position, SeekOrigin.Begin);
+                        LinearizationParamaters.Write(writer);
+
+                        //update positions of objects in start stream since it is written before the objects
+                        writer.Stream.Seek(firstPageCrossReferenceTable.StartXRef, SeekOrigin.Begin);
+                        firstPageCrossReferenceTable.Write(writer);
+                        writer.WriteEof(this, 0); //the first linear xref always starts at 0
+                        writer.WriteRaw("\r\n");
+                        //refill padding
+                        int newFirstXrefLength = writer.Position - firstPageCrossReferenceTable.StartXRef;
+
+                        if (newFirstXrefLength < firstPageCrossRefTableLength)
+                        {
+                            writer.WriteRaw(new string(' ', firstPageCrossRefTableLength - newFirstXrefLength));
+                        }
+                        writer.Stream.Seek(0, SeekOrigin.End);
+                    }
+                    else
+                    {
+                        var trailer = _trailers.SingleOrDefault(t => t.Prev == null);
+                        while (trailer != null)
+                        {
+                            WriteTrailer(writer, trailer);
+                            trailer = trailer.Next;
+                        }
                     }
                 }
 
@@ -456,19 +572,59 @@ namespace PdfSharper.Pdf
             }
         }
 
+        private static void WriteOptionalObject(PdfWriter writer, PdfObject pdfObject)
+        {
+            if (pdfObject != null)
+            {
+                pdfObject.Reference.Position = writer.Position;
+                pdfObject.Write(writer);
+            }
+        }
+
+        internal PdfTrailer GetWritableTrailer(PdfObjectID forObjectID)
+        {
+            if (_trailers.Count == 1)
+            {
+                return _trailers.FirstOrDefault();
+            }
+
+            if (_trailers.All(t => t.IsReadOnly == false))
+            {
+                foreach (PdfTrailer trailer in _trailers)
+                {
+                    if ((trailer.XRefTable.Contains(forObjectID) || trailer.XRefTable._maxObjectNumber + 1 == forObjectID.ObjectNumber)
+                        && (trailer.Next == null || !trailer.Next.XRefTable.Contains(forObjectID)))
+                    {
+                        return trailer;
+                    }
+                }
+
+                if (_trailers.All(t => t.XRefTable._maxObjectNumber + 1 < forObjectID.ObjectNumber))
+                {//incremental update applied to a linear document and we are removing
+                    return _trailers.FirstOrDefault(t => t.Next == null);
+                }
+
+                return MakeNewTrailer();
+
+
+            }
+
+            if (_trailers.All(t => t.IsReadOnly))
+            {
+                return MakeNewTrailer();
+            }
+
+            return _trailers.SingleOrDefault(t => t.IsReadOnly == false);
+        }
         internal PdfTrailer MakeNewTrailer()
         {
-            PdfTrailer endingTrailer = new PdfTrailer(this);
+            PdfTrailer endingTrailer = Options.CompressContentStreams ? new PdfCrossReferenceStream(this, true) : new PdfTrailer(this);
+
+            if (Options.CompressContentStreams)
+            {
+                endingTrailer.IsCompact = true;
+            }
             endingTrailer.XRefTable = new PdfCrossReferenceTable(this);
-
-            PdfDictionary trailerInfo = Info.Clone();
-            trailerInfo.Document = this;
-            PdfReference infoReference = new PdfReference(Info.ObjectID, -1);
-            infoReference.Value = trailerInfo;
-
-            endingTrailer.XRefTable.Add(infoReference);
-
-            endingTrailer.Elements.SetReference(PdfTrailer.Keys.Info, infoReference);
 
             //TODO: Document trailer root ok?
             endingTrailer.Elements.SetReference(PdfTrailer.Keys.Root, _trailer.Root);
@@ -482,11 +638,32 @@ namespace PdfSharper.Pdf
 
             _trailers.Insert(0, endingTrailer);
 
+            if (endingTrailer is PdfCrossReferenceStream)
+            {
+                Internals.AddObject(endingTrailer);
+            }
+
+
+            PdfDictionary trailerInfo = Info.Clone();
+            trailerInfo.Document = this;
+            PdfReference infoReference = new PdfReference(Info.ObjectID, -1)
+            {
+                Value = trailerInfo
+            };
+            endingTrailer.AddReference(infoReference);
+
+            endingTrailer.Elements.SetReference(PdfTrailer.Keys.Info, infoReference);
+
             return endingTrailer;
         }
 
-        private void WriteTrailer(PdfWriter writer, PdfTrailer trailer)
+        private void WriteTrailer(PdfWriter writer, PdfTrailer trailer, PdfCrossReferenceStream linearXRefTrailer = null)
         {
+            if (trailer is PdfCrossReferenceStream)
+            {
+                WriteCrossReferenceTrailer(writer, trailer as PdfCrossReferenceStream, linearXRefTrailer);
+                return;
+            }
             PdfReference[] irefs = trailer.XRefTable.AllReferences;
             int count = irefs.Length;
             for (int idx = 0; idx < count; idx++)
@@ -516,6 +693,166 @@ namespace PdfSharper.Pdf
 
             trailer.Write(writer);
             writer.WriteEof(this, trailer.StartXRef);
+        }
+
+        private void WriteCrossReferenceTrailer(PdfWriter writer, PdfCrossReferenceStream trailer, PdfCrossReferenceStream linearXRefTrailer)
+        {
+            //TODO: grouping of sequential objects
+            PdfReference[] irefs = trailer.XRefTable.AllReferences;
+            int count = irefs.Length;
+            for (int idx = 0; idx < count; idx++)
+            {
+                PdfReference iref = irefs[idx];
+                if (!iref.ContainingStreamID.IsEmpty ||
+                    iref.Value == trailer)
+                {
+                    continue;
+                }
+
+                iref.Position = writer.Position;
+                iref.Value.Write(writer);
+            }
+
+            if (trailer.Next == null || trailer.Next != linearXRefTrailer)
+            {
+                trailer.StartXRef = writer.Position;
+            }
+            else
+            {
+                LinearizationParamaters.MainCrossReferenceStreamOffset = writer.Position;
+                linearXRefTrailer.Elements.SetInteger(PdfCrossReferenceStream.Keys.Prev, writer.Position);
+                trailer.StartXRef = linearXRefTrailer.StartXRef;
+            }
+
+            trailer.Reference.Position = writer.Position;
+            trailer.Write(writer);
+            writer.WriteEof(this, trailer.StartXRef);
+        }
+
+
+        public void Linearize()
+        {
+            if (!IsLinearized)
+            {
+                throw new NotSupportedException("We can only update linearized documents at this moment.");
+            }
+
+            var firstPageCrossReferenceTable = _trailers.OfType<PdfCrossReferenceStream>()
+                                        .OrderBy(t => t.StartXRef)
+                                        .FirstOrDefault();
+
+            PdfReference[] firstPageRefs = GatherFirstPageAndDocumentReferences();
+
+            Dictionary<PdfReference, PdfCrossReferenceStream> refLookup = _trailers.OfType<PdfCrossReferenceStream>()
+                                                                                   .SelectMany(pcrs => pcrs.XRefTable.AllReferences.Select(iref => new
+                                                                                   {
+                                                                                       Reference = iref,
+                                                                                       Trailer = pcrs
+                                                                                   }))
+                                                                                   .GroupBy(anon => anon.Reference, (a, b) => b.OrderByDescending(x => x.Trailer.Reference.Position).FirstOrDefault())
+                                                                                   .ToDictionary(k => k.Reference, v => v.Trailer);
+
+            foreach (PdfReference iref in firstPageRefs)
+            {
+                if (!firstPageCrossReferenceTable.XRefTable.Contains(iref.ObjectID))
+                {
+                    PdfCrossReferenceStream containingStream = refLookup[iref];
+                    PdfCrossReferenceStream.CrossReferenceStreamEntry irefEntry = containingStream.Entries.FirstOrDefault(e => e.ObjectNumber == iref.ObjectNumber);
+
+                    containingStream.RemoveReference(iref);
+                    refLookup[iref] = firstPageCrossReferenceTable;
+
+                    if (!iref.ContainingStreamID.IsEmpty)
+                    {
+                        //move object between object streams?
+                        PdfObjectStream sourceObjectStream = _irefTable[iref.ContainingStreamID].Value as PdfObjectStream;
+                        sourceObjectStream.RemoveObject(iref);
+                    }
+
+                    firstPageCrossReferenceTable.AddReference(iref);
+                }
+            }
+        }
+
+        private PdfReference[] GatherFirstPageAndDocumentReferences()
+        {
+            HashSet<PdfItem> exclusions = new HashSet<PdfItem>();
+
+            for (int i = 1; i < PageCount; i++)
+            {
+                exclusions.Add(Pages[i].Reference);
+            }
+
+            if (AcroForm != null)
+            {
+                foreach (var field in AcroForm.Fields) //top level fields are not part of the page annotations array
+                {
+                    exclusions.Add(field.Reference);
+                }
+
+                PdfDictionary defaultFormResources = AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
+                if (defaultFormResources != null)
+                {
+                    PdfReference[] formResourceReferences = PdfTraversalUtility.TransitiveClosure(defaultFormResources).Select(kvp => kvp.Key).ToArray();
+                    foreach (var iref in formResourceReferences)
+                    {
+                        exclusions.Add(iref);
+                    }
+                }
+            }
+            exclusions.Add(Pages.Reference);
+
+            var firstPageObjects = PdfTraversalUtility.TransitiveClosure(Pages[0], exclusions).Select(kvp => kvp.Key).ToList();
+
+            //sometimes the transitiveclosure does not include the root element
+            firstPageObjects.Add(Pages[0].Reference);
+
+            var fieldsWithKids = firstPageObjects.Select(iref => iref.Value)
+                                                 .OfType<PdfAcroField>()
+                                                 .Where(af => af.HasKids)
+                                                 .Select(af => af.Reference)
+                                                 .ToList();
+
+            firstPageObjects = firstPageObjects.Except(fieldsWithKids).ToList();
+
+            firstPageObjects.Add(LinearizationParamaters.Reference);
+            firstPageObjects.Add(LinearizationParamaters.HintStream.Reference);
+
+            firstPageObjects.AddRange(Catalog.Elements.Select(e => e.Value)
+                                                      .OfType<PdfReference>()
+                                                      .Where(iref => iref.ObjectNumber > LinearizationParamaters.Reference.ObjectNumber));
+
+
+            firstPageObjects.Add(Catalog.Reference);
+
+            PdfDictionary names = Catalog.Elements.GetDictionary(PdfCatalog.Keys.Names);
+            if (names != null)
+            {
+                PdfReference[] nameRefererences = PdfTraversalUtility.TransitiveClosure(names).Select(kvp => kvp.Key).Where(iref => iref.ObjectNumber < Pages[0].ObjectNumber).ToArray();
+                firstPageObjects.AddRange(nameRefererences);
+            }
+
+            //find the document level javascripts that are not referenced anywhere
+            var adbeJS = _irefTable.AllReferences.Where(iref => iref.ObjectNumber > LinearizationParamaters.Reference.ObjectNumber &&
+                                                                iref.ObjectNumber < Pages[0].ObjectNumber)
+                                                 .Select(iref => iref.Value).OfType<PdfDictionary>()
+                                                .Where(pdfd => pdfd.Elements.Count == 2 &&
+                                                                   pdfd.Elements.ContainsKey(PdfDictionary.PdfStream.Keys.Filter) &&
+                                                                   pdfd.Elements.ContainsKey(PdfDictionary.PdfStream.Keys.Length))
+                                                .Select(pdfd => pdfd.Reference)
+                                                .ToList();
+
+            firstPageObjects.AddRange(adbeJS);
+
+
+            var firstPageCrossReferenceTable = _trailers.OfType<PdfCrossReferenceStream>()
+                                        .OrderBy(t => t.StartXRef)
+                                        .FirstOrDefault();
+
+            firstPageObjects.Add(firstPageCrossReferenceTable.Reference);
+            firstPageObjects.AddRange(firstPageCrossReferenceTable.ObjectStreams.Select(os => os.Reference));
+
+            return firstPageObjects.Distinct().OrderBy(iref => iref.ObjectNumber).ToArray();
         }
 
         /// <summary>
@@ -555,17 +892,6 @@ namespace PdfSharper.Pdf
 
             // Let catalog do the rest.
             Catalog.PrepareForSave();
-
-#if true
-            if ((_openMode == PdfDocumentOpenMode.Modify || _trailers.Count == 1) && !_trailers.Any(t => t.IsReadOnly))
-            {
-                // Remove all unreachable objects (e.g. from deleted pages)
-                int removed = _irefTable.Compact();
-                if (removed != 0)
-                    Debug.WriteLine("PrepareForSave: Number of deleted unreachable objects: " + removed);
-                _irefTable.Renumber();
-            }
-#endif
         }
 
         /// <summary>

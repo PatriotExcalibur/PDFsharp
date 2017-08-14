@@ -15,3 +15,8 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("628cd848-e444-4222-8e4c-1b599ea4d7c9")]
 
+#if TESTKEY
+[assembly: AssemblyKeyFile("..\\..\\..\\..\\DummyKey.snk")]
+#else
+ [assembly:  AssemblyKeyFile("..\\..\\..\\PEX.snk")]
+#endif

@@ -232,14 +232,6 @@ namespace PdfSharper.Pdf.AcroForms
         }
         XColor borderColor = XColor.Empty;
 
-        public virtual void RemoveJavascript()
-        {
-            if (_document != null && _document.AcroForm != null)
-            {
-                _document.AcroForm.RemoveJavascript();
-            }
-        }
-
         /// <summary>
         /// Gets or sets the value of the field.
         /// </summary>
@@ -740,6 +732,18 @@ namespace PdfSharper.Pdf.AcroForms
 
         public virtual void Flatten()
         {
+            PdfStructure structRoot = Owner.Catalog.StructTreeRoot;
+            bool canRemove = true;
+            if (structRoot != null && !(this is PdfGenericField))
+            {
+                bool referencedByStructure = structRoot.AllReferences.ContainsKey(ObjectNumber);
+                if (referencedByStructure)
+                {
+                    canRemove = false;
+                    Elements.SetBoolean("/removed", true);
+                }
+            }
+
             // Copy Font-Resources to the Page
             // This is neccessary, because Fonts used by AcroFields may be referenced only by the AcroForm, which is deleted after flattening
             if (Page != null)
@@ -759,15 +763,39 @@ namespace PdfSharper.Pdf.AcroForms
 
                 Page.Annotations.Remove(this);
 
-                RemoveJavascript();
+
+                if (Page.Annotations.Count == 0)
+                {
+                    if (canRemove && Page.Annotations.IsIndirect)
+                    {
+                        _document.Internals.RemoveObject(Page.Annotations);
+                    }
+                    Page.Elements.Remove(PdfPage.Keys.Annots);
+                }
             }
 
-            foreach (var field in Fields)
+            var children = Fields.Cast<PdfAcroField>().ToList();
+            foreach (var field in children)
             {
                 field.Flatten();
             }
-
-            _document.Internals.RemoveObject(this);
+            if (Parent != null)
+            {
+                Parent.Fields.Remove(this);
+                Elements.Remove(Keys.Parent);
+            }
+            else
+            {
+                if (structRoot != null)
+                {
+                    canRemove = !structRoot.AllReferences.ContainsKey(ObjectNumber);
+                }
+                Owner.AcroForm.Fields.Remove(this);
+                if (canRemove)
+                {
+                    _document.Internals.RemoveObject(this);
+                }
+            }
         }
 
         /// <summary>
@@ -810,9 +838,19 @@ namespace PdfSharper.Pdf.AcroForms
             // Save and restore Graphics state
             content.Insert(0, OpCodes.OperatorFromName("q"));
             content.Add(OpCodes.OperatorFromName("Q"));
-            var appendedContent = Page.Contents.AppendContent();
+            var appendedContent = Page.Contents.FlattenedContents;
+            if (appendedContent == null)
+            {
+                appendedContent = Page.Contents.AppendContent();
+                Page.Contents.FlattenedContents = appendedContent;
+            }
+
             using (var ms = new MemoryStream())
             {
+                if (appendedContent.Stream != null)
+                {
+                    ms.Write(appendedContent.Stream.UnfilteredValue, 0, appendedContent.Stream.UnfilteredValue.Length);
+                }
                 var cw = new ContentWriter(ms);
                 foreach (var obj in content)
                     obj.WriteObject(cw);
@@ -920,9 +958,13 @@ namespace PdfSharper.Pdf.AcroForms
             string s = xobj.Stream.ToString();
             if (!string.IsNullOrEmpty(s))
             {
+                normalStateDict.IsCompact = Owner.Options.CompressContentStreams;
                 normalStateDict.Elements.Remove("/Filter");
                 normalStateDict.Stream.Value = new RawEncoding().GetBytes(s);
-
+                if (Owner.Options.CompressContentStreams)
+                {
+                    normalStateDict.Stream.Zip();
+                }
                 var resourceDict = new PdfDictionary(Owner);
                 resourceDict.IsCompact = IsCompact;
                 resourceDict.Elements[PdfResources.Keys.ProcSet] = new PdfArray(Owner, new PdfName("/PDF"), new PdfName("/Text"));
@@ -1092,6 +1134,18 @@ namespace PdfSharper.Pdf.AcroForms
                 Elements.Add(field);
 
                 field._parent = null;
+            }
+
+            internal void Remove(PdfAcroField field)
+            {
+                if (field.IsIndirect)
+                {
+                    Elements.Remove(field.Reference);
+                }
+                else
+                {
+                    Elements.Remove(field);
+                }
             }
 
 

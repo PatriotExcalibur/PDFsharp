@@ -309,9 +309,6 @@ namespace PdfSharper.Pdf
         /// </summary>
         public PdfStream CreateStream(byte[] value)
         {
-            if (_stream != null)
-                throw new InvalidOperationException("The dictionary already has a stream.");
-
             _stream = new PdfStream(value, this);
             // Always set the length.
             Elements[PdfStream.Keys.Length] = new PdfInteger(_stream.Length);
@@ -1535,6 +1532,29 @@ namespace PdfSharper.Pdf
                     if (_ownerDictionary != null && _ownerDictionary.Owner != null && !_ownerDictionary.Owner.UnderConstruction)
                     {
                         Owner.FlagAsDirty();
+
+                        PdfReference iref = GetReference(key);
+                        if (iref != null)
+                        {
+                            var structKeyRoot = Owner.Owner.Catalog.StructTreeRoot;
+
+                            if (structKeyRoot != null)
+                            {
+                                int count = 0;
+                                if (structKeyRoot.AllReferences.TryGetValue(iref.ObjectNumber, out count))
+                                {
+                                    if (count == 1)
+                                    {
+                                        structKeyRoot.AllReferences.Remove(iref.ObjectNumber);
+                                    }
+                                    else
+                                    {
+                                        structKeyRoot.AllReferences[iref.ObjectNumber]--;
+                                    }
+                                }
+
+                            }
+                        }
                     }
                 }
                 return _elements.Remove(key);
@@ -1878,6 +1898,15 @@ namespace PdfSharper.Pdf
                     }
                     return 0;
                 }
+
+                set
+                {
+                    PdfDictionary dictionary = _ownerDictionary.Elements.GetDictionary(Keys.DecodeParms);
+                    if (dictionary != null)
+                    {
+                        dictionary.Elements.SetInteger("/Columns", value);
+                    }
+                }
             }
 
             public string Trailer { get { return _trailer; } }
@@ -1924,6 +1953,11 @@ namespace PdfSharper.Pdf
                             {
                                 string message = String.Format("«Cannot decode filter '{0}'»", filter);
                                 bytes = PdfEncoders.RawEncoding.GetBytes(message);
+                            }
+
+                            if (HasDecodeParams)
+                            {
+                                bytes = DecodeStream(bytes, DecodeColumns, DecodePredictor);
                             }
                         }
                         else
@@ -1972,11 +2006,15 @@ namespace PdfSharper.Pdf
                 if (_value == null)
                     return;
 
-                if (!_ownerDictionary.Elements.ContainsKey("/Filter"))
+                if (!_ownerDictionary.Elements.ContainsKey(Keys.Filter))
                 {
+                    if (_ownerDictionary.Stream.HasDecodeParams)
+                    {
+                        _value = EncodeStream(_value, _ownerDictionary.Stream.DecodeColumns, _ownerDictionary.Stream.DecodePredictor);
+                    }
                     _value = Filtering.FlateDecode.Encode(_value, _ownerDictionary._document.Options.FlateEncodeMode);
-                    _ownerDictionary.Elements["/Filter"] = new PdfName("/FlateDecode");
-                    _ownerDictionary.Elements["/Length"] = new PdfInteger(_value.Length);
+                    _ownerDictionary.Elements.SetName(Keys.Filter, "/FlateDecode");
+                    _ownerDictionary.Elements.SetInteger(Keys.Length, _value.Length);
                 }
             }
 
@@ -2012,19 +2050,79 @@ namespace PdfSharper.Pdf
                 return stream;
             }
 
-            //internal void WriteObject_(Stream stream)
-            //{
-            //    if (_value != null)
-            //        stream.Write(_value, 0, value.Length);
-            //}
 
-            ///// <summary>
-            ///// Converts a raw encoded string into a byte array.
-            ///// </summary>
-            //public static byte[] RawEncode(string content)
-            //{
-            //    return PdfEncoders.RawEncoding.GetBytes(content);
-            //}
+            //SEE RFC 2083 and the "UP" section
+            internal static byte[] DecodeStream(byte[] bytes, int columns, int predictor)
+            {
+                int size = bytes.Length;
+                if (predictor < 10 || predictor > 15)
+                    throw new ArgumentException("Invalid predictor.", "predictor");
+
+                int rowSizeRaw = columns + 1;
+
+                if (size % rowSizeRaw != 0)
+                    throw new ArgumentException("Columns and size of array do not match.");
+
+                int rows = size / rowSizeRaw;
+
+                byte[] result = new byte[rows * columns];
+#if DEBUG
+                for (int i = 0; i < result.Length; ++i)
+                    result[i] = 88;
+#endif
+
+                for (int row = 0; row < rows; ++row)
+                {
+                    if (bytes[row * rowSizeRaw] != 2)
+                        throw new ArgumentException("Invalid predictor in array.");
+
+                    for (int col = 0; col < columns; ++col)
+                    {
+                        // Copy data for first row.
+                        if (row == 0)
+                            result[row * columns + col] = bytes[row * rowSizeRaw + col + 1];
+                        else
+                        {
+                            // For other rows, add previous row.
+                            result[row * columns + col] = (byte)(result[row * columns - columns + col] + bytes[row * rowSizeRaw + col + 1]);
+                        }
+                    }
+                }
+                return result;
+            }
+
+            internal static byte[] EncodeStream(byte[] bytes, int columns, int predictor)
+            {
+                int size = bytes.Length;
+                if (predictor < 10 || predictor > 15)
+                    throw new ArgumentException("Invalid predictor.", "predictor");
+
+                int rowSizeRaw = columns + 1;
+
+                int rows = size / columns;
+
+                byte[] result = new byte[rows * rowSizeRaw];
+
+                for (int row = 0; row < rows; row++)
+                {
+                    result[row * rowSizeRaw] = 2;
+
+                    for (int col = 0; col < columns; col++)
+                    {
+                        if (row == 0)
+                        {
+                            result[row * columns + col + 1] = bytes[row * columns + col];
+                        }
+                        else
+                        {
+                            result[row * rowSizeRaw + col + 1] = (byte)((bytes[row * columns + col] - bytes[(row - 1) * columns + col]));
+                        }
+                    }
+                }
+
+                return result;
+            }
+
 
             /// <summary>
             /// Common keys for all streams.

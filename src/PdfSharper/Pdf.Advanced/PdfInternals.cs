@@ -127,8 +127,8 @@ namespace PdfSharper.Pdf.Advanced
         {
             PdfFormXObjectTable table = _document.FormTable;
             PdfImportedObjectTable iot = table.GetImportedObjectTable(externalObject.Owner);
-            PdfReference reference= iot[externalObject.ObjectID];
-            return reference == null ? null : reference.Value;
+            PdfReference reference = iot[externalObject.ObjectID];
+            return reference?.Value;
         }
 
         /// <summary>
@@ -244,9 +244,29 @@ namespace PdfSharper.Pdf.Advanced
             if (obj.Owner != _document)
                 throw new InvalidOperationException("Object does not belong to this document.");
 
-            var writeableTrailer = _document._trailers.SingleOrDefault(t => t.IsReadOnly == false);
-            writeableTrailer.XRefTable.Remove(obj.Reference);
+            var writeableTrailer = _document.GetWritableTrailer(obj.ObjectID);
+            writeableTrailer.RemoveReference(obj.Reference);
             _document._irefTable.Remove(obj.Reference);
+
+            if (obj.Reference.ContainingStreamID.IsEmpty == false)
+            {
+                PdfObjectStream containingStream = writeableTrailer.XRefTable[obj.Reference.ContainingStreamID].Value as PdfObjectStream;
+                if (containingStream != null)
+                {
+                    containingStream.RemoveObject(obj.Reference);
+                    if (containingStream.Number == 0)
+                    {
+                        RemoveObject(containingStream);
+                    }
+                }
+
+            }
+
+            var structRoot = _document.Catalog.StructTreeRoot;
+            if (structRoot != null)
+            {
+                structRoot.AllReferences.Remove(obj.ObjectNumber);
+            }
         }
 
         /// <summary>
@@ -258,16 +278,7 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         public PdfObject[] GetClosure(PdfObject obj)
         {
-            return GetClosure(obj, Int32.MaxValue);
-        }
-
-        /// <summary>
-        /// Returns an array containing the specified object as first element follows by its transitive
-        /// closure limited by the specified number of iterations.
-        /// </summary>
-        public PdfObject[] GetClosure(PdfObject obj, int depth)
-        {
-            PdfReference[] references = _document._irefTable.TransitiveClosure(obj, depth);
+            PdfReference[] references = PdfTraversalUtility.TransitiveClosure(obj).Select(kvp => kvp.Key).ToArray();
             int count = references.Length + 1;
             PdfObject[] objects = new PdfObject[count];
             objects[0] = obj;
@@ -283,8 +294,10 @@ namespace PdfSharper.Pdf.Advanced
         public void WriteObject(Stream stream, PdfItem item)
         {
             // Never write an encrypted object
-            PdfWriter writer = new PdfWriter(stream, null);
-            writer.Options = PdfWriterOptions.OmitStream;
+            PdfWriter writer = new PdfWriter(stream, null)
+            {
+                Options = PdfWriterOptions.OmitStream
+            };
             item.Write(writer);
         }
 

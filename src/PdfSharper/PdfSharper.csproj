@@ -39,8 +39,16 @@
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>..\PEX.snk</AssemblyOriginatorKeyFile>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'TestKey|AnyCPU'">
+    <OutputPath>bin\TestKey\</OutputPath>
+    <DefineConstants>TRACE;CORE;CORE_WITH_GDI;TESTKEY</DefineConstants>
+    <DocumentationFile>bin\Release\PdfSharper.xml</DocumentationFile>
+    <Optimize>true</Optimize>
+    <NoWarn>CS1591</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -236,8 +244,10 @@
     <Compile Include="Pdf.Advanced\PdfImageTable.cs" />
     <Compile Include="Pdf.Advanced\PdfImportedObjectTable.cs" />
     <Compile Include="Pdf.Advanced\PdfInternals.cs" />
+    <Compile Include="Pdf.Advanced\PdfLinearizationParameters.cs" />
     <Compile Include="Pdf.Advanced\PdfObjectInternals.cs" />
     <Compile Include="Pdf.Advanced\PdfObjectStream.cs" />
+    <Compile Include="Pdf.Advanced\PdfObjectStreamHeader.cs" />
     <Compile Include="Pdf.Advanced\PdfPageInheritableObjects.cs" />
     <Compile Include="Pdf.Advanced\PdfPageInterals.cs" />
     <Compile Include="Pdf.Advanced\PdfReference.cs" />
@@ -247,10 +257,12 @@
     <Compile Include="Pdf.Advanced\PdfShading.cs" />
     <Compile Include="Pdf.Advanced\PdfShadingPattern.cs" />
     <Compile Include="Pdf.Advanced\PdfSoftMask.cs" />
+    <Compile Include="Pdf.Advanced\PdfStructure.cs" />
     <Compile Include="Pdf.Advanced\PdfTilingPattern.cs" />
     <Compile Include="Pdf.Advanced\PdfToUnicodeMap.cs" />
     <Compile Include="Pdf.Advanced\PdfTrailer.cs" />
     <Compile Include="Pdf.Advanced\PdfTransparencyGroupAttributes.cs" />
+    <Compile Include="Pdf.Advanced\PdfTraversalUtility.cs" />
     <Compile Include="Pdf.Advanced\PdfTrueTypeFont.cs" />
     <Compile Include="Pdf.Advanced\PdfType0Font.cs" />
     <Compile Include="Pdf.Advanced\PdfType1Font.cs" />
@@ -365,7 +377,6 @@
     <Compile Include="Pdf\PdfReal.cs" />
     <Compile Include="Pdf\PdfRealObject.cs" />
     <Compile Include="Pdf\PdfRectangle.cs" />
-    <Compile Include="Pdf\PdfReferenceTable.cs" />
     <Compile Include="Pdf\PdfString.cs" />
     <Compile Include="Pdf\PdfStringObject.cs" />
     <Compile Include="Pdf\PdfUInteger.cs" />
@@ -381,25 +392,6 @@
     <Compile Include="root\ProductVersionInfo.cs" />
     <Compile Include="root\PSSR.cs" />
     <Compile Include="root\VersionInfo.cs" />
-    <Compile Include="SharpZipLib\Checksums\Adler32.cs" />
-    <Compile Include="SharpZipLib\Checksums\CRC32.cs" />
-    <Compile Include="SharpZipLib\Checksums\IChecksum.cs" />
-    <Compile Include="SharpZipLib\SharpZipBaseException.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\Deflater.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\DeflaterConstants.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\DeflaterEngine.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\DeflaterHuffman.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\DeflaterPending.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\Inflater.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\InflaterDynHeader.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\InflaterHuffmanTree.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\PendingBuffer.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\Streams\DeflaterOutputStream.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\Streams\InflaterInputStream.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\Streams\OutputWindow.cs" />
-    <Compile Include="SharpZipLib\Zip\Compression\Streams\StreamManipulator.cs" />
-    <Compile Include="SharpZipLib\Zip\ZipConstants.cs" />
-    <Compile Include="SharpZipLib\Zip\ZipException.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Messages.de.restext" />
@@ -433,7 +425,6 @@
   <ItemGroup>
     <Folder Include="Drawing\internal\" />
     <Folder Include="Resources\images\" />
-    <Folder Include="SharpZipLib\SharpZip\" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Fonts\AFM\Files\mustRead.html" />

@@ -45,7 +45,7 @@ namespace PdfSharper.Pdf
         /// <param name="objectNumber">The object number.</param>
         public PdfObjectID(int objectNumber)
         {
-            Debug.Assert(objectNumber >= 1, "Object number out of range.");
+            //Debug.Assert(objectNumber >= 1, "Object number out of range.");
             _objectNumber = objectNumber;
             _generationNumber = 0;
 #if DEBUG_

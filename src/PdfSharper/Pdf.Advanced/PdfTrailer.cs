@@ -48,9 +48,26 @@ namespace PdfSharper.Pdf.Advanced
 
         internal int StartXRef { get; set; } = -1;
 
-        internal PdfTrailer Prev { get; set; }
+        PdfTrailer _prev;
+        internal PdfTrailer Prev
+        {
+            get
+            {
+                return _prev;
+            }
+            set
+            {
+                if (value != null)
+                {
+                    Elements.SetInteger(Keys.Prev, value.StartXRef);
+                }
+                _prev = value;
+            }
+        }
 
         internal PdfTrailer Next { get; set; }
+
+        internal List<PdfObjectStream> ObjectStreams { get; } = new List<PdfObjectStream>();
 
         /// <summary>
         /// Initializes a new instance of PdfTrailer.
@@ -98,12 +115,6 @@ namespace PdfSharper.Pdf.Advanced
             //trailers are readonly or not
             //we do not auto clone them for modifications
         }
-
-        // TODO: needed when linearized...
-        //public int Prev
-        //{
-        //  get {return Elements.GetInteger(Keys.Prev);}
-        //}
 
         public PdfDocumentInformation Info
         {
@@ -173,8 +184,10 @@ namespace PdfSharper.Pdf.Advanced
         /// </summary>
         internal PdfArray CreateNewDocumentIDs()
         {
-            PdfArray array = new PdfArray(_document);
-            array.IsCompact = true;
+            PdfArray array = new PdfArray(_document)
+            {
+                IsCompact = true
+            };
             byte[] docID = Guid.NewGuid().ToByteArray();
             string id = PdfEncoders.RawEncoding.GetString(docID, 0, docID.Length);
             array.Elements.Add(new PdfString(id, PdfStringFlags.HexLiteral));
@@ -191,7 +204,7 @@ namespace PdfSharper.Pdf.Advanced
             get
             {
                 if (_securityHandler == null)
-                    _securityHandler = (PdfStandardSecurityHandler)Elements.GetValue(Keys.Encrypt, VCF.CreateIndirect);
+                    _securityHandler = (PdfStandardSecurityHandler)Elements.GetValue(Keys.Encrypt, VCF.None);
                 return _securityHandler;
             }
         }
@@ -199,10 +212,6 @@ namespace PdfSharper.Pdf.Advanced
 
         protected override void WriteObject(PdfWriter writer)
         {
-            // Delete /XRefStm entry, if any.
-            // HACK: 
-            _elements.Remove(Keys.XRefStm);
-
             // Don't encrypt myself
             PdfStandardSecurityHandler securityHandler = writer.SecurityHandler;
             writer.SecurityHandler = null;
@@ -248,8 +257,6 @@ namespace PdfSharper.Pdf.Advanced
                 iref.Value.Reference = iref;
             }
 
-            Elements.Remove(Keys.Prev);
-
             Debug.Assert(_document._irefTable.IsUnderConstruction == false);
             _document._irefTable.IsUnderConstruction = false;
         }
@@ -278,7 +285,25 @@ namespace PdfSharper.Pdf.Advanced
             XRefTable.FixXRefs(forceDocument);
         }
 
+        internal virtual void AddReference(PdfReference iref)
+        {
+            if (iref == Reference)
+            {
+                return;
+            }
 
+            XRefTable.Add(iref);
+        }
+
+        internal virtual void RemoveReference(PdfReference iref)
+        {
+            if (iref == Reference)
+            {
+                return;
+            }
+
+            XRefTable.Remove(iref);
+        }
 
 
         /// <summary>

@@ -31,8 +31,6 @@ namespace PDFsharper.UnitTests.Pdf.AcroForms
 
             document.AcroForm.Flatten();
 
-            Assert.IsTrue(field1.Elements.ContainsKey(PdfAnnotation.Keys.AP), "field1 should have rendered an appearance stream.");
-
             Assert.IsNotNull(document, "document should not be null");
             Assert.IsNotNull(document.Pages, "document Pages should not be null");
             Assert.IsTrue(document.Pages.Count == 1, "document Pages count is not correct");

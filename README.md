@@ -15,7 +15,9 @@ The current target for 1.6 is the end of june with the following features
 * Form flattening
 
 
-Features we need and plan to support in the next 12 months. (1.7)
-* Unembed fonts
+Features we need and plan to support in the next 2 months. (1.7)
 * Compressed object stream writing
+
+Features we need and plan to support in the next 12 months (1.8)
+* Unembed fonts
 * Linearization

@@ -98,6 +98,16 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'TestKey|AnyCPU'">
+    <OutputPath>bin\TestKey\</OutputPath>
+    <DefineConstants>TRACE;GDI;UseGdiObjects;TESTKEY</DefineConstants>
+    <BaseAddress>285212672</BaseAddress>
+    <Optimize>true</Optimize>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <FileAlignment>4096</FileAlignment>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System">
       <Name>System</Name>
@@ -693,11 +703,17 @@
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfInternals.cs">
       <Link>Pdf.Advanced\PdfInternals.cs</Link>
     </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfLinearizationParameters.cs">
+      <Link>Pdf.Advanced\PdfLinearizationParameters.cs</Link>
+    </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfObjectInternals.cs">
       <Link>Pdf.Advanced\PdfObjectInternals.cs</Link>
     </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfObjectStream.cs">
       <Link>Pdf.Advanced\PdfObjectStream.cs</Link>
+    </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfObjectStreamHeader.cs">
+      <Link>Pdf.Advanced\PdfObjectStreamHeader.cs</Link>
     </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfPageInheritableObjects.cs">
       <Link>Pdf.Advanced\PdfPageInheritableObjects.cs</Link>
@@ -726,6 +742,9 @@
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfSoftMask.cs">
       <Link>Pdf.Advanced\PdfSoftMask.cs</Link>
     </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfStructure.cs">
+      <Link>Pdf.Advanced\PdfStructure.cs</Link>
+    </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTilingPattern.cs">
       <Link>Pdf.Advanced\PdfTilingPattern.cs</Link>
     </Compile>
@@ -737,6 +756,9 @@
     </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTransparencyGroupAttributes.cs">
       <Link>Pdf.Advanced\PdfTransparencyGroupAttributes.cs</Link>
+    </Compile>
+    <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTraversalUtility.cs">
+      <Link>Pdf.Advanced\PdfTraversalUtility.cs</Link>
     </Compile>
     <Compile Include="..\PdfSharper\Pdf.Advanced\PdfTrueTypeFont.cs">
       <Link>Pdf.Advanced\PdfTrueTypeFont.cs</Link>
@@ -1074,9 +1096,6 @@
     <Compile Include="..\PdfSharper\Pdf\PdfRectangle.cs">
       <Link>Pdf\PdfRectangle.cs</Link>
     </Compile>
-    <Compile Include="..\PdfSharper\Pdf\PdfReferenceTable.cs">
-      <Link>Pdf\PdfReferenceTable.cs</Link>
-    </Compile>
     <Compile Include="..\PdfSharper\Pdf\PdfString.cs">
       <Link>Pdf\PdfString.cs</Link>
     </Compile>
@@ -1121,63 +1140,6 @@
     </Compile>
     <Compile Include="..\PdfSharper\root\VersionInfo.cs">
       <Link>root\VersionInfo.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Checksums\Adler32.cs">
-      <Link>SharpZipLib\Checksums\Adler32.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Checksums\CRC32.cs">
-      <Link>SharpZipLib\Checksums\CRC32.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Checksums\IChecksum.cs">
-      <Link>SharpZipLib\Checksums\IChecksum.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\SharpZipBaseException.cs">
-      <Link>SharpZipLib\SharpZipBaseException.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\Deflater.cs">
-      <Link>SharpZipLib\Zip\Compression\Deflater.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\DeflaterConstants.cs">
-      <Link>SharpZipLib\Zip\Compression\DeflaterConstants.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\DeflaterEngine.cs">
-      <Link>SharpZipLib\Zip\Compression\DeflaterEngine.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\DeflaterHuffman.cs">
-      <Link>SharpZipLib\Zip\Compression\DeflaterHuffman.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\DeflaterPending.cs">
-      <Link>SharpZipLib\Zip\Compression\DeflaterPending.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\Inflater.cs">
-      <Link>SharpZipLib\Zip\Compression\Inflater.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\InflaterDynHeader.cs">
-      <Link>SharpZipLib\Zip\Compression\InflaterDynHeader.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\InflaterHuffmanTree.cs">
-      <Link>SharpZipLib\Zip\Compression\InflaterHuffmanTree.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\PendingBuffer.cs">
-      <Link>SharpZipLib\Zip\Compression\PendingBuffer.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\Streams\DeflaterOutputStream.cs">
-      <Link>SharpZipLib\Zip\Compression\Streams\DeflaterOutputStream.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\Streams\InflaterInputStream.cs">
-      <Link>SharpZipLib\Zip\Compression\Streams\InflaterInputStream.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\Streams\OutputWindow.cs">
-      <Link>SharpZipLib\Zip\Compression\Streams\OutputWindow.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\Compression\Streams\StreamManipulator.cs">
-      <Link>SharpZipLib\Zip\Compression\Streams\StreamManipulator.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\ZipConstants.cs">
-      <Link>SharpZipLib\Zip\ZipConstants.cs</Link>
-    </Compile>
-    <Compile Include="..\PdfSharper\SharpZipLib\Zip\ZipException.cs">
-      <Link>SharpZipLib\Zip\ZipException.cs</Link>
     </Compile>
     <EmbeddedResource Include="..\PdfSharper\Forms\PagePreview.resx">
       <Link>Forms\PagePreview.resx</Link>
@@ -1282,15 +1244,11 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\images\" />
-    <Folder Include="SharpZipLib\SharpZip\" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\PdfSharper\Fonts\AFM\Files\mustRead.html">
       <Link>Fonts\AFM\Files\mustRead.html</Link>
     </EmbeddedResource>
-    <Content Include="..\PdfSharper\SharpZipLib\ReadMe.txt">
-      <Link>SharpZipLib\ReadMe.txt</Link>
-    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

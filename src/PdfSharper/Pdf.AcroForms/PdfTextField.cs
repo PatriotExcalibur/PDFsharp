@@ -29,11 +29,9 @@
 
 using PdfSharper.Drawing;
 using PdfSharper.Drawing.Layout;
-using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Annotations;
-using PdfSharper.Pdf.Internal;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 
 namespace PdfSharper.Pdf.AcroForms
 {
@@ -77,7 +75,7 @@ namespace PdfSharper.Pdf.AcroForms
             {
                 bool wasDirty = IsDirty;
                 Elements.SetString(Keys.V, value);
-                if (wasDirty != IsDirty || _document._trailers.Count == 1)
+                if (wasDirty != IsDirty || _document._trailers.All(t => t.IsReadOnly == false))
                 {
                     _needsAppearances = true;
                 }
@@ -497,10 +495,16 @@ namespace PdfSharper.Pdf.AcroForms
                 var appearance = Elements.GetDictionary(PdfAnnotation.Keys.AP);
                 if (appearance != null)
                 {
-                    var apps = appearance.Elements.GetDictionary("/N");
-                    if (apps != null)
+                    PdfDictionary normalAppearance = appearance.Elements.GetDictionary("/N");
+                    if (normalAppearance != null)
                     {
-                        RenderContentStream(apps.Stream);
+                        RenderContentStream(normalAppearance.Stream);
+                    }
+
+                    Elements.Remove(Keys.AP);
+                    if (normalAppearance != null && normalAppearance.IsIndirect)
+                    {
+                        _document.Internals.RemoveObject(normalAppearance);
                     }
                 }
             }
