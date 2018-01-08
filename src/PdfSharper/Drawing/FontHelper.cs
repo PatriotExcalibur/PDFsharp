@@ -586,7 +586,7 @@ namespace PdfSharper.Drawing
 
         private static PdfReference GetAdobeStandardFontEncoding(PdfDocument doc)
         {
-            PdfDictionary standardEncoding = doc.AcroForm.Elements.GetDictionary("/DR").Elements.GetDictionary("/Font")
+            PdfDictionary standardEncoding = doc.AcroForm?.Elements.GetDictionary("/DR").Elements.GetDictionary("/Font")
                 .Elements.OfType<PdfDictionary>()
                 .FirstOrDefault(d => d.Elements.GetString(PdfFont.Keys.Type) == PdfTrueTypeFont.Keys.Encoding && d.Elements.ContainsKey("/Differences"));
 
