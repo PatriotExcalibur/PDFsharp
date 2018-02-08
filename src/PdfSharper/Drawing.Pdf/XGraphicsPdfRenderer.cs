@@ -2126,16 +2126,21 @@ namespace PdfSharper.Drawing.Pdf
         PdfGraphicsState RestoreState(InternalGraphicsState state)
         {
             int count = 1;
-            PdfGraphicsState top = _gfxStateStack.Pop();
-            while (top.InternalState != state)
+            if (_gfxStateStack.Count > 0)
             {
+                PdfGraphicsState top = _gfxStateStack.Pop();
+                while (top.InternalState != state)
+                {
+                    Append("Q\n");
+                    count++;
+                    top = _gfxStateStack.Pop();
+                }
+
                 Append("Q\n");
-                count++;
-                top = _gfxStateStack.Pop();
+                _gfxState = top;
+                return top;
             }
-            Append("Q\n");
-            _gfxState = top;
-            return top;
+            return null;
         }
 
         /// <summary>
