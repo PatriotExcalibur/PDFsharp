@@ -29,6 +29,7 @@
 
 using PdfSharper.Drawing;
 using PdfSharper.Drawing.Layout;
+using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Annotations;
 using System;
 using System.Linq;
@@ -487,6 +488,10 @@ namespace PdfSharper.Pdf.AcroForms
             {
                 RenderAppearance();
             }
+            else
+            {
+                CheckAppearenceStreamStack();
+            }
 
             base.Flatten();
 
@@ -495,7 +500,7 @@ namespace PdfSharper.Pdf.AcroForms
                 var appearance = Elements.GetDictionary(PdfAnnotation.Keys.AP);
                 if (appearance != null)
                 {
-                    PdfDictionary normalAppearance = appearance.Elements.GetDictionary("/N");
+                    PdfDictionary normalAppearance = appearance.Elements.GetDictionary(PdfObjectStream.Keys.N);
                     if (normalAppearance != null)
                     {
                         RenderContentStream(normalAppearance.Stream);
@@ -505,6 +510,62 @@ namespace PdfSharper.Pdf.AcroForms
                     if (normalAppearance != null && normalAppearance.IsIndirect)
                     {
                         _document.Internals.RemoveObject(normalAppearance);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// q and Q are just like parentheses in programming, they should always come in pairs. 
+        /// This method checks appearance streams for the appropriate pairs and repairs them.
+        /// </summary>
+        private void CheckAppearenceStreamStack()
+        {
+            const byte littleQ = (byte)'q';
+            const byte bigQ = (byte)'Q';
+            const byte newLine = (byte)'\n';
+
+            var apDict = Elements.GetDictionary(Keys.AP);
+            if (apDict != null)
+            {
+                var normAppearanceDict = apDict.Elements.GetDictionary(PdfObjectStream.Keys.N);
+                if (normAppearanceDict != null)
+                {
+                    if (normAppearanceDict.Stream?.Length > 0)
+                    {
+                        int graphicsStackCount = 0;
+                        byte[] unfiltered = normAppearanceDict.Stream.UnfilteredValue;
+                        for (int i = 0; i < unfiltered.Length; i++)
+                        {
+                            if (unfiltered[i] == littleQ)
+                            {
+                                graphicsStackCount++;
+                            }
+                            else if (unfiltered[i] == bigQ)
+                            {
+                                graphicsStackCount--;
+                            }
+                        }
+
+                        //if there are any remaining, there are missing pairings
+                        //repair them
+                        if (graphicsStackCount > 0)
+                        {
+                            Array.Resize(ref unfiltered, (graphicsStackCount * 2) + unfiltered.Length);
+                            for (int r = unfiltered.Length - (graphicsStackCount * 2); r < unfiltered.Length; r++)
+                            {
+                                unfiltered[r++] = bigQ;
+                                unfiltered[r] = newLine;
+                            }
+
+                            normAppearanceDict.Stream.Value = unfiltered;
+                            if (Owner.Options.CompressContentStreams)
+                            {
+                                //reset the filter so it will re-compress
+                                normAppearanceDict.Elements.Remove("/Filter");
+                                normAppearanceDict.Stream.Zip();
+                            }
+                        }
                     }
                 }
             }
