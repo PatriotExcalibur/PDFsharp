@@ -576,7 +576,10 @@ namespace PdfSharper.Pdf
         {
             if (pdfObject != null)
             {
-                pdfObject.Reference.Position = writer.Position;
+                if (pdfObject.IsIndirect)
+                {
+                    pdfObject.Reference.Position = writer.Position;
+                }
                 pdfObject.Write(writer);
             }
         }
