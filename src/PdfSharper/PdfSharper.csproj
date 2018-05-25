@@ -420,6 +420,7 @@
     <EmbeddedResource Include="Fonts\AFM\Files\Times-New-Roman-Bold.afm" />
     <EmbeddedResource Include="Fonts\AFM\Files\Times-New-Roman-BoldItalic.afm" />
     <EmbeddedResource Include="Fonts\AFM\Files\Times-New-Roman-Italic.afm" />
+    <None Include="packages.config" />
     <None Include="SharpZipLib\ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -430,6 +431,12 @@
     <EmbeddedResource Include="Fonts\AFM\Files\mustRead.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>if $(ConfigurationName) == Debug $(SolutionDir)\packages\GitVersion.CommandLine.4.0.0-beta0012\tools\GitVersion.exe /updateAssemblyInfo $(ProjectDir)Properties\AssemblyInfo.cs</PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>if $(ConfigurationName) == Debug git checkout -- $(ProjectDir)Properties\AssemblyInfo.cs</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
