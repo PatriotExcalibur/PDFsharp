@@ -31,7 +31,10 @@ using PdfSharper.Drawing;
 using PdfSharper.Drawing.Layout;
 using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Annotations;
+using PdfSharper.Pdf.Content;
+using PdfSharper.Pdf.Content.Objects;
 using System;
+using System.IO;
 using System.Linq;
 
 namespace PdfSharper.Pdf.AcroForms
@@ -521,10 +524,6 @@ namespace PdfSharper.Pdf.AcroForms
         /// </summary>
         private void CheckAppearenceStreamStack()
         {
-            const byte littleQ = (byte)'q';
-            const byte bigQ = (byte)'Q';
-            const byte newLine = (byte)'\n';
-
             var apDict = Elements.GetDictionary(Keys.AP);
             if (apDict != null)
             {
@@ -534,31 +533,62 @@ namespace PdfSharper.Pdf.AcroForms
                     if (normAppearanceDict.Stream?.Length > 0)
                     {
                         int graphicsStackCount = 0;
-                        byte[] unfiltered = normAppearanceDict.Stream.UnfilteredValue;
-                        for (int i = 0; i < unfiltered.Length; i++)
+                        var streamContents = ContentReader.ReadContent(normAppearanceDict.Stream.UnfilteredValue);
+
+                        foreach (var streamSequence in streamContents)
                         {
-                            if (unfiltered[i] == littleQ)
+                            if (streamSequence is COperator ssop)
                             {
-                                graphicsStackCount++;
-                            }
-                            else if (unfiltered[i] == bigQ)
-                            {
-                                graphicsStackCount--;
+                                if (ssop.OpCode.OpCodeName == OpCodeName.q)
+                                {
+                                    graphicsStackCount++;
+                                }
+                                else if (ssop.OpCode.OpCodeName == OpCodeName.Q)
+                                {
+                                    graphicsStackCount--;
+                                }
                             }
                         }
 
-                        //if there are any remaining, there are missing pairings
-                        //repair them
+                        byte[] newStream = null;
                         if (graphicsStackCount > 0)
                         {
-                            Array.Resize(ref unfiltered, (graphicsStackCount * 2) + unfiltered.Length);
-                            for (int r = unfiltered.Length - (graphicsStackCount * 2); r < unfiltered.Length; r++)
+                            for (int i = 0; i < graphicsStackCount; i++)
                             {
-                                unfiltered[r++] = bigQ;
-                                unfiltered[r] = newLine;
+                                streamContents.Add(OpCodes.OperatorFromName("Q"));
                             }
+                            using (MemoryStream ms = new MemoryStream())
+                            {
+                                var cw = new ContentWriter(ms);
+                                foreach (var op in streamContents)
+                                {
+                                    op.WriteObject(cw);
+                                }
 
-                            normAppearanceDict.Stream.Value = unfiltered;
+                                newStream = ms.ToArray();
+                            }
+                        }
+                        else if (graphicsStackCount < 0)
+                        {
+                            for (int i = graphicsStackCount; i < 0; i++)
+                            {
+                                streamContents.Insert(0, OpCodes.OperatorFromName("q"));
+                            }
+                            using (MemoryStream ms = new MemoryStream())
+                            {
+                                var cw = new ContentWriter(ms);
+                                foreach (var op in streamContents)
+                                {
+                                    op.WriteObject(cw);
+                                }
+
+                                newStream = ms.ToArray();
+                            }
+                        }
+
+                        if (newStream != null)
+                        {
+                            normAppearanceDict.Stream.Value = newStream;
                             if (Owner.Options.CompressContentStreams)
                             {
                                 //reset the filter so it will re-compress
