@@ -745,24 +745,12 @@ namespace PdfSharper.Pdf.AcroForms
             }
 
             // Copy Font-Resources to the Page
-            // This is neccessary, because Fonts used by AcroFields may be referenced only by the AcroForm, which is deleted after flattening
+            // This is necessary, because Fonts used by AcroFields may be referenced only by the AcroForm, which is deleted after flattening
             if (Page != null)
             {
-                var resources = _document.AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
-                if (!String.IsNullOrEmpty(ContentFontName) && resources != null && resources.Elements.ContainsKey(PdfResources.Keys.Font))
-                {
-                    var fontKey = "/" + ContentFontName;
-                    var fontList = resources.Elements.GetDictionary(PdfResources.Keys.Font);
-                    var fontRef = fontList.Elements.GetReference(fontKey);
-                    if (fontRef != null)
-                    {
-                        var fontDict = (PdfDictionary)Page.Resources.Elements.GetValue(PdfResources.Keys.Font, VCF.Create);
-                        fontDict.Elements.SetReference(fontKey, fontRef);
-                    }
-                }
+                MoveFontToPage(ContentFontName);
 
                 Page.Annotations.Remove(this);
-
 
                 if (Page.Annotations.Count == 0)
                 {
@@ -794,6 +782,37 @@ namespace PdfSharper.Pdf.AcroForms
                 if (canRemove)
                 {
                     _document.Internals.RemoveObject(this);
+                }
+            }
+        }
+
+        protected void MoveFontToPage(string fontName, PdfDictionary resources = null)
+        {
+            if (Page != null)
+            {
+                if (resources == null)
+                {
+                    resources = _document.AcroForm.Elements.GetDictionary(PdfAcroForm.Keys.DR);
+                }
+
+                if (!String.IsNullOrEmpty(fontName) && resources != null && resources.Elements.ContainsKey(PdfResources.Keys.Font))
+                {
+                    string fontKey = string.Empty;
+                    if (fontName.StartsWith("/"))
+                    {
+                        fontKey = fontName;
+                    }
+                    else
+                    {
+                        fontKey = "/" + fontName;
+                    }
+                    var fontList = resources.Elements.GetDictionary(PdfResources.Keys.Font);
+                    var fontRef = fontList.Elements.GetReference(fontKey);
+                    if (fontRef != null)
+                    {
+                        var fontDict = (PdfDictionary)Page.Resources.Elements.GetValue(PdfResources.Keys.Font, VCF.Create);
+                        fontDict.Elements.SetReference(fontKey, fontRef);
+                    }
                 }
             }
         }

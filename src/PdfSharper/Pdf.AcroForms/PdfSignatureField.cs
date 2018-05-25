@@ -28,9 +28,13 @@
 #endregion
 
 using PdfSharper.Drawing;
+using PdfSharper.Pdf.Advanced;
 using PdfSharper.Pdf.Annotations;
+using PdfSharper.Pdf.Content;
+using PdfSharper.Pdf.Content.Objects;
 using PdfSharper.Signatures;
-using System;
+using System.IO;
+using System.Linq;
 
 namespace PdfSharper.Pdf.AcroForms
 {
@@ -39,6 +43,8 @@ namespace PdfSharper.Pdf.AcroForms
     /// </summary>
     public sealed class PdfSignatureField : PdfAcroField
     {
+        //% DSBlank
+        private static readonly byte[] BLANK_STREAM = new byte[] { 37, 32, 68, 83, 66, 108, 97, 110, 107, 10 };
         public string Reason
         {
             get
@@ -137,6 +143,118 @@ namespace PdfSharper.Pdf.AcroForms
 
             // Set XRef to normal state
             ap.Elements["/N"] = form.PdfForm.Reference;
+        }
+
+        /// <summary>
+        /// See https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PPKAppearances.pdf for
+        /// the reference guide on the template structure of how this is laid out
+        /// </summary>
+        public override void Flatten()
+        {
+            base.Flatten();
+
+            PdfDictionary normalAppearance = Elements.GetDictionary(PdfAnnotation.Keys.AP)?.Elements?.GetDictionary(PdfObjectStream.Keys.N);
+
+            if (normalAppearance == null || normalAppearance.Stream == null)
+            {
+                return;
+            }
+
+            string templateName = null;
+            var content = ContentReader.ReadContent(normalAppearance.Stream.UnfilteredValue);
+            foreach (CObject obj in content)
+            {
+                if (obj is COperator cop)
+                {
+                    if (cop.OpCode.OpCodeName == OpCodeName.Do)
+                    {
+                        templateName = cop.Operands.OfType<CName>().FirstOrDefault()?.Name;
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(templateName))
+            {
+                return;
+            }
+
+            var signatureRenderingForm = new PdfFormXObject(normalAppearance);
+            var namedStream = new PdfFormXObject(signatureRenderingForm.Resources?.XObjects?.Elements?.GetDictionary(templateName));
+            if (namedStream == null)
+            {
+                return;
+            }
+
+            byte[] unfilteredNamed = namedStream.Stream?.UnfilteredValue;
+            if (unfilteredNamed == null)
+            {
+                return;
+            }
+
+            CSequence formContents = ContentReader.ReadContent(unfilteredNamed);
+            using (var ms = new MemoryStream())
+            {
+                var cw = new ContentWriter(ms);
+                foreach (var sequence in formContents)
+                {
+                    if (sequence is COperator sop && sop.OpCode.OpCodeName == OpCodeName.Do)
+                    {
+                        string subtemplateName = sop.Operands.OfType<CName>().FirstOrDefault()?.Name;
+                        var subNamedStream = new PdfFormXObject(namedStream.Resources.XObjects.Elements.GetDictionary(subtemplateName));
+
+                        if (subNamedStream == null)
+                        {
+                            continue;
+                        }
+
+                        if (subNamedStream.IsIndirect)
+                        {
+                            _document.Internals.RemoveObject(subNamedStream);
+                        }
+
+                        byte[] unfilteredValue = subNamedStream.Stream?.UnfilteredValue;
+
+                        if (unfilteredValue != null)
+                        {
+                            var subStreamContents = ContentReader.ReadContent(unfilteredValue);
+                            foreach (var subStreamSequenceItem in subStreamContents)
+                            {
+                                subStreamSequenceItem.WriteObject(cw);
+                                if (subStreamSequenceItem is COperator sscop && sscop.OpCode.OpCodeName == OpCodeName.Tf)
+                                {
+                                    MoveFontToPage(sscop.Operands[0].ToString(), subNamedStream.Resources);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        sequence.WriteObject(cw);
+                    }
+                }
+
+                if (ms.Length > 0)
+                {
+                    RenderContentStream(new PdfStream(ms.ToArray(), this));
+                }
+            }
+
+            if (namedStream.IsIndirect)
+            {
+                _document.Internals.RemoveObject(namedStream);
+            }
+
+            Elements.Remove(Keys.AP);
+            if (normalAppearance.IsIndirect)
+            {
+                _document.Internals.RemoveObject(normalAppearance);
+            }
+
+            var signatureValueElement = Elements?.GetDictionary(PdfAcroField.Keys.V);
+            if (signatureValueElement != null && signatureValueElement.IsIndirect)
+            {
+                _document.Internals.RemoveObject(signatureValueElement);
+            }
         }
 
         /// <summary>
