@@ -1367,7 +1367,7 @@ namespace PdfSharper.Pdf.IO
                             break;
 
                         case 1:
-                            res += "Not compresed: offset, generation number";
+                            res += "Not compressed: offset, generation number";
                             break;
 
                         case 2:

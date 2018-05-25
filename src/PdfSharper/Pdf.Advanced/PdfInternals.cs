@@ -250,7 +250,7 @@ namespace PdfSharper.Pdf.Advanced
 
             if (obj.Reference.ContainingStreamID.IsEmpty == false)
             {
-                PdfObjectStream containingStream = writeableTrailer.XRefTable[obj.Reference.ContainingStreamID].Value as PdfObjectStream;
+                PdfObjectStream containingStream = writeableTrailer.XRefTable[obj.Reference.ContainingStreamID]?.Value as PdfObjectStream;
                 if (containingStream != null)
                 {
                     containingStream.RemoveObject(obj.Reference);

@@ -189,9 +189,22 @@ namespace PdfSharper.Pdf.Advanced
                     //non-offset position 
                     objHeader.Offset = objStreamWriter.Position;
 
-                    //TODO: get the object from the correct trailer, it's not always the most recent version that
-                    //should be written here
-                    _document._irefTable[new PdfObjectID(objHeader.ObjectNumber)].Value.Write(objStreamWriter);
+
+                    PdfObjectID objectID = new PdfObjectID(objHeader.ObjectNumber);
+                    if (!_document._irefTable.Contains(objectID))
+                    {
+                        var latestObjectVersionTrailer = _document._trailers.Where(t => t.XRefTable.Contains(new PdfObjectID(objHeader.ObjectNumber))).OrderByDescending(t => t.Info.ModificationDate)
+                            .FirstOrDefault();
+
+                        if (latestObjectVersionTrailer != null)
+                        {
+                            latestObjectVersionTrailer.XRefTable[objectID].Value.Write(objStreamWriter);
+                        }
+                    }
+                    else
+                    {
+                        _document._irefTable[objectID].Value.Write(objStreamWriter);
+                    }
                 }
 
                 string objectStreamHeader = string.Join(" ", _header.Select(h => $"{h.ObjectNumber} {h.Offset}")) + " ";
