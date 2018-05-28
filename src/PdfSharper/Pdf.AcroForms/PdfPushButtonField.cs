@@ -64,11 +64,17 @@ namespace PdfSharper.Pdf.AcroForms
                     if (appSelRef != null)
                     {
                         var appSel = appSelRef.Value as PdfDictionary;
-                        if (appSel != null)
+                        if (appSel != null && GetIsVisible())
                         {
                             RenderContentStream(appSel.Stream);
                         }
+
+                        if (appSelRef.Value != null)
+                        {
+                            _document.Internals.RemoveObject(appSelRef.Value);
+                        }
                     }
+                    Elements.Remove(Keys.AP);
                 }
             }
         }

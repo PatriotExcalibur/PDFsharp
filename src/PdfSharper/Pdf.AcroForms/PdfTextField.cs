@@ -504,7 +504,7 @@ namespace PdfSharper.Pdf.AcroForms
                 if (appearance != null)
                 {
                     PdfDictionary normalAppearance = appearance.Elements.GetDictionary(PdfObjectStream.Keys.N);
-                    if (normalAppearance != null)
+                    if (normalAppearance != null && GetIsVisible())
                     {
                         RenderContentStream(normalAppearance.Stream);
                     }

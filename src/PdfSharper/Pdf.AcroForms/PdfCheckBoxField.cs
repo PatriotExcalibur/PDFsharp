@@ -243,7 +243,7 @@ namespace PdfSharper.Pdf.AcroForms
                         if (value)
                         {
                             //Element 0 behandeln -> auf checked setzen
-                            string name1 = "";                            
+                            string name1 = "";
                             PdfDictionary o = ((PdfDictionary)(((PdfReference)(Fields.Elements.Items[0])).Value)).Elements[Keys.AP] as PdfDictionary;
                             if (o != null)
                             {
@@ -381,12 +381,16 @@ namespace PdfSharper.Pdf.AcroForms
                     if (apps != null)
                     {
                         var appSel = Checked ? apps.Elements.GetDictionary(GetNonOffValue()) : apps.Elements.GetDictionary(UncheckedName);
-                        if (appSel != null)
+                        if (appSel != null && GetIsVisible())
                         {
                             RenderContentStream(appSel.Stream);
                         }
+                        if (apps.IsIndirect)
+                        {
+                            _document.Internals.RemoveObject(apps);
+                        }
                     }
-
+                    Elements.Remove(Keys.AP);
                 }
             }
         }
