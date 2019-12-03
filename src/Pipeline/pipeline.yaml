@@ -1,0 +1,33 @@
+
+# Define solution / project variables
+variables:
+    solutionName: BuildAll-PdfSharp  
+  
+  # The root pipeline URL exists in PEX.Pipeline repository
+  resources:
+    repositories:
+      - repository: PEXPipeline
+        type: git
+        name: PEX/PEX.Pipeline
+        ref: master
+  
+  jobs:
+    - template: pipeline-nuget.yaml@PEXPipeline
+      parameters:
+        pipelineRef: master
+        displayNamePrefix: ${{variables.solutionName}} -
+        solutionName: ${{variables.solutionName}}
+        solutionPath: $(Build.SourcesDirectory)\${{variables.solutionName}}.sln
+        projectPath: $(Build.SourcesDirectory)\${{variables.solutionName}}
+        projectName: ${{variables.solutionName}}
+        assemblyInfoPath: $(Build.SourcesDirectory)\${{variables.solutionName}}\Properties\AssemblyInfo.cs
+        NuGet.PackageID: ${{variables.solutionName}}
+        NuGet.Owner: empira Software GmbH
+        NuGet.Author: empira Software GmbH
+        NuGet.Copyright: "Copyright (c) 2005-2018 empira Software GmbH, Troisdorf (Germany)"
+        NuGet.Description: "Forked for PEX"
+        buildSteps:
+          - template: templates/nuget-restore.yaml
+          - template: templates/build-solution.yaml      
+          - template: templates/test-solution.yaml
+  
